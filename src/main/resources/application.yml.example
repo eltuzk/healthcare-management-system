@@ -1,0 +1,20 @@
+# Fill in the values below (or set environment variables in your machine)
+
+spring:
+  application:
+    name: healthcare-backend
+
+  datasource:
+    # Example: jdbc:oracle:thin:@localhost:1521/XEPDB1
+    url: YOUR_ORACLE_JDBC_URL
+    username: YOUR_DB_USERNAME
+    password: YOUR_DB_PASSWORD
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.OracleDialect
