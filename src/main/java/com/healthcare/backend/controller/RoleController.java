@@ -1,5 +1,6 @@
 package com.healthcare.backend.controller;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.healthcare.backend.dto.request.RoleRequestDTO;
+import com.healthcare.backend.dto.response.PermissionResponseDTO;
 import com.healthcare.backend.dto.response.RoleResponseDTO;
-import com.healthcare.backend.service.RolePermissionServiceInterface;
 import com.healthcare.backend.service.RoleServiceInterface;
 
 import jakarta.validation.Valid;
@@ -26,11 +27,9 @@ public class RoleController {
     @Autowired
     private RoleServiceInterface roleService;
 
-    @Autowired
-    private RolePermissionServiceInterface rolePermissionService;
     @GetMapping
-    public ResponseEntity<Page<RoleResponseDTO>> getAllRole(Pageable pageable) {
-        Page<RoleResponseDTO> res = roleService.getAllRole(pageable);
+    public ResponseEntity<Page<RoleResponseDTO>> getAllRoles(@ParameterObject Pageable pageable) {
+        Page<RoleResponseDTO> res = roleService.getAllRoles(pageable);
         return ResponseEntity.ok(res);
     }
 
@@ -60,7 +59,19 @@ public class RoleController {
 
     @PostMapping("/{roleId}/permissions/{permissionId}")
     public ResponseEntity<String> addPermissionToRole(@PathVariable Long roleId, @PathVariable Long permissionId) {
-        rolePermissionService.addPermissisonToRole(roleId, permissionId);
+        roleService.addPermissisonToRole(roleId, permissionId);
         return ResponseEntity.ok("Permission added successfully.");
+    }
+
+    @GetMapping("/{roleId}/permissions")
+    public ResponseEntity<Page<PermissionResponseDTO>> getPermissionsByRole (@PathVariable Long roleId, @ParameterObject Pageable pageable) {
+        Page<PermissionResponseDTO> res = roleService.getPermissionsOfRole(roleId, pageable);
+        return ResponseEntity.ok(res);
+    }
+
+    @DeleteMapping("/{roleId}/permissions/{permissionId}")
+    public ResponseEntity<String> removePermissionFromRole (@PathVariable Long roleId, @PathVariable Long permissionId) {
+        roleService.removePermissionFromRole(roleId, permissionId);
+        return ResponseEntity.ok("Permission deleted successfully.");
     }
 }

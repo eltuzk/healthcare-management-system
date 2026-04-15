@@ -11,7 +11,8 @@ import com.healthcare.backend.entity.RolePermissionId;
 @Repository
 public interface RolePermissionRepository extends JpaRepository<RolePermission, RolePermissionId> {
     boolean existsByRole_RoleId(Long roleId);
+    
     boolean existsByPermission_PermissionId(Long permissionId);
 
-    Page<RolePermission> findAllById_RoleId(Long roleId, Pageable pageable);
+    Page<RolePermission> findAllByRole_RoleId(Long roleId, Pageable pageable);
 }
