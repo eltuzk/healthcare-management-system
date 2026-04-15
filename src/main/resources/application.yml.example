@@ -18,3 +18,21 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.OracleDialect
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+  spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: user@example.com
+    password: password
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true

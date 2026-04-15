@@ -7,7 +7,7 @@ import com.healthcare.backend.dto.request.PermissionRequestDTO;
 import com.healthcare.backend.dto.response.PermissionResponseDTO;
 
 public interface PermissionServiceInterface {
-    Page<PermissionResponseDTO> getAllPermission(Pageable pageable);
+    Page<PermissionResponseDTO> getAllPermissions (Pageable pageable);
 
     PermissionResponseDTO getPermissionById(Long id);
 

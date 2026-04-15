@@ -1,5 +1,6 @@
 package com.healthcare.backend.controller;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,8 +26,8 @@ public class PermissionController {
     private PermissionServiceInterface permissionService;
 
     @GetMapping
-    public ResponseEntity<Page<PermissionResponseDTO>> getAllPermission(Pageable pageable) {
-        Page<PermissionResponseDTO> res = permissionService.getAllPermission(pageable);
+    public ResponseEntity<Page<PermissionResponseDTO>> getAllPermissions(@ParameterObject Pageable pageable) {
+        Page<PermissionResponseDTO> res = permissionService.getAllPermissions(pageable);
         return ResponseEntity.ok(res);
     }
 

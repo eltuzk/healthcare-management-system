@@ -7,5 +7,5 @@ import com.healthcare.backend.entity.Permission;
 
 @Repository
 public interface PermissionRepository extends JpaRepository<Permission, Long> {
-
+    boolean existsByPermissionName(String permissionName);
 }
