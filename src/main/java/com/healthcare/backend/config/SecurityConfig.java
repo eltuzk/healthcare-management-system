@@ -41,6 +41,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**")
                         .permitAll()
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/accounts/change-password").authenticated()
                         .requestMatchers("/roles/**", "/permissions/**", "/accounts/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/doctors/**").hasAnyAuthority("ADMIN", "PATIENT", "RECEPTIONIST")
                         .requestMatchers(HttpMethod.POST, "/doctors/**").hasAuthority("ADMIN")

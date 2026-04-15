@@ -26,8 +26,8 @@ public class JwtServiceImpl implements JwtServiceInterface {
 
     public String generateToken(Long accountId, String email, String roleName) {
         return Jwts.builder()
+                .subject(email)
                 .claim("accountId", accountId)
-                .claim("email", email)
                 .claim("roleName", roleName)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 900000))
@@ -57,7 +57,7 @@ public class JwtServiceImpl implements JwtServiceInterface {
         
         return jwtParser.parseSignedClaims(token)
                 .getPayload()
-                .get("email", String.class);
+                .getSubject();
     }
 
     public String extractRole(String token) {
