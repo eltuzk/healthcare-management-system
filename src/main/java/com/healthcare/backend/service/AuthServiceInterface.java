@@ -1,8 +1,9 @@
 package com.healthcare.backend.service;
 
 import com.healthcare.backend.dto.request.AuthRequestDTO;
-import com.healthcare.backend.dto.request.ChangePasswordRequestDTO;
+import com.healthcare.backend.dto.request.ForgotPassword_EmailRequestDTO;
 import com.healthcare.backend.dto.request.RegisterRequestDTO;
+import com.healthcare.backend.dto.request.ResetPasswordRequestDTO;
 import com.healthcare.backend.dto.response.AuthResponseDTO;
 import com.healthcare.backend.dto.response.RegisterResponseDTO;
 
@@ -13,7 +14,7 @@ public interface AuthServiceInterface {
 
     AuthResponseDTO login(AuthRequestDTO authRequestDTO);
 
-    void changePassword(String email, ChangePasswordRequestDTO changePasswordRequestDTO);
+    void processForgotPassword(ForgotPassword_EmailRequestDTO forgotPasswordRequest);
 
-    void forgotPassword();
+    void executeResetPassword(String token, ResetPasswordRequestDTO resetPassworsRequest);
 }
