@@ -1,13 +1,3 @@
-# ================================================================
-# APPLICATION CONFIGURATION EXAMPLE
-# ================================================================
-# Hướng dẫn sử dụng:
-#   1. Copy file này, đổi tên thành application.yml
-#   2. Điền các giá trị thật vào những chỗ có chú thích YOUR_...
-#   3. KHÔNG commit file application.yml thật lên Git
-#      (chỉ commit file .example này)
-# ================================================================
-
 spring:
   application:
     name: healthcare-backend
@@ -24,8 +14,6 @@ spring:
   # JPA / HIBERNATE
   jpa:
     hibernate:
-      # QUAN TRỌNG: để "validate" khi dùng Flyway
-      # KHÔNG dùng "create" hoặc "update" — sẽ xung đột với Flyway
       ddl-auto: validate
     show-sql: true
     properties:
@@ -35,9 +23,6 @@ spring:
   # FLYWAY — Database migration
   flyway:
     enabled: true
-    # Đặt các file SQL migration tại: src/main/resources/db/migration/
-    # Tên file theo format: V{số}__{mô_tả}.sql
-    # Ví dụ: V1__create_tables.sql, V2__insert_admin.sql
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
@@ -47,8 +32,6 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: YOUR_GMAIL_ADDRESS     # Ví dụ: yourapp@gmail.com
-    # Dùng App Password, không dùng mật khẩu Gmail thật
-    # Tạo App Password tại: Google Account → Security → App Passwords
     password: YOUR_GMAIL_APP_PASSWORD
     protocol: smtp
     properties:
