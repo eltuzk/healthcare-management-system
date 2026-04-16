@@ -3,10 +3,7 @@ package com.healthcare.backend.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
-public class ChangePasswordRequestDTO {
-    @NotBlank(message = "This field is required.")
-    private String oldPassword;
-
+public class ResetPasswordRequestDTO {
     @NotBlank(message = "This field is required.")
     @Pattern(
         regexp = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$",
@@ -21,21 +18,18 @@ public class ChangePasswordRequestDTO {
     )
     private String confirmNewPassword;
 
-    public String getOldPassword() {
-        return oldPassword;
-    }
-    public void setOldPassword(String oldPassword) {
-        this.oldPassword = oldPassword;
-    }
     public String getNewPassword() {
         return newPassword;
     }
+
     public void setNewPassword(String newPassword) {
         this.newPassword = newPassword;
     }
+
     public String getConfirmNewPassword() {
         return confirmNewPassword;
     }
+
     public void setConfirmNewPassword(String confirmNewPassword) {
         this.confirmNewPassword = confirmNewPassword;
     }

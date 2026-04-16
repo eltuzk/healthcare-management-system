@@ -12,6 +12,7 @@ import com.healthcare.backend.entity.Permission;
 import com.healthcare.backend.entity.Role;
 import com.healthcare.backend.entity.RolePermission;
 import com.healthcare.backend.entity.RolePermissionId;
+import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.PermissionRepository;
 import com.healthcare.backend.repository.RolePermissionRepository;
 import com.healthcare.backend.repository.RoleRepository;
@@ -25,7 +26,9 @@ public class RoleServiceImpl implements RoleServiceInterface {
     private RolePermissionRepository rolePermissionRepository;
     @Autowired
     private PermissionRepository permissionRepository;
-    
+    @Autowired
+    private AccountRepository accountRepository;
+
     @Override
     public Page<RoleResponseDTO> getAllRoles(Pageable pageable) {
         return roleRepository.findAll(pageable)
@@ -60,6 +63,9 @@ public class RoleServiceImpl implements RoleServiceInterface {
             throw new RuntimeException("Role not found with id: " + id);
         }
 
+        if(roleRepository.existsByRoleNameAndRoleIdNot(roleRequestDTO.getRoleName(), id)) {
+            throw new RuntimeException("Role name already exists: " + roleRequestDTO.getRoleName());
+        };
         existingRole.setRoleName(roleRequestDTO.getRoleName().toUpperCase());
         existingRole.setDescription(roleRequestDTO.getDescription());
 
@@ -74,8 +80,13 @@ public class RoleServiceImpl implements RoleServiceInterface {
             throw new RuntimeException("Role not found with id: " + id);
         }
 
-        boolean isUsed = rolePermissionRepository.existsByRole_RoleId(id);
-        if (isUsed) {
+        boolean isUsedByAccounts = accountRepository.existsByRole_RoleId(id);
+        if (isUsedByAccounts) {
+            throw new RuntimeException("Cannot delete role: This role is currently assigned to existing accounts.");
+        }
+
+        boolean isUsedByPermissions = rolePermissionRepository.existsByRole_RoleId(id);
+        if (isUsedByPermissions) {
             throw new RuntimeException("Cannot delete role: This role is currently assigned and has existing permissions.");
         }
 
