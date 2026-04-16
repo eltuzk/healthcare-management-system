@@ -1,34 +1,55 @@
-# Fill in the values below (or set environment variables in your machine)
+# ================================================================
+# APPLICATION CONFIGURATION EXAMPLE
+# ================================================================
+# Hướng dẫn sử dụng:
+#   1. Copy file này, đổi tên thành application.yml
+#   2. Điền các giá trị thật vào những chỗ có chú thích YOUR_...
+#   3. KHÔNG commit file application.yml thật lên Git
+#      (chỉ commit file .example này)
+# ================================================================
 
 spring:
   application:
     name: healthcare-backend
 
+  # DATABASE — Oracle
   datasource:
-    # Example: jdbc:oracle:thin:@localhost:1521/XEPDB1
+    # Format: jdbc:oracle:thin:@<host>:<port>/<service_name>
+    # Ví dụ:  jdbc:oracle:thin:@localhost:1521/XEPDB1
     url: YOUR_ORACLE_JDBC_URL
-    username: YOUR_DB_USERNAME
+    username: YOUR_DB_USERNAME       # Ví dụ: healthcare
     password: YOUR_DB_PASSWORD
     driver-class-name: oracle.jdbc.OracleDriver
 
+  # JPA / HIBERNATE
   jpa:
     hibernate:
-      ddl-auto: update
+      # QUAN TRỌNG: để "validate" khi dùng Flyway
+      # KHÔNG dùng "create" hoặc "update" — sẽ xung đột với Flyway
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.OracleDialect
 
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
+  # FLYWAY — Database migration
+  flyway:
+    enabled: true
+    # Đặt các file SQL migration tại: src/main/resources/db/migration/
+    # Tên file theo format: V{số}__{mô_tả}.sql
+    # Ví dụ: V1__create_tables.sql, V2__insert_admin.sql
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
 
-  spring:
+  # MAIL — Gmail SMTP
   mail:
     host: smtp.gmail.com
     port: 587
-    username: user@example.com
-    password: password
+    username: YOUR_GMAIL_ADDRESS     # Ví dụ: yourapp@gmail.com
+    # Dùng App Password, không dùng mật khẩu Gmail thật
+    # Tạo App Password tại: Google Account → Security → App Passwords
+    password: YOUR_GMAIL_APP_PASSWORD
     protocol: smtp
     properties:
       mail:
@@ -36,3 +57,8 @@ springdoc:
           auth: true
           starttls:
             enable: true
+
+# SWAGGER UI
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
