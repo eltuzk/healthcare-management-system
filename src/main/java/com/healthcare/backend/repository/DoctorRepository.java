@@ -12,7 +12,7 @@ import jakarta.annotation.Nullable;
 
 @Repository
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
-    @Query("SELECT d FROM doctor d WHERE (:specialization IS NULL OR d.specialization = :specialization)")
+    @Query("SELECT d FROM Doctor d WHERE (:specialization IS NULL OR d.specialization = :specialization)")
     Page<Doctor> findDoctorsBySpecialization(Pageable pageable, @Nullable String specialization);
 
     boolean existsByAccount_Email(String email);

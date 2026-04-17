@@ -91,6 +91,10 @@ public class AuthServiceImpl implements AuthServiceInterface {
             throw new RuntimeException("Email or password is incorrect.");
         }
 
+        // if (!authRequestDTO.getPassword().equals(account.getPasswordHash())) {
+        //     throw new RuntimeException("Email or password is incorrect.");
+        // }
+
         String accessToken = jwtService.generateToken(account.getAccountId(), account.getEmail(), account.getRole().getRoleName());
 
         return new AuthResponseDTO(accessToken);

@@ -56,8 +56,8 @@ public class Doctor {
     @Column(name = "dateOfBirth")
     private LocalDate dateOfBirth;
 
-    @Column(name = "status")
-    private boolean status;
+    @Column(name = "isActive")
+    private boolean isActive;
     
     public Long getDoctorId() {
         return doctorId;
@@ -163,12 +163,13 @@ public class Doctor {
         this.account = account;
     }
 
-    public boolean isStatus() {
-        return status;
+    public boolean isActive() {
+        return isActive;
     }
 
-    public void setStatus(boolean status) {
-        this.status = status;
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
     }
+
 
 }

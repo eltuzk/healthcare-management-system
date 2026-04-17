@@ -39,7 +39,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
             doctor.getHireDate(),
             doctor.getIdentifyNum(),
             doctor.getDateOfBirth(),
-            doctor.isStatus()
+            doctor.isActive()
         ));
     }
 
@@ -60,7 +60,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
             doctor.getHireDate(),
             doctor.getIdentifyNum(),
             doctor.getDateOfBirth(),
-            doctor.isStatus()
+            doctor.isActive()
         ))
         .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
     }
@@ -98,7 +98,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
         doctor.setPhone(doctorRequest.getPhone());
         doctor.setQualification(doctorRequest.getQualification());
         doctor.setSpecialization(doctorRequest.getSpecialization());
-        doctor.setStatus(true);
+        doctor.setActive(true);
 
         doctorRepository.save(doctor);
 
@@ -116,7 +116,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
             doctor.getHireDate(),
             doctor.getIdentifyNum(),
             doctor.getDateOfBirth(),
-            doctor.isStatus()
+            doctor.isActive()
         );
     }
 
@@ -172,7 +172,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
         doctor.setIdentifyNum(doctorRequest.getIdentifyNum());
 
         doctor.setDateOfBirth(doctorRequest.getDateOfBirth());
-        doctor.setStatus(doctorRequest.isStatus());
+        doctor.setActive(doctorRequest.isStatus());
 
         doctorRepository.save(doctor);
 
@@ -190,7 +190,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
             doctor.getHireDate(),
             doctor.getIdentifyNum(),
             doctor.getDateOfBirth(),
-            doctor.isStatus()
+            doctor.isActive()
         );
     }
 
@@ -199,7 +199,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
         Doctor doctor = doctorRepository.findById(doctorId)
             .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
         
-        doctor.setStatus(false);
+        doctor.setActive(false);
         doctorRepository.save(doctor);
     }
 }
