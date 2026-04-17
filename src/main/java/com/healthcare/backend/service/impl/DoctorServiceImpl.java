@@ -128,14 +128,12 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
         String currentEmail = doctor.getAccount().getEmail();
         String newEmail = doctorRequest.getAccountEmail();
         
+        Account newAccount = accountRepository.findByEmail(newEmail)
+                .orElseThrow(() -> new RuntimeException("Account not found with this email."));
         if (newEmail != null && !newEmail.equals(currentEmail)) {
             if (doctorRepository.existsByAccount_Email(newEmail)) {
                 throw new RuntimeException("Email being used by another.");
             }
-            
-            Account newAccount = accountRepository.findByEmail(newEmail)
-                .orElseThrow(() -> new RuntimeException("Account not found with this email."));
-            
             if (!newAccount.getRole().getRoleName().equals("DOCTOR")) {
                 throw new RuntimeException("Account invalid.");
             }
@@ -172,6 +170,16 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
         doctor.setIdentityNum(doctorRequest.getIdentityNum());
 
         doctor.setDateOfBirth(doctorRequest.getDateOfBirth());
+        doctor.setHireDate(doctorRequest.getHireDate());
+        if(doctor.isActive() != doctorRequest.isStatus()) {
+            doctor.setActive(doctorRequest.isStatus());
+        } else {
+            doctor.setActive(doctor.isActive());
+        }
+        if(!doctor.isActive()) {
+            newAccount.setActive(false);
+            accountRepository.save(newAccount);
+        }
         doctor.setActive(doctorRequest.isStatus());
 
         doctorRepository.save(doctor);

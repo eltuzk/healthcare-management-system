@@ -66,6 +66,10 @@ public class AccountServiceImpl implements AccountServiceInterface {
             throw new RuntimeException("Email already exists: " + email);
         }
 
+        if(accountRequestDTO.getRole().equalsIgnoreCase("PATIENT")) {
+            throw new RuntimeException("Cannot create account with role PATIENT.");
+        }
+
         Account account = new Account();
         account.setEmail(accountRequestDTO.getEmail());
         account.setPasswordHash(passwordEncoder.encode(accountRequestDTO.getPassword()));
@@ -74,7 +78,7 @@ public class AccountServiceImpl implements AccountServiceInterface {
             .orElseThrow(() -> new RuntimeException("Role not found: " + accountRequestDTO.getRole()));
         account.setRole(role);
 
-        account.setActive(false);
+        account.setActive(true);
         accountRepository.save(account);
 
         return new AccountResponseDTO(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive());
