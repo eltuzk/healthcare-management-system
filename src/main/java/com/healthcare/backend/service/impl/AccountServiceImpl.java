@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.healthcare.backend.dto.request.AccountRequestDTO;
+import com.healthcare.backend.dto.request.ChangePasswordRequestDTO;
 import com.healthcare.backend.dto.response.AccountResponseDTO;
 import com.healthcare.backend.dto.response.PermissionResponseDTO;
 import com.healthcare.backend.entity.Account;
@@ -73,14 +74,14 @@ public class AccountServiceImpl implements AccountServiceInterface {
             .orElseThrow(() -> new RuntimeException("Role not found: " + accountRequestDTO.getRole()));
         account.setRole(role);
 
-        account.setActive(true);
+        account.setActive(false);
         accountRepository.save(account);
 
         return new AccountResponseDTO(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive());
     }
 
     @Override
-    public AccountRequestDTO updateAccount(Long id, AccountRequestDTO accountRequestDTO) {
+    public AccountResponseDTO updateAccount(Long id, AccountRequestDTO accountRequestDTO) {
         Account account = accountRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
 
@@ -101,14 +102,14 @@ public class AccountServiceImpl implements AccountServiceInterface {
         if (accountRequestDTO.getPassword() != null) {
             account.setPasswordHash(passwordEncoder.encode(accountRequestDTO.getPassword()));
         }
-        accountRepository.save(account);
 
         if (accountRequestDTO.isActive() != account.isActive()) {
             account.setActive(accountRequestDTO.isActive());
-            accountRepository.save(account);
         }
 
-        return accountRequestDTO;
+        accountRepository.save(account);
+
+        return new AccountResponseDTO(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive());
     }
 
     @Override
@@ -168,5 +169,28 @@ public class AccountServiceImpl implements AccountServiceInterface {
         response.put("permissionsByAccount", permissionsByAccount);
 
         return response;
+    }
+
+    @Override
+    public void changePassword(String email, ChangePasswordRequestDTO changePasswordRequestDTO) {
+        Account account = accountRepository.findByEmail(email).orElse(null);
+        if(account == null) {
+            throw new RuntimeException();
+        }
+
+        if(!passwordEncoder.matches(changePasswordRequestDTO.getOldPassword(), account.getPasswordHash())) {
+            throw new RuntimeException("Old password incorrect.");
+        }
+
+        if(!changePasswordRequestDTO.getNewPassword().equals(changePasswordRequestDTO.getConfirmNewPassword())) {
+            throw new RuntimeException("New passwords do not match.");
+        }
+
+        if(passwordEncoder.matches(changePasswordRequestDTO.getNewPassword(), account.getPasswordHash())) {
+            throw new RuntimeException("New password cannot be the same as the old password.");
+        }
+
+        account.setPasswordHash(passwordEncoder.encode(changePasswordRequestDTO.getNewPassword()));
+        accountRepository.save(account);
     }
 }

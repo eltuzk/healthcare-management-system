@@ -29,15 +29,6 @@ public class EmailServiceImpl implements EmailServiceInterface {
     }
 
     @Override
-    public void sendPasswordResetEmail(String email, String passwordResetToken) {
-        String subject = "Password Reset Request";
-        String path = "/auth/reset-password";
-        String message = "Please click the button below to reset your password: ";
-
-        sendEmail(email, passwordResetToken, subject, path, message);
-    }
-
-    @Override
     public void sendForgotPasswordEmail(String email, String forgotPasswordToken) {
         String subject = "Forgot your password";
         String path = "/auth/forgot-password";

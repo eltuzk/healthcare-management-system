@@ -3,7 +3,7 @@ package com.healthcare.backend.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+// import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -40,14 +40,17 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**")
                         .permitAll()
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/roles/**", "/permissions/**", "/accounts/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/doctors/**").hasAnyAuthority("ADMIN", "PATIENT", "RECEPTIONIST")
-                        .requestMatchers(HttpMethod.POST, "/doctors/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/doctors/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/doctors/**").hasAuthority("ADMIN")
-                        .anyRequest()
-                        .authenticated())
+                        .anyRequest().permitAll()
+                        )
+                        // .requestMatchers("/auth/**").permitAll()
+                        // .requestMatchers("/accounts/change-password").authenticated()
+                        // .requestMatchers("/roles/**", "/permissions/**", "/accounts/**").hasAuthority("ADMIN")
+                        // .requestMatchers(HttpMethod.GET, "/doctors/**").hasAnyAuthority("ADMIN", "PATIENT", "RECEPTIONIST")
+                        // .requestMatchers(HttpMethod.POST, "/doctors/**").hasAuthority("ADMIN")
+                        // .requestMatchers(HttpMethod.PUT, "/doctors/**").hasAuthority("ADMIN")
+                        // .requestMatchers(HttpMethod.DELETE, "/doctors/**").hasAuthority("ADMIN")
+                        // .anyRequest().authenticated()
+                        // )
                 //.httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

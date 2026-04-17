@@ -58,17 +58,16 @@ public class PermissionServiceImpl implements PermissionServiceInterface {
             throw new RuntimeException("Permission not found with id: " + id);
         }
 
-        boolean isUsing_Role = rolePermissionRepository.existsByPermission_PermissionId(id);
-        if (isUsing_Role) {
+        boolean isUsedByRole = rolePermissionRepository.existsByPermission_PermissionId(id);
+        if (isUsedByRole) {
             throw new RuntimeException("Cannot delete permission: This permission is currently assigned and has been existing roles.");
         }
 
-        boolean isUsing_Account = accountPermissionRepository.existsByPermission_PermissionId(id);
-        if (isUsing_Account) {
+        boolean isUsedByAccount = accountPermissionRepository.existsByPermission_PermissionId(id);
+        if (isUsedByAccount) {
             throw new RuntimeException("Cannot delete permission: This permission is currently assigned and has been existing accounts.");
         }
 
         permissionRepository.deleteById(id);
-        return;
     }
 }

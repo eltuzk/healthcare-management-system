@@ -18,7 +18,7 @@ public interface RoleServiceInterface {
 
     void deleteRole (Long id);
 
-    void addPermissisonToRole(Long roleId, Long permissionId);
+    void addPermissionToRole(Long roleId, Long permissionId);
 
     void removePermissionFromRole(Long roleId, Long permissionId);
 

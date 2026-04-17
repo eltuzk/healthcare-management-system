@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.healthcare.backend.dto.request.AccountRequestDTO;
+import com.healthcare.backend.dto.request.ChangePasswordRequestDTO;
 import com.healthcare.backend.dto.response.AccountResponseDTO;
 
 public interface AccountServiceInterface {
@@ -15,11 +16,14 @@ public interface AccountServiceInterface {
 
     AccountResponseDTO createAccount (AccountRequestDTO accountRequestDTO);
 
-    AccountRequestDTO updateAccount (Long id, AccountRequestDTO accountRequestDTO);
+    AccountResponseDTO updateAccount (Long id, AccountRequestDTO accountRequestDTO);
 
     void deleteAccount (Long id);
 
     void addPermissionToAccount (Long accountId, Long permissionId);
 
     Map<String, Object> getPermissionsByAccount (Pageable pageable, Long accountId);
+
+    void changePassword(String email, ChangePasswordRequestDTO changePasswordRequestDTO);
+
 }

@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.healthcare.backend.dto.request.AuthRequestDTO;
+import com.healthcare.backend.dto.request.ForgotPassword_EmailRequestDTO;
 import com.healthcare.backend.dto.request.RegisterRequestDTO;
+import com.healthcare.backend.dto.request.ResetPasswordRequestDTO;
 import com.healthcare.backend.dto.response.AuthResponseDTO;
 import com.healthcare.backend.dto.response.RegisterResponseDTO;
 import com.healthcare.backend.service.AuthServiceInterface;
@@ -42,5 +44,20 @@ public class AuthController {
     public ResponseEntity<String> login(@Valid @RequestBody AuthRequestDTO authRequestDTO) {
         AuthResponseDTO res = authServiceInterface.login(authRequestDTO);
         return ResponseEntity.ok(res.getAccessToken());
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPassword_EmailRequestDTO forgotPasswordRequest) {
+        authServiceInterface.processForgotPassword(forgotPasswordRequest);
+        return ResponseEntity.ok("Mail sent successfully. Please check your email.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(
+        @RequestParam("token") String token, 
+        @Valid @RequestBody ResetPasswordRequestDTO resetPasswordRequest
+    ) {
+        authServiceInterface.executeResetPassword(token, resetPasswordRequest);
+        return ResponseEntity.ok("Password reset successfully.");
     }
 }
