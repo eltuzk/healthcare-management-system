@@ -66,6 +66,9 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException("Email already exists: " + email);
         }
 
+        if(accountRequest.getRole().equalsIgnoreCase("PATIENT")) {
+            throw new RuntimeException("Patient accounts must be created via the/register API.");
+        }
         Account account = new Account();
         account.setEmail(accountRequest.getEmail());
         account.setPasswordHash(passwordEncoder.encode(accountRequest.getPassword()));
@@ -102,12 +105,12 @@ public class AccountServiceImpl implements AccountService {
         if (accountRequest.getPassword() != null) {
             account.setPasswordHash(passwordEncoder.encode(accountRequest.getPassword()));
         }
-        accountRepository.save(account);
 
         if (accountRequest.isActive() != account.isActive()) {
             account.setActive(accountRequest.isActive());
-            accountRepository.save(account);
         }
+
+        accountRepository.save(account);
 
         return new AccountResponse(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive());
     }
