@@ -147,7 +147,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
         String newLicense = doctorRequest.getLicenseNum();
         if (newLicense != null && !newLicense.equals(currentLicense)) {
             if (doctorRepository.existsByLicenseNum(newLicense)) {
-                throw new RuntimeException("Số chứng chỉ hành nghề này đã tồn tại trong hệ thống.");
+                throw new RuntimeException("This license number already exists.");
             }
             doctor.setLicenseNum(newLicense);
         }
@@ -163,7 +163,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
         String newIdentity = doctorRequest.getIdentityNum();
         if (newIdentity != null && !newIdentity.equals(currentIdentity)) {
             if (doctorRepository.existsByIdentityNum(newIdentity)) {
-                throw new RuntimeException("Số CMND/CCCD này đã tồn tại trong hệ thống.");
+                throw new RuntimeException("This identity number already exists.");
             }
             doctor.setIdentityNum(newIdentity);
         }
