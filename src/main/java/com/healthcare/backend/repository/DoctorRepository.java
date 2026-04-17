@@ -19,5 +19,5 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
     boolean existsByLicenseNum(String licenseNum);
 
-    boolean existsByIdentifyNum(String identifyNum);
+    boolean existsByIdentityNum(String identityNum);
 }

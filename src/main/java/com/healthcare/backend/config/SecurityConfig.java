@@ -1,6 +1,6 @@
 package com.healthcare.backend.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 // import org.springframework.http.HttpMethod;
@@ -10,16 +10,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+// import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.healthcare.backend.security.JwtFilter;
+// import com.healthcare.backend.security.JwtFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    @Autowired
-
-    private JwtFilter jwtFilter;
+//     @Autowired
+//     private JwtFilter jwtFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -52,8 +51,8 @@ public class SecurityConfig {
                         // .anyRequest().authenticated()
                         // )
                 //.httpBasic(Customizer.withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                // .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
                 // .formLogin(Customizer.withDefaults());
 
         return http.build();

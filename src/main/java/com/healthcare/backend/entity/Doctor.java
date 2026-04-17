@@ -23,7 +23,7 @@ public class Doctor {
     @JoinColumn(name = "accountId")
     private Account account;
 
-    @Column(name = "fullName", nullable = false, length = 100)
+    @Column(name = "fullName", nullable = false, length = 200)
     private String fullName;
 
     @Column(name = "specialization")
@@ -50,8 +50,8 @@ public class Doctor {
     @Column(name = "hireDate")
     private LocalDate hireDate;
 
-    @Column(name = "identifyNum", unique = true)
-    private String identifyNum;
+    @Column(name = "identityNum", unique = true)
+    private String identityNum;
 
     @Column(name = "dateOfBirth")
     private LocalDate dateOfBirth;
@@ -139,14 +139,6 @@ public class Doctor {
         this.hireDate = hireDate;
     }
 
-    public String getIdentifyNum() {
-        return identifyNum;
-    }
-
-    public void setIdentifyNum(String identifyNum) {
-        this.identifyNum = identifyNum;
-    }
-
     public LocalDate getDateOfBirth() {
         return dateOfBirth;
     }
@@ -169,6 +161,14 @@ public class Doctor {
 
     public void setActive(boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public String getIdentityNum() {
+        return identityNum;
+    }
+
+    public void setIdentityNum(String identityNum) {
+        this.identityNum = identityNum;
     }
 
 

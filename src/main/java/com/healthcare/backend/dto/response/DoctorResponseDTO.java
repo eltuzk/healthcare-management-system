@@ -25,7 +25,7 @@ public class DoctorResponseDTO {
 
     private LocalDate hireDate;
 
-    private String identifyNum;
+    private String identityNum;
     
     private LocalDate dateOfBirth;
     
@@ -36,7 +36,7 @@ public class DoctorResponseDTO {
 
     public DoctorResponseDTO(Long doctorId, String accountEmail, String fullName, String specialization,
             String licenseNum, String qualification, String experience, String gender, String phone, String address,
-            LocalDate hireDate, String identifyNum, LocalDate dateOfBirth, boolean status) {
+            LocalDate hireDate, String identityNum, LocalDate dateOfBirth, boolean status) {
         this.doctorId = doctorId;
         this.accountEmail = accountEmail;
         this.fullName = fullName;
@@ -48,7 +48,7 @@ public class DoctorResponseDTO {
         this.phone = phone;
         this.address = address;
         this.hireDate = hireDate;
-        this.identifyNum = identifyNum;
+        this.identityNum = identityNum;
         this.dateOfBirth = dateOfBirth;
         this.status = status;
     }
@@ -141,14 +141,6 @@ public class DoctorResponseDTO {
         this.hireDate = hireDate;
     }
 
-    public String getIdentifyNum() {
-        return identifyNum;
-    }
-
-    public void setIdentifyNum(String identifyNum) {
-        this.identifyNum = identifyNum;
-    }
-
     public LocalDate getDateOfBirth() {
         return dateOfBirth;
     }
@@ -163,6 +155,14 @@ public class DoctorResponseDTO {
 
     public void setStatus(boolean status) {
         this.status = status;
+    }
+
+    public String getIdentityNum() {
+        return identityNum;
+    }
+
+    public void setIdentityNum(String identityNum) {
+        this.identityNum = identityNum;
     }
 
     

@@ -37,7 +37,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
             doctor.getPhone(),
             doctor.getAddress(),
             doctor.getHireDate(),
-            doctor.getIdentifyNum(),
+            doctor.getIdentityNum(),
             doctor.getDateOfBirth(),
             doctor.isActive()
         ));
@@ -58,7 +58,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
             doctor.getPhone(),
             doctor.getAddress(),
             doctor.getHireDate(),
-            doctor.getIdentifyNum(),
+            doctor.getIdentityNum(),
             doctor.getDateOfBirth(),
             doctor.isActive()
         ))
@@ -80,7 +80,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
             throw new RuntimeException("This license number already exists.");
         }
 
-        if(doctorRepository.existsByIdentifyNum(doctorRequest.getIdentifyNum())) {
+        if(doctorRepository.existsByIdentityNum(doctorRequest.getIdentityNum())) {
             throw new RuntimeException("This identify number already exists.");
         }
 
@@ -93,7 +93,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
         doctor.setFullName(doctorRequest.getFullName());
         doctor.setGender(doctorRequest.getGender());
         doctor.setHireDate(doctorRequest.getHireDate());
-        doctor.setIdentifyNum(doctorRequest.getIdentifyNum());
+        doctor.setIdentityNum(doctorRequest.getIdentityNum());
         doctor.setLicenseNum(doctorRequest.getLicenseNum());
         doctor.setPhone(doctorRequest.getPhone());
         doctor.setQualification(doctorRequest.getQualification());
@@ -114,7 +114,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
             doctor.getPhone(),
             doctor.getAddress(),
             doctor.getHireDate(),
-            doctor.getIdentifyNum(),
+            doctor.getIdentityNum(),
             doctor.getDateOfBirth(),
             doctor.isActive()
         );
@@ -161,15 +161,15 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
         doctor.setPhone(doctorRequest.getPhone());
         doctor.setAddress(doctorRequest.getAddress());
 
-        String currentIdentify = doctor.getIdentifyNum();
-        String newIdentify = doctorRequest.getIdentifyNum();
-        if (newIdentify != null && !newIdentify.equals(currentIdentify)) {
-            if (doctorRepository.existsByIdentifyNum(newIdentify)) {
+        String currentIdentity = doctor.getIdentityNum();
+        String newIdentity = doctorRequest.getIdentityNum();
+        if (newIdentity != null && !newIdentity.equals(currentIdentity)) {
+            if (doctorRepository.existsByIdentityNum(newIdentity)) {
                 throw new RuntimeException("Số CMND/CCCD này đã tồn tại trong hệ thống.");
             }
-            doctor.setIdentifyNum(newIdentify);
+            doctor.setIdentityNum(newIdentity);
         }
-        doctor.setIdentifyNum(doctorRequest.getIdentifyNum());
+        doctor.setIdentityNum(doctorRequest.getIdentityNum());
 
         doctor.setDateOfBirth(doctorRequest.getDateOfBirth());
         doctor.setActive(doctorRequest.isStatus());
@@ -188,7 +188,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
             doctor.getPhone(),
             doctor.getAddress(),
             doctor.getHireDate(),
-            doctor.getIdentifyNum(),
+            doctor.getIdentityNum(),
             doctor.getDateOfBirth(),
             doctor.isActive()
         );
