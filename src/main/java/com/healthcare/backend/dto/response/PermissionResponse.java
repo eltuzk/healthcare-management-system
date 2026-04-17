@@ -1,14 +1,14 @@
 package com.healthcare.backend.dto.response;
 
-public class PermissionResponseDTO {
+public class PermissionResponse {
     private Long id;
     private String permissionName;
     private String details;
 
-    public PermissionResponseDTO() {
+    public PermissionResponse() {
     }
     
-    public PermissionResponseDTO(Long id, String permissionName, String details) {
+    public PermissionResponse(Long id, String permissionName, String details) {
         this.id = id;
         this.permissionName = permissionName;
         this.details = details;

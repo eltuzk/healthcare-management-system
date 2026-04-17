@@ -17,7 +17,7 @@ public class RolePermission {
     @MapsId("roleId")
     @JoinColumn(name = "role_id")
     private Role role;
-    
+
     @ManyToOne
     @MapsId("permissionId")
     @JoinColumn(name = "permission_id")

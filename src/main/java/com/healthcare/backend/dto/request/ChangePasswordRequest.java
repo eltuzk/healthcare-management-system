@@ -3,7 +3,7 @@ package com.healthcare.backend.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
-public class ChangePasswordRequestDTO {
+public class ChangePasswordRequest {
     @NotBlank(message = "This field is required.")
     private String oldPassword;
 

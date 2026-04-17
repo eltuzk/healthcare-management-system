@@ -15,12 +15,12 @@ public class AccountPermission  {
 
     @ManyToOne
     @MapsId("accountId")
-    @JoinColumn(name = "account_Id")
+    @JoinColumn(name = "account_id")
     private Account account;
 
     @ManyToOne
     @MapsId("permissionId")
-    @JoinColumn(name = "permission_Id")
+    @JoinColumn(name = "permission_id")
     private Permission permission;
 
     public AccountPermission() {
@@ -56,5 +56,5 @@ public class AccountPermission  {
         this.permission = permission;
     }
 
-    
+
 }

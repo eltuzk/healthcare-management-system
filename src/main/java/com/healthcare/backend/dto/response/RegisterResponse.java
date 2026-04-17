@@ -1,12 +1,12 @@
 package com.healthcare.backend.dto.response;
 
-public class RegisterResponseDTO {
+public class RegisterResponse {
     private String email;
     
-    public RegisterResponseDTO() {
+    public RegisterResponse() {
     }
 
-    public RegisterResponseDTO(String email) {
+    public RegisterResponse(String email) {
         this.email = email;
     }
 

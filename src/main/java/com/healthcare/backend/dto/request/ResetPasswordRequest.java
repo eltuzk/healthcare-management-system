@@ -3,7 +3,7 @@ package com.healthcare.backend.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
-public class ResetPasswordRequestDTO {
+public class ResetPasswordRequest {
     @NotBlank(message = "This field is required.")
     @Pattern(
         regexp = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$",

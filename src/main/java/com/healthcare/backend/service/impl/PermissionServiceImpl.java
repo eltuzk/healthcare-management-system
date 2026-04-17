@@ -5,16 +5,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.healthcare.backend.dto.request.PermissionRequestDTO;
-import com.healthcare.backend.dto.response.PermissionResponseDTO;
+import com.healthcare.backend.dto.request.PermissionRequest;
+import com.healthcare.backend.dto.response.PermissionResponse;
 import com.healthcare.backend.entity.Permission;
 import com.healthcare.backend.repository.AccountPermissionRepository;
 import com.healthcare.backend.repository.PermissionRepository;
 import com.healthcare.backend.repository.RolePermissionRepository;
-import com.healthcare.backend.service.PermissionServiceInterface;
+import com.healthcare.backend.service.PermissionService;
 
 @Service
-public class PermissionServiceImpl implements PermissionServiceInterface {
+public class PermissionServiceImpl implements PermissionService {
     @Autowired
     private PermissionRepository permissionRepository;
 
@@ -25,30 +25,30 @@ public class PermissionServiceImpl implements PermissionServiceInterface {
     private AccountPermissionRepository accountPermissionRepository;
 
     @Override
-    public Page<PermissionResponseDTO> getAllPermissions(Pageable pageable) {
+    public Page<PermissionResponse> getAllPermissions(Pageable pageable) {
         return permissionRepository.findAll(pageable)
-            .map(permission -> new PermissionResponseDTO(permission.getId(), permission.getPermissionName(), permission.getDetail()));
+            .map(permission -> new PermissionResponse(permission.getId(), permission.getPermissionName(), permission.getDetail()));
     }
 
     @Override
-    public PermissionResponseDTO getPermissionById(Long id) {
+    public PermissionResponse getPermissionById(Long id) {
         return permissionRepository.findById(id)
-            .map(permission -> new PermissionResponseDTO(permission.getId(), permission.getPermissionName(), permission.getDetail()))
+            .map(permission -> new PermissionResponse(permission.getId(), permission.getPermissionName(), permission.getDetail()))
             .orElseThrow(() -> new RuntimeException("Permission not found with id: " + id));
     }
 
     @Override
-    public PermissionResponseDTO createPermission(PermissionRequestDTO permissionRequestDTO) {
-        if(permissionRepository.existsByPermissionName(permissionRequestDTO.getPermissionName())) {
-            throw new RuntimeException("Permission name already exists: " + permissionRequestDTO.getPermissionName());
+    public PermissionResponse createPermission(PermissionRequest permissionRequest) {
+        if(permissionRepository.existsByPermissionName(permissionRequest.getPermissionName())) {
+            throw new RuntimeException("Permission name already exists: " + permissionRequest.getPermissionName());
         }
 
         Permission temp = new Permission();
-        temp.setPermissionName(permissionRequestDTO.getPermissionName());
-        temp.setDetail(permissionRequestDTO.getDetails());
+        temp.setPermissionName(permissionRequest.getPermissionName());
+        temp.setDetail(permissionRequest.getDetails());
 
         Permission res = permissionRepository.save(temp);
-        return new PermissionResponseDTO(res.getId(), res.getPermissionName(), res.getDetail());
+        return new PermissionResponse(res.getId(), res.getPermissionName(), res.getDetail());
     }
 
     @Override

@@ -9,10 +9,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.healthcare.backend.dto.request.AccountRequestDTO;
-import com.healthcare.backend.dto.request.ChangePasswordRequestDTO;
-import com.healthcare.backend.dto.response.AccountResponseDTO;
-import com.healthcare.backend.dto.response.PermissionResponseDTO;
+import com.healthcare.backend.dto.request.AccountRequest;
+import com.healthcare.backend.dto.request.ChangePasswordRequest;
+import com.healthcare.backend.dto.response.AccountResponse;
+import com.healthcare.backend.dto.response.PermissionResponse;
 import com.healthcare.backend.entity.Account;
 import com.healthcare.backend.entity.AccountPermission;
 import com.healthcare.backend.entity.AccountPermissionId;
@@ -24,10 +24,10 @@ import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.PermissionRepository;
 import com.healthcare.backend.repository.RolePermissionRepository;
 import com.healthcare.backend.repository.RoleRepository;
-import com.healthcare.backend.service.AccountServiceInterface;
+import com.healthcare.backend.service.AccountService;
 
 @Service
-public class AccountServiceImpl implements AccountServiceInterface {
+public class AccountServiceImpl implements AccountService {
     @Autowired
     private AccountRepository accountRepository;
 
@@ -47,69 +47,69 @@ public class AccountServiceImpl implements AccountServiceInterface {
     private RolePermissionRepository rolePermissionRepository;
 
     @Override
-    public Page<AccountResponseDTO> getAllAccounts(Pageable pageable) {
+    public Page<AccountResponse> getAllAccounts(Pageable pageable) {
         return accountRepository.findAll(pageable).map(account -> 
-            new AccountResponseDTO(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive()));
+            new AccountResponse(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive()));
     }
 
     @Override
-    public AccountResponseDTO getAccountById(Long id) {
+    public AccountResponse getAccountById(Long id) {
         return accountRepository.findById(id)
-            .map(account -> new AccountResponseDTO(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive()))
+            .map(account -> new AccountResponse(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive()))
             .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
     }
 
     @Override
-    public AccountResponseDTO createAccount(AccountRequestDTO accountRequestDTO) {
-        String email = accountRequestDTO.getEmail();
+    public AccountResponse createAccount(AccountRequest accountRequest) {
+        String email = accountRequest.getEmail();
         if (accountRepository.existsByEmail(email)) {
             throw new RuntimeException("Email already exists: " + email);
         }
 
         Account account = new Account();
-        account.setEmail(accountRequestDTO.getEmail());
-        account.setPasswordHash(passwordEncoder.encode(accountRequestDTO.getPassword()));
+        account.setEmail(accountRequest.getEmail());
+        account.setPasswordHash(passwordEncoder.encode(accountRequest.getPassword()));
 
-        Role role = roleRepository.findByRoleName(accountRequestDTO.getRole().toUpperCase())
-            .orElseThrow(() -> new RuntimeException("Role not found: " + accountRequestDTO.getRole()));
+        Role role = roleRepository.findByRoleName(accountRequest.getRole().toUpperCase())
+            .orElseThrow(() -> new RuntimeException("Role not found: " + accountRequest.getRole()));
         account.setRole(role);
 
         account.setActive(true);
         accountRepository.save(account);
 
-        return new AccountResponseDTO(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive());
+        return new AccountResponse(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive());
     }
 
     @Override
-    public AccountResponseDTO updateAccount(Long id, AccountRequestDTO accountRequestDTO) {
+    public AccountResponse updateAccount(Long id, AccountRequest accountRequest) {
         Account account = accountRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
 
-        if (accountRequestDTO.getEmail() != null && !accountRequestDTO.getEmail().equals(account.getEmail())) {
+        if (accountRequest.getEmail() != null && !accountRequest.getEmail().equals(account.getEmail())) {
             throw new RuntimeException("Email cannot be updated.");
         }
 
-        if (accountRequestDTO.getRole() != null && 
-            !accountRequestDTO.getRole()
+        if (accountRequest.getRole() != null &&
+            !accountRequest.getRole()
                     .toUpperCase()
                     .equalsIgnoreCase(account.getRole().getRoleName())
             ) {
-            Role role = roleRepository.findByRoleName(accountRequestDTO.getRole().toUpperCase())
-                .orElseThrow(() -> new RuntimeException("Role not found: " + accountRequestDTO.getRole()));
+            Role role = roleRepository.findByRoleName(accountRequest.getRole().toUpperCase())
+                .orElseThrow(() -> new RuntimeException("Role not found: " + accountRequest.getRole()));
             account.setRole(role);
         }
 
-        if (accountRequestDTO.getPassword() != null) {
-            account.setPasswordHash(passwordEncoder.encode(accountRequestDTO.getPassword()));
+        if (accountRequest.getPassword() != null) {
+            account.setPasswordHash(passwordEncoder.encode(accountRequest.getPassword()));
         }
         accountRepository.save(account);
 
-        if (accountRequestDTO.isActive() != account.isActive()) {
-            account.setActive(accountRequestDTO.isActive());
+        if (accountRequest.isActive() != account.isActive()) {
+            account.setActive(accountRequest.isActive());
             accountRepository.save(account);
         }
 
-        return new AccountResponseDTO(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive());
+        return new AccountResponse(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive());
     }
 
     @Override
@@ -150,15 +150,15 @@ public class AccountServiceImpl implements AccountServiceInterface {
         }
 
         Long roleId = account.getRole().getRoleId();
-        Page<PermissionResponseDTO> permissionsByRole = rolePermissionRepository.findAllByRole_RoleId(roleId, pageable)
-            .map(rolePermission -> new PermissionResponseDTO(
+        Page<PermissionResponse> permissionsByRole = rolePermissionRepository.findAllByRole_RoleId(roleId, pageable)
+            .map(rolePermission -> new PermissionResponse(
                 rolePermission.getPermission().getId(), 
                 rolePermission.getPermission().getPermissionName(),
                 rolePermission.getPermission().getDetail()
             ));
 
-        Page<PermissionResponseDTO> permissionsByAccount = accountPermissionRepository.findAllByAccount_AccountId(accountId, pageable)
-            .map(accountPermission -> new PermissionResponseDTO(
+        Page<PermissionResponse> permissionsByAccount = accountPermissionRepository.findAllByAccount_AccountId(accountId, pageable)
+            .map(accountPermission -> new PermissionResponse(
                 accountPermission.getPermission().getId(),
                 accountPermission.getPermission().getPermissionName(),
                 accountPermission.getPermission().getDetail()
@@ -172,25 +172,25 @@ public class AccountServiceImpl implements AccountServiceInterface {
     }
 
     @Override
-    public void changePassword(String email, ChangePasswordRequestDTO changePasswordRequestDTO) {
+    public void changePassword(String email, ChangePasswordRequest changePasswordRequest) {
         Account account = accountRepository.findByEmail(email).orElse(null);
         if(account == null) {
             throw new RuntimeException();
         }
 
-        if(!passwordEncoder.matches(changePasswordRequestDTO.getOldPassword(), account.getPasswordHash())) {
+        if(!passwordEncoder.matches(changePasswordRequest.getOldPassword(), account.getPasswordHash())) {
             throw new RuntimeException("Old password incorrect.");
         }
 
-        if(!changePasswordRequestDTO.getNewPassword().equals(changePasswordRequestDTO.getConfirmNewPassword())) {
+        if(!changePasswordRequest.getNewPassword().equals(changePasswordRequest.getConfirmNewPassword())) {
             throw new RuntimeException("New passwords do not match.");
         }
 
-        if(passwordEncoder.matches(changePasswordRequestDTO.getNewPassword(), account.getPasswordHash())) {
+        if(passwordEncoder.matches(changePasswordRequest.getNewPassword(), account.getPasswordHash())) {
             throw new RuntimeException("New password cannot be the same as the old password.");
         }
 
-        account.setPasswordHash(passwordEncoder.encode(changePasswordRequestDTO.getNewPassword()));
+        account.setPasswordHash(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
         accountRepository.save(account);
     }
 }

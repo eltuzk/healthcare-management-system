@@ -1,15 +1,15 @@
 package com.healthcare.backend.dto.response;
 
-public class AccountResponseDTO {
+public class AccountResponse {
     private Long id;
     private String email;
     private String role;
     private boolean isActive;
 
-    public AccountResponseDTO() {
+    public AccountResponse() {
     }
 
-    public AccountResponseDTO(Long id, String email, String role, boolean isActive) {
+    public AccountResponse(Long id, String email, String role, boolean isActive) {
         this.id = id;
         this.email = email;
         this.role = role;

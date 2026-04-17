@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.healthcare.backend.dto.request.AccountRequestDTO;
-import com.healthcare.backend.dto.request.ChangePasswordRequestDTO;
-import com.healthcare.backend.dto.response.AccountResponseDTO;
-import com.healthcare.backend.service.AccountServiceInterface;
+import com.healthcare.backend.dto.request.AccountRequest;
+import com.healthcare.backend.dto.request.ChangePasswordRequest;
+import com.healthcare.backend.dto.response.AccountResponse;
+import com.healthcare.backend.service.AccountService;
 
 import jakarta.validation.Valid;
 
@@ -28,26 +28,26 @@ import jakarta.validation.Valid;
 @RequestMapping("/accounts")
 public class AccountController {
     @Autowired
-    private AccountServiceInterface accountService;
+    private AccountService accountService;
 
     @GetMapping
-    public ResponseEntity<Page<AccountResponseDTO>> getAllAccounts(@ParameterObject Pageable pageable) {
+    public ResponseEntity<Page<AccountResponse>> getAllAccounts(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(accountService.getAllAccounts(pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AccountResponseDTO> getAccountById(@PathVariable Long id) {
+    public ResponseEntity<AccountResponse> getAccountById(@PathVariable Long id) {
         return ResponseEntity.ok(accountService.getAccountById(id));
     }
 
     @PostMapping
-    public ResponseEntity<AccountResponseDTO> createAccount(@RequestBody AccountRequestDTO accountRequestDTO) {
-        return ResponseEntity.ok(accountService.createAccount(accountRequestDTO));
+    public ResponseEntity<AccountResponse> createAccount(@RequestBody AccountRequest accountRequest) {
+        return ResponseEntity.ok(accountService.createAccount(accountRequest));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AccountResponseDTO> updateAccount(@PathVariable Long id, @RequestBody AccountRequestDTO accountRequestDTO) {
-        return ResponseEntity.ok(accountService.updateAccount(id, accountRequestDTO));
+    public ResponseEntity<AccountResponse> updateAccount(@PathVariable Long id, @RequestBody AccountRequest accountRequest) {
+        return ResponseEntity.ok(accountService.updateAccount(id, accountRequest));
     }
 
     @DeleteMapping("/{id}")
@@ -76,7 +76,7 @@ public class AccountController {
     @PostMapping("/change-password")
     public ResponseEntity<String> changePassword(
         @AuthenticationPrincipal String email,
-        @Valid @RequestBody ChangePasswordRequestDTO changePasswordRequest
+        @Valid @RequestBody ChangePasswordRequest changePasswordRequest
     ) {
         accountService.changePassword(email, changePasswordRequest);
         return ResponseEntity.ok("Password changed successfully.");

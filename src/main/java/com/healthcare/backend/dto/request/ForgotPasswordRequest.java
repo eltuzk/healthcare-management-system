@@ -2,7 +2,7 @@ package com.healthcare.backend.dto.request;
 
 import jakarta.validation.constraints.Email;
 
-public class ForgotPassword_EmailRequestDTO {
+public class ForgotPasswordRequest {
     @Email(message = "Invalid email format. (Example: abc@example.com)")
     private String email;
 

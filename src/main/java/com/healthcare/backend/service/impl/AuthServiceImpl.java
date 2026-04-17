@@ -5,22 +5,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.healthcare.backend.dto.request.AuthRequestDTO;
-import com.healthcare.backend.dto.request.ForgotPassword_EmailRequestDTO;
-import com.healthcare.backend.dto.request.RegisterRequestDTO;
-import com.healthcare.backend.dto.request.ResetPasswordRequestDTO;
-import com.healthcare.backend.dto.response.AuthResponseDTO;
-import com.healthcare.backend.dto.response.RegisterResponseDTO;
+import com.healthcare.backend.dto.request.AuthRequest;
+import com.healthcare.backend.dto.request.ForgotPasswordRequest;
+import com.healthcare.backend.dto.request.RegisterRequest;
+import com.healthcare.backend.dto.request.ResetPasswordRequest;
+import com.healthcare.backend.dto.response.AuthResponse;
+import com.healthcare.backend.dto.response.RegisterResponse;
 import com.healthcare.backend.entity.Account;
 import com.healthcare.backend.entity.Role;
 import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.RoleRepository;
 import com.healthcare.backend.security.JwtServiceInterface;
-import com.healthcare.backend.service.AuthServiceInterface;
-import com.healthcare.backend.service.EmailServiceInterface;
+import com.healthcare.backend.service.AuthService;
+import com.healthcare.backend.service.EmailService;
 
 @Service
-public class AuthServiceImpl implements AuthServiceInterface {
+public class AuthServiceImpl implements AuthService {
     @Autowired
     private AccountRepository accountRepository;
     @Autowired
@@ -28,19 +28,19 @@ public class AuthServiceImpl implements AuthServiceInterface {
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
-    private EmailServiceInterface emailService;
+    private EmailService emailService;
     @Autowired
     private JwtServiceInterface jwtService;
 
     @Override
-    public RegisterResponseDTO register(RegisterRequestDTO registerRequestDTO) {
-        if (accountRepository.existsByEmail(registerRequestDTO.getEmail())) {
+    public RegisterResponse register(RegisterRequest registerRequest) {
+        if (accountRepository.existsByEmail(registerRequest.getEmail())) {
             throw new RuntimeException("Email is existed.");
         }
 
         Account newAccount = new Account();
-        newAccount.setEmail(registerRequestDTO.getEmail());
-        newAccount.setPasswordHash(passwordEncoder.encode(registerRequestDTO.getPassword()));
+        newAccount.setEmail(registerRequest.getEmail());
+        newAccount.setPasswordHash(passwordEncoder.encode(registerRequest.getPassword()));
 
         Role userRole = roleRepository.findByRoleName("PATIENT")
             .orElseThrow(() -> new RuntimeException("No role existed."));
@@ -55,7 +55,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
             jwtService.generateVerificationToken(newAccount.getEmail())
         );
         
-        return new RegisterResponseDTO(registerRequestDTO.getEmail());
+        return new RegisterResponse(registerRequest.getEmail());
     }
 
     @Override
@@ -79,25 +79,25 @@ public class AuthServiceImpl implements AuthServiceInterface {
     }
 
     @Override
-    public AuthResponseDTO login(AuthRequestDTO authRequestDTO) {
-        Account account = accountRepository.findByEmail(authRequestDTO.getEmail())
+    public AuthResponse login(AuthRequest authRequest) {
+        Account account = accountRepository.findByEmail(authRequest.getEmail())
             .orElseThrow(() -> new RuntimeException("Email or password is incorrect."));
 
         if(!account.isActive()) {
             throw new RuntimeException("Account is not active.");
         }
 
-        if (!passwordEncoder.matches(authRequestDTO.getPassword(), account.getPasswordHash())) {
+        if (!passwordEncoder.matches(authRequest.getPassword(), account.getPasswordHash())) {
             throw new RuntimeException("Email or password is incorrect.");
         }
 
         String accessToken = jwtService.generateToken(account.getAccountId(), account.getEmail(), account.getRole().getRoleName());
 
-        return new AuthResponseDTO(accessToken);
+        return new AuthResponse(accessToken);
     }
 
     @Override
-    public void processForgotPassword(ForgotPassword_EmailRequestDTO forgotPasswordRequest) {
+    public void processForgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
         String email = forgotPasswordRequest.getEmail();
 
         if(!accountRepository.existsByEmail(email)) {
@@ -109,7 +109,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
     }
 
     @Override
-    public void executeResetPassword(String token, ResetPasswordRequestDTO resetPassworsRequest) {
+    public void executeResetPassword(String token, ResetPasswordRequest resetPassworsRequest) {
         if(!jwtService.validateToken(token)) {
             throw new RuntimeException("Invalid or expired token.");
         }

@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
-public class AuthRequestDTO {
+public class RegisterRequest {
     @NotBlank(message = "Email is required.")
     @Email(message = "Invalid email format. (Example: abc@example.com)")
     private String email;

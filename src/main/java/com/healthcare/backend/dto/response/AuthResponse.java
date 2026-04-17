@@ -1,12 +1,12 @@
 package com.healthcare.backend.dto.response;
 
-public class AuthResponseDTO {
+public class AuthResponse {
         String accessToken;
         
-        public AuthResponseDTO() {
+        public AuthResponse() {
         }
 
-        public AuthResponseDTO(String accessToken) {
+        public AuthResponse(String accessToken) {
             this.accessToken = accessToken;
         }
 

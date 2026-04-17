@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.healthcare.backend.dto.request.PermissionRequestDTO;
-import com.healthcare.backend.dto.response.PermissionResponseDTO;
-import com.healthcare.backend.service.PermissionServiceInterface;
+import com.healthcare.backend.dto.request.PermissionRequest;
+import com.healthcare.backend.dto.response.PermissionResponse;
+import com.healthcare.backend.service.PermissionService;
 
 import jakarta.validation.Valid;
 
@@ -23,23 +23,23 @@ import jakarta.validation.Valid;
 @RequestMapping("/permissions")
 public class PermissionController {
     @Autowired
-    private PermissionServiceInterface permissionService;
+    private PermissionService permissionService;
 
     @GetMapping
-    public ResponseEntity<Page<PermissionResponseDTO>> getAllPermissions(@ParameterObject Pageable pageable) {
-        Page<PermissionResponseDTO> res = permissionService.getAllPermissions(pageable);
+    public ResponseEntity<Page<PermissionResponse>> getAllPermissions(@ParameterObject Pageable pageable) {
+        Page<PermissionResponse> res = permissionService.getAllPermissions(pageable);
         return ResponseEntity.ok(res);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PermissionResponseDTO> getPermissionById(@PathVariable Long id) {
-        PermissionResponseDTO res = permissionService.getPermissionById(id);
+    public ResponseEntity<PermissionResponse> getPermissionById(@PathVariable Long id) {
+        PermissionResponse res = permissionService.getPermissionById(id);
         return ResponseEntity.ok(res);
     }
 
     @PostMapping
-    public ResponseEntity<PermissionResponseDTO> createPermission(@Valid @RequestBody PermissionRequestDTO permissionRequestDTO) {
-        PermissionResponseDTO res = permissionService.createPermission(permissionRequestDTO);
+    public ResponseEntity<PermissionResponse> createPermission(@Valid @RequestBody PermissionRequest permissionRequest) {
+        PermissionResponse res = permissionService.createPermission(permissionRequest);
         return ResponseEntity.ok(res);
     }
 

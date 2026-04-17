@@ -2,10 +2,17 @@ package com.healthcare.backend.entity;
 
 import java.io.Serializable;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+
+@Embeddable
 public class AccountPermissionId implements Serializable {
+    @Column(name = "account_id")
     private Long accountId;
+
+    @Column(name = "permission_id")
     private Long permissionId;
-    
+
     public AccountPermissionId() {
     }
 
@@ -60,6 +67,4 @@ public class AccountPermissionId implements Serializable {
             return false;
         return true;
     }
-
-    
 }

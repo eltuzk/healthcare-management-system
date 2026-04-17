@@ -12,13 +12,13 @@ import jakarta.persistence.Table;
 public class Permission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "permissionId")
+    @Column(name = "permission_id")
     private Long permissionId;
 
-    @Column(name = "permissionName", nullable = false, unique = true, length = 100)
+    @Column(name = "permission_name", nullable = false, unique = true, length = 100)
     private String permissionName;
 
-    @Column(name = "detail")
+    @Column(name = "detail", length = 500)
     private String detail;
 
     public Long getId() {
@@ -44,5 +44,5 @@ public class Permission {
     public void setPermissionName(String permissionName) {
         this.permissionName = permissionName;
     }
-    
+
 }

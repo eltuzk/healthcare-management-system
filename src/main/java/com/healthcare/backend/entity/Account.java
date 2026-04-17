@@ -14,20 +14,20 @@ import jakarta.persistence.Table;
 public class Account {
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
-    @Column(name = "accountId")
+    @Column(name = "account_id")
     private Long accountId;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "passwordHash", nullable = false)
+    @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
     @ManyToOne
-    @JoinColumn(name = "roleId")
+    @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    @Column(name = "isActive")
+    @Column(name = "is_active", nullable = false)
     private boolean isActive = false;
 
     public Long getAccountId() {
