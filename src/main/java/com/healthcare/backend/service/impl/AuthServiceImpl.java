@@ -109,7 +109,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
     }
 
     @Override
-    public void executeResetPassword(String token, ResetPasswordRequestDTO resetPassworsRequest) {
+    public void executeResetPassword(String token, ResetPasswordRequestDTO resetPasswordRequest) {
         if(!jwtService.validateToken(token)) {
             throw new RuntimeException("Invalid or expired token.");
         }
@@ -120,14 +120,14 @@ public class AuthServiceImpl implements AuthServiceInterface {
             throw new RuntimeException("Account not existed.");
         }
 
-        if(!resetPassworsRequest.getNewPassword().equals(resetPassworsRequest.getConfirmNewPassword())) {
+        if(!resetPasswordRequest.getNewPassword().equals(resetPasswordRequest.getConfirmNewPassword())) {
             throw new RuntimeException("New passwords do not match.");
         }
-        if(passwordEncoder.matches(resetPassworsRequest.getNewPassword(), account.getPasswordHash())) {
+        if(passwordEncoder.matches(resetPasswordRequest.getNewPassword(), account.getPasswordHash())) {
             throw new RuntimeException("New password cannot be the same as the old password.");
         }
 
-        account.setPasswordHash(passwordEncoder.encode(resetPassworsRequest.getNewPassword()));
+        account.setPasswordHash(passwordEncoder.encode(resetPasswordRequest.getNewPassword()));
         accountRepository.save(account);
     }
 }

@@ -94,8 +94,8 @@ public class RoleServiceImpl implements RoleServiceInterface {
         return;
     }
 
-        @Override
-    public void addPermissisonToRole(Long roleId, Long permissionId) {
+    @Override
+    public void addPermissionToRole(Long roleId, Long permissionId) {
         Role tmp_Role = roleRepository.findById(roleId)
             .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
         

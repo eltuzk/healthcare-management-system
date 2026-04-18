@@ -59,7 +59,7 @@ public class RoleController {
 
     @PostMapping("/{roleId}/permissions/{permissionId}")
     public ResponseEntity<String> addPermissionToRole(@PathVariable Long roleId, @PathVariable Long permissionId) {
-        roleService.addPermissisonToRole(roleId, permissionId);
+        roleService.addPermissionToRole(roleId, permissionId);
         return ResponseEntity.ok("Permission added successfully.");
     }
 
