@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,24 +27,28 @@ public class PermissionController {
     private PermissionServiceInterface permissionService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Page<PermissionResponseDTO>> getAllPermissions(@ParameterObject Pageable pageable) {
         Page<PermissionResponseDTO> res = permissionService.getAllPermissions(pageable);
         return ResponseEntity.ok(res);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<PermissionResponseDTO> getPermissionById(@PathVariable Long id) {
         PermissionResponseDTO res = permissionService.getPermissionById(id);
         return ResponseEntity.ok(res);
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<PermissionResponseDTO> createPermission(@Valid @RequestBody PermissionRequestDTO permissionRequestDTO) {
         PermissionResponseDTO res = permissionService.createPermission(permissionRequestDTO);
         return ResponseEntity.ok(res);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<String> deletePermission(@PathVariable Long id) {
         permissionService.deletePermission(id);
         return ResponseEntity.ok("Permission deleted successfully");

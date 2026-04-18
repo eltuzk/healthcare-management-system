@@ -4,11 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.healthcare.backend.dto.request.DoctorRequestDTO;
 import com.healthcare.backend.dto.response.DoctorResponseDTO;
 import com.healthcare.backend.entity.Account;
 import com.healthcare.backend.entity.Doctor;
+import com.healthcare.backend.mapper.DoctorMapper;
 import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.DoctorRepository;
 import com.healthcare.backend.service.DoctorServiceInterface;
@@ -21,58 +23,34 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
     private DoctorRepository doctorRepository;
 
     @Autowired
+    private DoctorMapper doctorMapper;
+
+    @Autowired
     private AccountRepository accountRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public Page<DoctorResponseDTO> getAllDoctors(Pageable pageable, @Nullable String specialization) {
-        return doctorRepository.findDoctorsBySpecialization(pageable, specialization).map(doctor -> new DoctorResponseDTO(
-            doctor.getDoctorId(),
-            doctor.getAccount().getEmail(),
-            doctor.getFullName(),
-            doctor.getSpecialization(),
-            doctor.getLicenseNum(),
-            doctor.getQualification(),
-            doctor.getExperience(),
-            doctor.getGender(),
-            doctor.getPhone(),
-            doctor.getAddress(),
-            doctor.getHireDate(),
-            doctor.getIdentityNum(),
-            doctor.getDateOfBirth(),
-            doctor.isActive()
-        ));
+        return doctorRepository.findDoctorsBySpecialization(pageable, specialization).map(doctorMapper::toDto);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DoctorResponseDTO getDoctorById(Long doctorId) {
         return doctorRepository.findById(doctorId)
-        .map(doctor -> new DoctorResponseDTO(
-            doctor.getDoctorId(),
-            doctor.getAccount().getEmail(),
-            doctor.getFullName(),
-            doctor.getSpecialization(),
-            doctor.getLicenseNum(),
-            doctor.getQualification(),
-            doctor.getExperience(),
-            doctor.getGender(),
-            doctor.getPhone(),
-            doctor.getAddress(),
-            doctor.getHireDate(),
-            doctor.getIdentityNum(),
-            doctor.getDateOfBirth(),
-            doctor.isActive()
-        ))
+        .map(doctorMapper::toDto)
         .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
     }
 
     @Override
+    @Transactional
     public DoctorResponseDTO createDoctor(DoctorRequestDTO doctorRequest) {
         Account account = accountRepository.findByEmail(doctorRequest.getAccountEmail())
             .orElseThrow(() -> new RuntimeException("Account not found by this email."));
         if(doctorRepository.existsByAccount_Email(doctorRequest.getAccountEmail())) {
             throw new RuntimeException("This account being used.");
         }
-        if(!account.getRole().getRoleName().equals("DOCTOR")) {
+        if(!"DOCTOR".equals(account.getRole().getRoleName())) {
             throw new RuntimeException("This account invalid.");
         }
 
@@ -84,40 +62,11 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
             throw new RuntimeException("This identify number already exists.");
         }
 
-        Doctor doctor = new Doctor();
-        account.setActive(true);
+        Doctor doctor = doctorMapper.createEntityFromDto(doctorRequest);
         doctor.setAccount(account);
-        doctor.setAddress(doctorRequest.getAddress());
-        doctor.setDateOfBirth(doctorRequest.getDateOfBirth());
-        doctor.setExperience(doctorRequest.getExperience());
-        doctor.setFullName(doctorRequest.getFullName());
-        doctor.setGender(doctorRequest.getGender());
-        doctor.setHireDate(doctorRequest.getHireDate());
-        doctor.setIdentityNum(doctorRequest.getIdentityNum());
-        doctor.setLicenseNum(doctorRequest.getLicenseNum());
-        doctor.setPhone(doctorRequest.getPhone());
-        doctor.setQualification(doctorRequest.getQualification());
-        doctor.setSpecialization(doctorRequest.getSpecialization());
-        doctor.setActive(true);
 
         doctorRepository.save(doctor);
-
-        return new DoctorResponseDTO(
-            doctor.getDoctorId(),
-            doctor.getAccount().getEmail(),
-            doctor.getFullName(),
-            doctor.getSpecialization(),
-            doctor.getLicenseNum(),
-            doctor.getQualification(),
-            doctor.getExperience(),
-            doctor.getGender(),
-            doctor.getPhone(),
-            doctor.getAddress(),
-            doctor.getHireDate(),
-            doctor.getIdentityNum(),
-            doctor.getDateOfBirth(),
-            doctor.isActive()
-        );
+        return doctorMapper.toDto(doctor);
     }
 
     @Override
@@ -125,89 +74,47 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
         Doctor doctor = doctorRepository.findById(doctorId)
             .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
         
-        String currentEmail = doctor.getAccount().getEmail();
         String newEmail = doctorRequest.getAccountEmail();
-        
-        if (newEmail != null && !newEmail.equals(currentEmail)) {
-            if (doctorRepository.existsByAccount_Email(newEmail)) {
-                throw new RuntimeException("Email being used by another.");
-            }
+        if (newEmail != null && !newEmail.equals(doctor.getAccount().getEmail())) {
             Account newAccount = accountRepository.findByEmail(newEmail)
-                .orElseThrow(() -> new RuntimeException("Account not found with this email."));
-            if (!newAccount.getRole().getRoleName().equals("DOCTOR")) {
-                throw new RuntimeException("Account invalid.");
+                    .orElseThrow(() -> new RuntimeException("New account not found."));
+            
+            if (doctorRepository.existsByAccount_Email(newEmail)) {
+                throw new RuntimeException("The new account is already linked to another doctor.");
             }
             doctor.setAccount(newAccount);
         }
 
-        doctor.setFullName(doctorRequest.getFullName());
-        doctor.setSpecialization(doctorRequest.getSpecialization());
-
-        String currentLicense = doctor.getLicenseNum();
         String newLicense = doctorRequest.getLicenseNum();
-        if (newLicense != null && !newLicense.equals(currentLicense)) {
+        if (newLicense != null && !newLicense.equals(doctor.getLicenseNum())) {
             if (doctorRepository.existsByLicenseNum(newLicense)) {
                 throw new RuntimeException("This license number already exists.");
             }
-            doctor.setLicenseNum(newLicense);
         }
 
-        doctor.setLicenseNum(doctorRequest.getLicenseNum());
-        doctor.setQualification(doctorRequest.getQualification());
-        doctor.setExperience(doctorRequest.getExperience());
-        doctor.setGender(doctorRequest.getGender());
-        doctor.setPhone(doctorRequest.getPhone());
-        doctor.setAddress(doctorRequest.getAddress());
-
-        String currentIdentity = doctor.getIdentityNum();
         String newIdentity = doctorRequest.getIdentityNum();
-        if (newIdentity != null && !newIdentity.equals(currentIdentity)) {
+        if (newIdentity != null && !newIdentity.equals(doctor.getIdentityNum())) {
             if (doctorRepository.existsByIdentityNum(newIdentity)) {
                 throw new RuntimeException("This identity number already exists.");
             }
-            doctor.setIdentityNum(newIdentity);
         }
-        doctor.setIdentityNum(doctorRequest.getIdentityNum());
 
-        doctor.setDateOfBirth(doctorRequest.getDateOfBirth());
-        doctor.setHireDate(doctorRequest.getHireDate());
+        doctorMapper.updateEntityFromDto(doctor, doctorRequest);
 
-        if (doctor.isActive() != doctorRequest.isStatus()) {
-            doctor.setActive(doctorRequest.isStatus());
-            
-            if (!doctorRequest.isStatus()) {
-                Account currentAccount = doctor.getAccount();
-                currentAccount.setActive(false);
-                accountRepository.save(currentAccount);
-            }
-        }
+        doctor.getAccount().setActive(doctor.isActive());
 
         doctorRepository.save(doctor);
-
-        return new DoctorResponseDTO(
-            doctor.getDoctorId(),
-            doctor.getAccount().getEmail(),
-            doctor.getFullName(),
-            doctor.getSpecialization(),
-            doctor.getLicenseNum(),
-            doctor.getQualification(),
-            doctor.getExperience(),
-            doctor.getGender(),
-            doctor.getPhone(),
-            doctor.getAddress(),
-            doctor.getHireDate(),
-            doctor.getIdentityNum(),
-            doctor.getDateOfBirth(),
-            doctor.isActive()
-        );
+        return doctorMapper.toDto(doctor);
     }
 
     @Override
+    @Transactional
     public void deleteDoctor(Long doctorId) {
         Doctor doctor = doctorRepository.findById(doctorId)
-            .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
+                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
         
         doctor.setActive(false);
+        doctor.getAccount().setActive(false);
         doctorRepository.save(doctor);
     }
 }

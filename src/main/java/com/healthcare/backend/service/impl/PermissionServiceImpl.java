@@ -45,7 +45,7 @@ public class PermissionServiceImpl implements PermissionServiceInterface {
 
         Permission temp = new Permission();
         temp.setPermissionName(permissionRequestDTO.getPermissionName());
-        temp.setDetail(permissionRequestDTO.getDetails());
+        temp.setDetail(permissionRequestDTO.getDetail());
 
         Permission res = permissionRepository.save(temp);
         return new PermissionResponseDTO(res.getId(), res.getPermissionName(), res.getDetail());

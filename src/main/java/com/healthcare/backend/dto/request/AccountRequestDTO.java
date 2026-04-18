@@ -12,13 +12,13 @@ public class AccountRequestDTO {
     @NotBlank(message = "Password is required.")
     @Pattern(
         regexp = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$",
-        message = "Password must be at least 8 characters long, containing at least one uppercase letter, one number, and one special character."
+        message = "Password must be at least 8 characters long, containing at least one uppercase letter and one number."
     )
     private String password;
+
     @NotBlank(message = "Role is required.")
     private String role;
 
-    @NotBlank(message = "Active status is required.")
     private boolean active;
     
     public String getEmail() {

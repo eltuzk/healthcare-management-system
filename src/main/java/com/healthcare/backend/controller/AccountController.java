@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.healthcare.backend.dto.request.AccountRequestDTO;
 import com.healthcare.backend.dto.request.ChangePasswordRequestDTO;
 import com.healthcare.backend.dto.response.AccountResponseDTO;
+import com.healthcare.backend.security.UserPrincipal;
 import com.healthcare.backend.service.AccountServiceInterface;
 
 import jakarta.validation.Valid;
@@ -31,38 +33,45 @@ public class AccountController {
     private AccountServiceInterface accountService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Page<AccountResponseDTO>> getAllAccounts(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(accountService.getAllAccounts(pageable));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<AccountResponseDTO> getAccountById(@PathVariable Long id) {
         return ResponseEntity.ok(accountService.getAccountById(id));
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<AccountResponseDTO> createAccount(@RequestBody AccountRequestDTO accountRequestDTO) {
         return ResponseEntity.ok(accountService.createAccount(accountRequestDTO));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<AccountResponseDTO> updateAccount(@PathVariable Long id, @RequestBody AccountRequestDTO accountRequestDTO) {
         return ResponseEntity.ok(accountService.updateAccount(id, accountRequestDTO));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<String> deleteAccount(@PathVariable Long id) {
         accountService.deleteAccount(id);
         return ResponseEntity.ok("Account deleted successfully.");
     }
 
     @PostMapping("/{accountId}/permissions/{permissionId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<String> addPermissionToAccount(@PathVariable Long accountId, @PathVariable Long permissionId) {
         accountService.addPermissionToAccount(accountId, permissionId);
         return ResponseEntity.ok("Permission added successfully.");
     }
 
     @GetMapping("/{accountId}/permissions")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, Object>> getPermissionsByAccount(@PathVariable Long accountId, @ParameterObject Pageable pageable) {
         try {
             Map<String, Object> res = accountService.getPermissionsByAccount(pageable, accountId);
@@ -74,11 +83,12 @@ public class AccountController {
     }
 
     @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> changePassword(
-        @AuthenticationPrincipal String email,
+        @AuthenticationPrincipal UserPrincipal user,
         @Valid @RequestBody ChangePasswordRequestDTO changePasswordRequest
     ) {
-        accountService.changePassword(email, changePasswordRequest);
+        accountService.changePassword(user.email(), changePasswordRequest);
         return ResponseEntity.ok("Password changed successfully.");
     }
 }
