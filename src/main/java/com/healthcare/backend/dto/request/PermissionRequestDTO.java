@@ -8,7 +8,7 @@ public class PermissionRequestDTO {
     @Size(max = 100, message = "Permission name must not exceed 100 characters")
     private String permissionName;
 
-    private String details;
+    private String detail;
 
     public String getPermissionName() {
         return permissionName;
@@ -18,11 +18,11 @@ public class PermissionRequestDTO {
         this.permissionName = permissionName;
     }
 
-    public String getDetails() {
-        return details;
+    public String getDetail() {
+        return detail;
     }
 
-    public void setDetails(String details) {
-        this.details = details;
+    public void setDetail(String detail) {
+        this.detail = detail;
     }
 }

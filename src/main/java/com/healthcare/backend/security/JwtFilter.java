@@ -34,11 +34,14 @@ public class JwtFilter extends OncePerRequestFilter {
             if (jwtService.validateToken(token) && SecurityContextHolder.getContext().getAuthentication() == null) {
                 String roleName = jwtService.extractRole(token);
                 String email = jwtService.extractEmail(token).toString();
+                Long accountId = jwtService.extractAccountId(token);
 
                 List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(roleName));                
 
+                UserPrincipal principal = new UserPrincipal(accountId, email, roleName);
+
                 SecurityContext context = SecurityContextHolder.createEmptyContext();
-                Authentication auth = new UsernamePasswordAuthenticationToken(email, null, authorities);
+                Authentication auth = new UsernamePasswordAuthenticationToken(principal, null, authorities);
                 context.setAuthentication(auth);
 
                 SecurityContextHolder.setContext(context);
