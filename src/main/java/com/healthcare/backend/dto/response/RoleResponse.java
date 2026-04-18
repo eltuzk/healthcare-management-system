@@ -6,16 +6,16 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RoleResponse {
-    private Long id;
-    private String name;
+    private Long roleId;
+    private String roleName;
     private String description;
 
     public RoleResponse() {
     }
 
-    public RoleResponse(Long id, String name, String description) {
-        this.id = id;
-        this.name = name;
+    public RoleResponse(Long roleId, String roleName, String description) {
+        this.roleId = roleId;
+        this.roleName = roleName;
         this.description = description;
     }
 }

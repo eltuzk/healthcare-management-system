@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.healthcare.backend.dto.request.PermissionRequest;
 import com.healthcare.backend.dto.response.PermissionResponse;
 import com.healthcare.backend.entity.Permission;
+import com.healthcare.backend.mapper.PermissionMapper;
 import com.healthcare.backend.repository.AccountPermissionRepository;
 import com.healthcare.backend.repository.PermissionRepository;
 import com.healthcare.backend.repository.RolePermissionRepository;
@@ -23,32 +24,32 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Autowired
     private AccountPermissionRepository accountPermissionRepository;
+    @Autowired
+    private PermissionMapper permissionMapper;
 
     @Override
     public Page<PermissionResponse> getAllPermissions(Pageable pageable) {
         return permissionRepository.findAll(pageable)
-            .map(permission -> new PermissionResponse(permission.getPermissionId(), permission.getPermissionName(), permission.getDetail()));
+                .map(permissionMapper::toPermissionResponse);
     }
 
     @Override
     public PermissionResponse getPermissionById(Long id) {
         return permissionRepository.findById(id)
-            .map(permission -> new PermissionResponse(permission.getPermissionId(), permission.getPermissionName(), permission.getDetail()))
-            .orElseThrow(() -> new RuntimeException("Permission not found with id: " + id));
+                .map(permissionMapper::toPermissionResponse)
+                .orElseThrow(() -> new RuntimeException("Permission not found with id: " + id));
     }
 
     @Override
     public PermissionResponse createPermission(PermissionRequest permissionRequest) {
-        if(permissionRepository.existsByPermissionName(permissionRequest.getPermissionName())) {
+        if (permissionRepository.existsByPermissionName(permissionRequest.getPermissionName())) {
             throw new RuntimeException("Permission name already exists: " + permissionRequest.getPermissionName());
         }
 
-        Permission temp = new Permission();
-        temp.setPermissionName(permissionRequest.getPermissionName());
-        temp.setDetail(permissionRequest.getDetail());
+        Permission temp = permissionMapper.toPermissionEntity(permissionRequest);
 
         Permission res = permissionRepository.save(temp);
-        return new PermissionResponse(res.getPermissionId(), res.getPermissionName(), res.getDetail());
+        return permissionMapper.toPermissionResponse(res);
     }
 
     @Override
@@ -60,12 +61,14 @@ public class PermissionServiceImpl implements PermissionService {
 
         boolean isUsing_Role = rolePermissionRepository.existsByPermission_PermissionId(id);
         if (isUsing_Role) {
-            throw new RuntimeException("Cannot delete permission: This permission is currently assigned and has been existing roles.");
+            throw new RuntimeException(
+                    "Cannot delete permission: This permission is currently assigned and has been existing roles.");
         }
 
         boolean isUsing_Account = accountPermissionRepository.existsByPermission_PermissionId(id);
         if (isUsing_Account) {
-            throw new RuntimeException("Cannot delete permission: This permission is currently assigned and has been existing accounts.");
+            throw new RuntimeException(
+                    "Cannot delete permission: This permission is currently assigned and has been existing accounts.");
         }
 
         permissionRepository.deleteById(id);

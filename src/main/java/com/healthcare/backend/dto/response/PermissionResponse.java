@@ -6,15 +6,15 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PermissionResponse {
-    private Long id;
+    private Long permissionId;
     private String permissionName;
     private String detail;
 
     public PermissionResponse() {
     }
 
-    public PermissionResponse(Long id, String permissionName, String detail) {
-        this.id = id;
+    public PermissionResponse(Long permissionId, String permissionName, String detail) {
+        this.permissionId = permissionId;
         this.permissionName = permissionName;
         this.detail = detail;
     }

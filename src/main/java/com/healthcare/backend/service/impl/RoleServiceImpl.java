@@ -12,6 +12,8 @@ import com.healthcare.backend.entity.Permission;
 import com.healthcare.backend.entity.Role;
 import com.healthcare.backend.entity.RolePermission;
 import com.healthcare.backend.entity.RolePermissionId;
+import com.healthcare.backend.mapper.PermissionMapper;
+import com.healthcare.backend.mapper.RoleMapper;
 import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.PermissionRepository;
 import com.healthcare.backend.repository.RolePermissionRepository;
@@ -28,18 +30,22 @@ public class RoleServiceImpl implements RoleService {
     private PermissionRepository permissionRepository;
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    private RoleMapper roleMapper;
+    @Autowired
+    private PermissionMapper permissionMapper;
 
     @Override
     public Page<RoleResponse> getAllRoles(Pageable pageable) {
         return roleRepository.findAll(pageable)
-            .map(role -> new RoleResponse(role.getRoleId(), role.getRoleName(), role.getDescription()));
+                .map(roleMapper::toRoleResponse);
     }
 
     @Override
     public RoleResponse getRoleById(Long id) {
         return roleRepository.findById(id)
-            .map(role -> new RoleResponse(role.getRoleId(), role.getRoleName(), role.getDescription()))
-            .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
+                .map(roleMapper::toRoleResponse)
+                .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
     }
 
     @Override
@@ -48,12 +54,11 @@ public class RoleServiceImpl implements RoleService {
             throw new RuntimeException("Role name already exists: " + roleRequest.getRoleName());
         }
 
-        Role temp = new Role();
-        temp.setRoleName(roleRequest.getRoleName().toUpperCase());
-        temp.setDescription(roleRequest.getDescription());
+        Role temp = roleMapper.toRoleEntity(roleRequest);
+        temp.setRoleName(temp.getRoleName().toUpperCase());
 
         Role savedRole = roleRepository.save(temp);
-        return new RoleResponse(savedRole.getRoleId(), savedRole.getRoleName(), savedRole.getDescription());
+        return roleMapper.toRoleResponse(savedRole);
     }
 
     @Override
@@ -63,20 +68,21 @@ public class RoleServiceImpl implements RoleService {
             throw new RuntimeException("Role not found with id: " + id);
         }
 
-        if(roleRepository.existsByRoleNameAndRoleIdNot(roleRequest.getRoleName(), id)) {
+        if (roleRepository.existsByRoleNameAndRoleIdNot(roleRequest.getRoleName(), id)) {
             throw new RuntimeException("Role name already exists: " + roleRequest.getRoleName());
-        };
-        existingRole.setRoleName(roleRequest.getRoleName().toUpperCase());
-        existingRole.setDescription(roleRequest.getDescription());
+        }
+        ;
+        roleMapper.updateRoleEntity(roleRequest, existingRole);
+        existingRole.setRoleName(existingRole.getRoleName().toUpperCase());
 
         Role updatedRole = roleRepository.save(existingRole);
-        return new RoleResponse(updatedRole.getRoleId(), updatedRole.getRoleName(), updatedRole.getDescription());
+        return roleMapper.toRoleResponse(updatedRole);
     }
 
     @Override
-    public void deleteRole (Long id) {
+    public void deleteRole(Long id) {
         Role existingRole = roleRepository.findById(id).orElse(null);
-        if(existingRole == null) {
+        if (existingRole == null) {
             throw new RuntimeException("Role not found with id: " + id);
         }
 
@@ -87,20 +93,21 @@ public class RoleServiceImpl implements RoleService {
 
         boolean isUsedByPermissions = rolePermissionRepository.existsByRole_RoleId(id);
         if (isUsedByPermissions) {
-            throw new RuntimeException("Cannot delete role: This role is currently assigned and has existing permissions.");
+            throw new RuntimeException(
+                    "Cannot delete role: This role is currently assigned and has existing permissions.");
         }
 
         roleRepository.deleteById(id);
         return;
     }
 
-        @Override
+    @Override
     public void addPermissisonToRole(Long roleId, Long permissionId) {
         Role tmp_Role = roleRepository.findById(roleId)
-            .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
-        
+                .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
+
         Permission tmp_Permission = permissionRepository.findById(permissionId)
-            .orElseThrow(() -> new RuntimeException("Permission not found with id: " + permissionId));
+                .orElseThrow(() -> new RuntimeException("Permission not found with id: " + permissionId));
 
         RolePermissionId tmp_Id = new RolePermissionId(roleId, permissionId);
         if (rolePermissionRepository.existsById(tmp_Id)) {
@@ -114,10 +121,10 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public void removePermissionFromRole(Long roleId, Long permissionId) {
         roleRepository.findById(roleId)
-            .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
-        
+                .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
+
         permissionRepository.findById(permissionId)
-            .orElseThrow(() -> new RuntimeException("Permission not found with id: " + permissionId));
+                .orElseThrow(() -> new RuntimeException("Permission not found with id: " + permissionId));
 
         RolePermissionId tmp_Id = new RolePermissionId(roleId, permissionId);
         if (!rolePermissionRepository.existsById(tmp_Id)) {
@@ -130,9 +137,9 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Page<PermissionResponse> getPermissionsOfRole(Long roleId, Pageable pageable) {
         roleRepository.findById(roleId)
-            .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
+                .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
 
         return rolePermissionRepository.findAllByRole_RoleId(roleId, pageable)
-            .map(rolePermission -> new PermissionResponse(rolePermission.getPermission().getPermissionId(), rolePermission.getPermission().getPermissionName(), rolePermission.getPermission().getDetail()));
+                .map(rolePermission -> permissionMapper.toPermissionResponse(rolePermission.getPermission()));
     }
 }

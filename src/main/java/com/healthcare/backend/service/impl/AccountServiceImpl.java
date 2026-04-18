@@ -19,6 +19,8 @@ import com.healthcare.backend.entity.AccountPermissionId;
 import com.healthcare.backend.entity.Permission;
 import com.healthcare.backend.entity.Role;
 import com.healthcare.backend.entity.RolePermissionId;
+import com.healthcare.backend.mapper.AccountMapper;
+import com.healthcare.backend.mapper.PermissionMapper;
 import com.healthcare.backend.repository.AccountPermissionRepository;
 import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.PermissionRepository;
@@ -33,10 +35,10 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-    
+
     @Autowired
     private RoleRepository roleRepository;
-    
+
     @Autowired
     private PermissionRepository permissionRepository;
 
@@ -45,18 +47,21 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private RolePermissionRepository rolePermissionRepository;
+    @Autowired
+    private AccountMapper accountMapper;
+    @Autowired
+    private PermissionMapper permissionMapper;
 
     @Override
     public Page<AccountResponse> getAllAccounts(Pageable pageable) {
-        return accountRepository.findAll(pageable).map(account -> 
-            new AccountResponse(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive()));
+        return accountRepository.findAll(pageable).map(accountMapper::toAccountResponse);
     }
 
     @Override
     public AccountResponse getAccountById(Long id) {
         return accountRepository.findById(id)
-            .map(account -> new AccountResponse(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive()))
-            .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
+                .map(accountMapper::toAccountResponse)
+                .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
     }
 
     @Override
@@ -66,7 +71,7 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException("Email already exists: " + email);
         }
 
-        if(accountRequest.getRole().equalsIgnoreCase("PATIENT")) {
+        if (accountRequest.getRole().equalsIgnoreCase("PATIENT")) {
             throw new RuntimeException("Patient accounts must be created via the/register API.");
         }
         Account account = new Account();
@@ -74,31 +79,30 @@ public class AccountServiceImpl implements AccountService {
         account.setPasswordHash(passwordEncoder.encode(accountRequest.getPassword()));
 
         Role role = roleRepository.findByRoleName(accountRequest.getRole().toUpperCase())
-            .orElseThrow(() -> new RuntimeException("Role not found: " + accountRequest.getRole()));
+                .orElseThrow(() -> new RuntimeException("Role not found: " + accountRequest.getRole()));
         account.setRole(role);
 
         account.setActive(true);
         accountRepository.save(account);
 
-        return new AccountResponse(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive());
+        return accountMapper.toAccountResponse(account);
     }
 
     @Override
     public AccountResponse updateAccount(Long id, AccountRequest accountRequest) {
         Account account = accountRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
 
         if (accountRequest.getEmail() != null && !accountRequest.getEmail().equals(account.getEmail())) {
             throw new RuntimeException("Email cannot be updated.");
         }
 
         if (accountRequest.getRole() != null &&
-            !accountRequest.getRole()
-                    .toUpperCase()
-                    .equalsIgnoreCase(account.getRole().getRoleName())
-            ) {
+                !accountRequest.getRole()
+                        .toUpperCase()
+                        .equalsIgnoreCase(account.getRole().getRoleName())) {
             Role role = roleRepository.findByRoleName(accountRequest.getRole().toUpperCase())
-                .orElseThrow(() -> new RuntimeException("Role not found: " + accountRequest.getRole()));
+                    .orElseThrow(() -> new RuntimeException("Role not found: " + accountRequest.getRole()));
             account.setRole(role);
         }
 
@@ -112,13 +116,13 @@ public class AccountServiceImpl implements AccountService {
 
         accountRepository.save(account);
 
-        return new AccountResponse(account.getAccountId(), account.getEmail(), account.getRole().getRoleName(), account.isActive());
+        return accountMapper.toAccountResponse(account);
     }
 
     @Override
     public void deleteAccount(Long id) {
         Account account = accountRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
         account.setActive(false);
         accountRepository.save(account);
     }
@@ -129,7 +133,7 @@ public class AccountServiceImpl implements AccountService {
         if (account == null) {
             throw new RuntimeException("Account not found with id: " + accountId);
         }
-        
+
         Permission permission = permissionRepository.findById(permissionId).orElse(null);
         if (permission == null) {
             throw new RuntimeException("Permission not found with id: " + permissionId);
@@ -137,7 +141,8 @@ public class AccountServiceImpl implements AccountService {
 
         AccountPermissionId accountPermissionId = new AccountPermissionId(accountId, permissionId);
         RolePermissionId rolePermissionId = new RolePermissionId(account.getRole().getRoleId(), permissionId);
-        if (accountPermissionRepository.existsById(accountPermissionId) || rolePermissionRepository.existsById(rolePermissionId)) {
+        if (accountPermissionRepository.existsById(accountPermissionId)
+                || rolePermissionRepository.existsById(rolePermissionId)) {
             throw new RuntimeException("This permission has already been assigned to this account.");
         }
 
@@ -146,7 +151,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Map<String, Object> getPermissionsByAccount (Pageable pageable, Long accountId) {
+    public Map<String, Object> getPermissionsByAccount(Pageable pageable, Long accountId) {
         Account account = accountRepository.findById(accountId).orElse(null);
         if (account == null) {
             throw new RuntimeException("Account not found with id: " + accountId);
@@ -154,18 +159,11 @@ public class AccountServiceImpl implements AccountService {
 
         Long roleId = account.getRole().getRoleId();
         Page<PermissionResponse> permissionsByRole = rolePermissionRepository.findAllByRole_RoleId(roleId, pageable)
-            .map(rolePermission -> new PermissionResponse(
-                rolePermission.getPermission().getPermissionId(), 
-                rolePermission.getPermission().getPermissionName(),
-                rolePermission.getPermission().getDetail()
-            ));
+                .map(rolePermission -> permissionMapper.toPermissionResponse(rolePermission.getPermission()));
 
-        Page<PermissionResponse> permissionsByAccount = accountPermissionRepository.findAllByAccount_AccountId(accountId, pageable)
-            .map(accountPermission -> new PermissionResponse(
-                accountPermission.getPermission().getPermissionId(),
-                accountPermission.getPermission().getPermissionName(),
-                accountPermission.getPermission().getDetail()
-            ));
+        Page<PermissionResponse> permissionsByAccount = accountPermissionRepository
+                .findAllByAccount_AccountId(accountId, pageable)
+                .map(accountPermission -> permissionMapper.toPermissionResponse(accountPermission.getPermission()));
 
         Map<String, Object> response = new HashMap<>();
         response.put("permissionsByRole", permissionsByRole);
@@ -177,19 +175,19 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void changePassword(String email, ChangePasswordRequest changePasswordRequest) {
         Account account = accountRepository.findByEmail(email).orElse(null);
-        if(account == null) {
+        if (account == null) {
             throw new RuntimeException();
         }
 
-        if(!passwordEncoder.matches(changePasswordRequest.getOldPassword(), account.getPasswordHash())) {
+        if (!passwordEncoder.matches(changePasswordRequest.getOldPassword(), account.getPasswordHash())) {
             throw new RuntimeException("Old password incorrect.");
         }
 
-        if(!changePasswordRequest.getNewPassword().equals(changePasswordRequest.getConfirmNewPassword())) {
+        if (!changePasswordRequest.getNewPassword().equals(changePasswordRequest.getConfirmNewPassword())) {
             throw new RuntimeException("New passwords do not match.");
         }
 
-        if(passwordEncoder.matches(changePasswordRequest.getNewPassword(), account.getPasswordHash())) {
+        if (passwordEncoder.matches(changePasswordRequest.getNewPassword(), account.getPasswordHash())) {
             throw new RuntimeException("New password cannot be the same as the old password.");
         }
 

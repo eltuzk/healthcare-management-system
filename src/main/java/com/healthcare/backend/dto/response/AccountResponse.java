@@ -6,18 +6,18 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AccountResponse {
-    private Long id;
+    private Long accountId;
     private String email;
-    private String role;
+    private String roleName;
     private boolean isActive;
 
     public AccountResponse() {
     }
 
-    public AccountResponse(Long id, String email, String role, boolean isActive) {
-        this.id = id;
+    public AccountResponse(Long accountId, String email, String roleName, boolean isActive) {
+        this.accountId = accountId;
         this.email = email;
-        this.role = role;
+        this.roleName = roleName;
         this.isActive = isActive;
     }
 }
