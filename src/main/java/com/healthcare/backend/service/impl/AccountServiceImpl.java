@@ -155,14 +155,14 @@ public class AccountServiceImpl implements AccountService {
         Long roleId = account.getRole().getRoleId();
         Page<PermissionResponse> permissionsByRole = rolePermissionRepository.findAllByRole_RoleId(roleId, pageable)
             .map(rolePermission -> new PermissionResponse(
-                rolePermission.getPermission().getId(), 
+                rolePermission.getPermission().getPermissionId(), 
                 rolePermission.getPermission().getPermissionName(),
                 rolePermission.getPermission().getDetail()
             ));
 
         Page<PermissionResponse> permissionsByAccount = accountPermissionRepository.findAllByAccount_AccountId(accountId, pageable)
             .map(accountPermission -> new PermissionResponse(
-                accountPermission.getPermission().getId(),
+                accountPermission.getPermission().getPermissionId(),
                 accountPermission.getPermission().getPermissionName(),
                 accountPermission.getPermission().getDetail()
             ));

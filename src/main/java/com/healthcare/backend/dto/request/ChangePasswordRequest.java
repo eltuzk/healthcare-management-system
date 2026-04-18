@@ -2,43 +2,26 @@ package com.healthcare.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class ChangePasswordRequest {
-    @NotBlank(message = "This field is required.")
+    @NotBlank(message = "Mật khẩu cũ không được trống.")
     private String oldPassword;
 
-    @NotBlank(message = "This field is required.")
+    @NotBlank(message = "Mật khẩu mới không được trống.")
     @Pattern(
         regexp = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$",
-        message = "Password must be at least 8 characters long, containing at least one uppercase letter, one number, and one special character."
+        message = "Mật khẩu phải có ít nhất 8 ký tự, gồm ít nhất 1 chữ cái in hoa và 1 chữ số."
     )
     private String newPassword;
 
-    @NotBlank(message = "This field is required.")
+    @NotBlank(message = "Trường này là bắt buộc.")
     @Pattern(
         regexp = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$",
-        message = "Password must be at least 8 characters long, containing at least one uppercase letter, one number, and one special character."
+        message = "Mật khẩu phải có ít nhất 8 ký tự, gồm ít nhất 1 chữ cái in hoa và 1 chữ số."
     )
     private String confirmNewPassword;
-
-    public String getOldPassword() {
-        return oldPassword;
-    }
-    public void setOldPassword(String oldPassword) {
-        this.oldPassword = oldPassword;
-    }
-    public String getNewPassword() {
-        return newPassword;
-    }
-    public void setNewPassword(String newPassword) {
-        this.newPassword = newPassword;
-    }
-    public String getConfirmNewPassword() {
-        return confirmNewPassword;
-    }
-    public void setConfirmNewPassword(String confirmNewPassword) {
-        this.confirmNewPassword = confirmNewPassword;
-    }
-
-    
 }

@@ -4,8 +4,12 @@ import java.io.Serializable;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import lombok.Getter;
+import lombok.Setter;
 
 @Embeddable
+@Getter
+@Setter
 public class AccountPermissionId implements Serializable {
     @Column(name = "account_id")
     private Long accountId;
@@ -18,22 +22,6 @@ public class AccountPermissionId implements Serializable {
 
     public AccountPermissionId(Long accountId, Long permissionId) {
         this.accountId = accountId;
-        this.permissionId = permissionId;
-    }
-
-    public Long getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
-    }
-
-    public Long getPermissionId() {
-        return permissionId;
-    }
-
-    public void setPermissionId(Long permissionId) {
         this.permissionId = permissionId;
     }
 

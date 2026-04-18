@@ -6,10 +6,14 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "account_permission")
-public class AccountPermission  {
+@Getter
+@Setter
+public class AccountPermission {
     @EmbeddedId
     private AccountPermissionId accountPermissionId;
 
@@ -31,30 +35,4 @@ public class AccountPermission  {
         this.account = account;
         this.permission = permission;
     }
-
-    public AccountPermissionId getAccountPermissionId() {
-        return accountPermissionId;
-    }
-
-    public void setAccountPermissionId(AccountPermissionId accountPermissionId) {
-        this.accountPermissionId = accountPermissionId;
-    }
-
-    public Account getAccount() {
-        return account;
-    }
-
-    public void setAccount(Account account) {
-        this.account = account;
-    }
-
-    public Permission getPermission() {
-        return permission;
-    }
-
-    public void setPermission(Permission permission) {
-        this.permission = permission;
-    }
-
-
 }

@@ -1,5 +1,10 @@
 package com.healthcare.backend.dto.response;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class RegisterResponse {
     private String email;
     
@@ -7,14 +12,6 @@ public class RegisterResponse {
     }
 
     public RegisterResponse(String email) {
-        this.email = email;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
         this.email = email;
     }
 }

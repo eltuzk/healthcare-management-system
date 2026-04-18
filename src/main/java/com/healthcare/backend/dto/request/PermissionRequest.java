@@ -2,27 +2,16 @@ package com.healthcare.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class PermissionRequest {
-    @NotBlank(message = "Permission name is required")
-    @Size(max = 100, message = "Permission name must not exceed 100 characters")
+    @NotBlank(message = "Tên quyền là bắt buộc")
+    @Size(max = 100, message = "Tên quyền không được vượt quá 100 ký tự")
     private String permissionName;
 
-    private String details;
-
-    public String getPermissionName() {
-        return permissionName;
-    }
-
-    public void setPermissionName(String permissionName) {
-        this.permissionName = permissionName;
-    }
-
-    public String getDetails() {
-        return details;
-    }
-
-    public void setDetails(String details) {
-        this.details = details;
-    }
+    @Size(max = 500, message = "Mô tả quyền không được vượt quá 500 ký tự")
+    private String detail;
 }

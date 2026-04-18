@@ -3,32 +3,20 @@ package com.healthcare.backend.dto.request;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class AuthRequest {
-    @NotBlank(message = "Email is required.")
-    @Email(message = "Invalid email format. (Example: abc@example.com)")
+    @NotBlank(message = "Email là bắt buộc.")
+    @Email(message = "Email không đúng định dạng. Ví dụ: abc@example.com")
     private String email;
 
-    @NotBlank(message = "Password is required.")
+    @NotBlank(message = "Mật khẩu là bắt buộc.")
     @Pattern(
         regexp = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$",
-        message = "Password must be at least 8 characters long, containing at least one uppercase letter, one number, and one special character."
+        message = "Mật khẩu phải có ít nhất 8 ký tự, gồm ít nhất 1 chữ cái in hoa và 1 chữ số."
     )
     private String password;
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
 }

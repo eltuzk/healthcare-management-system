@@ -4,9 +4,13 @@ import java.io.Serializable;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import lombok.Getter;
+import lombok.Setter;
 
 @Embeddable
-public class RolePermissionId implements Serializable{
+@Getter
+@Setter
+public class RolePermissionId implements Serializable {
     @Column(name = "role_id")
     private Long roleId;
 
@@ -51,22 +55,4 @@ public class RolePermissionId implements Serializable{
             return false;
         return true;
     }
-
-    public Long getRoleId() {
-        return roleId;
-    }
-
-    public void setRoleId(Long roleId) {
-        this.roleId = roleId;
-    }
-
-    public Long getPermissionId() {
-        return permissionId;
-    }
-
-    public void setPermissionId(Long permissionId) {
-        this.permissionId = permissionId;
-    }
-
-
 }

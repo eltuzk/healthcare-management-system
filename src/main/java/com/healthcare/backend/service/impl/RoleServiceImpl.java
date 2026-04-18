@@ -133,6 +133,6 @@ public class RoleServiceImpl implements RoleService {
             .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
 
         return rolePermissionRepository.findAllByRole_RoleId(roleId, pageable)
-            .map(rolePermission -> new PermissionResponse(rolePermission.getPermission().getId(), rolePermission.getPermission().getPermissionName(), rolePermission.getPermission().getDetail()));
+            .map(rolePermission -> new PermissionResponse(rolePermission.getPermission().getPermissionId(), rolePermission.getPermission().getPermissionName(), rolePermission.getPermission().getDetail()));
     }
 }

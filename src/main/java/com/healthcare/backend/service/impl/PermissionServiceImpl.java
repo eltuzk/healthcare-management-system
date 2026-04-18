@@ -27,13 +27,13 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public Page<PermissionResponse> getAllPermissions(Pageable pageable) {
         return permissionRepository.findAll(pageable)
-            .map(permission -> new PermissionResponse(permission.getId(), permission.getPermissionName(), permission.getDetail()));
+            .map(permission -> new PermissionResponse(permission.getPermissionId(), permission.getPermissionName(), permission.getDetail()));
     }
 
     @Override
     public PermissionResponse getPermissionById(Long id) {
         return permissionRepository.findById(id)
-            .map(permission -> new PermissionResponse(permission.getId(), permission.getPermissionName(), permission.getDetail()))
+            .map(permission -> new PermissionResponse(permission.getPermissionId(), permission.getPermissionName(), permission.getDetail()))
             .orElseThrow(() -> new RuntimeException("Permission not found with id: " + id));
     }
 
@@ -45,10 +45,10 @@ public class PermissionServiceImpl implements PermissionService {
 
         Permission temp = new Permission();
         temp.setPermissionName(permissionRequest.getPermissionName());
-        temp.setDetail(permissionRequest.getDetails());
+        temp.setDetail(permissionRequest.getDetail());
 
         Permission res = permissionRepository.save(temp);
-        return new PermissionResponse(res.getId(), res.getPermissionName(), res.getDetail());
+        return new PermissionResponse(res.getPermissionId(), res.getPermissionName(), res.getDetail());
     }
 
     @Override

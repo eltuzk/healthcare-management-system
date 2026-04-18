@@ -2,27 +2,16 @@ package com.healthcare.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class RoleRequest {
-    @NotBlank(message = "Role name is required")
-    @Size(max = 100, message = "Role name must not exceed 100 characters")
+    @NotBlank(message = "Tên vai trò là bắt buộc")
+    @Size(max = 100, message = "Tên vai trò không được vượt quá 100 ký tự")
     private String roleName;
 
+    @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự")
     private String description;
-
-    public String getRoleName() {
-        return roleName;
-    }
-
-    public void setRoleName(String roleName) {
-        this.roleName = roleName;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }

@@ -55,7 +55,7 @@
 |--------|------|-------------|-------|
 | `account_id` | NUMBER | PK | ID tài khoản |
 | `email` | VARCHAR2(255) | UQ, NN | Email đăng nhập |
-| `password` | VARCHAR2(255) | NN | Mật khẩu (BCrypt) |
+| `password_hash` | VARCHAR2(255) | NN | Mật khẩu (BCrypt) |
 | `role_id` | NUMBER | FK → ROLE, NN | Vai trò |
 | `is_active` | NUMBER(1) | NN, DEFAULT 1 | `1` = active, `0` = đã vô hiệu hóa |
 

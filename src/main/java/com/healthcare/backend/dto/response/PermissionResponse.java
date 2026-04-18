@@ -1,40 +1,21 @@
 package com.healthcare.backend.dto.response;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class PermissionResponse {
     private Long id;
     private String permissionName;
-    private String details;
+    private String detail;
 
     public PermissionResponse() {
     }
-    
-    public PermissionResponse(Long id, String permissionName, String details) {
+
+    public PermissionResponse(Long id, String permissionName, String detail) {
         this.id = id;
         this.permissionName = permissionName;
-        this.details = details;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getPermissionName() {
-        return permissionName;
-    }
-
-    public void setPermissionName(String permissionName) {
-        this.permissionName = permissionName;
-    }
-
-    public String getDetails() {
-        return details;
-    }
-    
-    public void setDetails(String details) {
-        this.details = details;
+        this.detail = detail;
     }
 }
