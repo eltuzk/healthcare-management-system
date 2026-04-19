@@ -1,26 +1,18 @@
 package com.healthcare.backend.service;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
+import java.util.List;
 import com.healthcare.backend.dto.request.RoleRequest;
-import com.healthcare.backend.dto.response.PermissionResponse;
 import com.healthcare.backend.dto.response.RoleResponse;
 
 public interface RoleService {
-    Page<RoleResponse> getAllRoles (Pageable pageable);
 
-    RoleResponse getRoleById (Long id);
+    List<RoleResponse> getAll();
 
-    RoleResponse createRole (RoleRequest roleRequest);
+    RoleResponse getById(Long id);
 
-    RoleResponse updateRole (Long id, RoleRequest roleRequest);
+    RoleResponse create(RoleRequest request);
 
-    void deleteRole (Long id);
+    RoleResponse update(Long id, RoleRequest request);
 
-    void addPermissionToRole(Long roleId, Long permissionId);
-
-    void removePermissionFromRole(Long roleId, Long permissionId);
-
-    Page<PermissionResponse> getPermissionsOfRole(Long roleId, Pageable pageable);
+    void delete(Long id);
 }

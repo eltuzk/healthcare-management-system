@@ -1,17 +1,19 @@
 package com.healthcare.backend.service;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import java.util.List;
 
 import com.healthcare.backend.dto.request.PermissionRequest;
 import com.healthcare.backend.dto.response.PermissionResponse;
 
 public interface PermissionService {
-    Page<PermissionResponse> getAllPermissions (Pageable pageable);
 
-    PermissionResponse getPermissionById(Long id);
+    List<PermissionResponse> getAll();
 
-    PermissionResponse createPermission(PermissionRequest permissionRequest);
+    PermissionResponse getById(Long id);
 
-    void deletePermission(Long id);
+    PermissionResponse create(PermissionRequest request);
+
+    PermissionResponse update(Long id, PermissionRequest request);
+
+    void delete(Long id);
 }

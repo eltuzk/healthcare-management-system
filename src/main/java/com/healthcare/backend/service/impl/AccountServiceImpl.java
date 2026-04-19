@@ -137,7 +137,9 @@ public class AccountServiceImpl implements AccountService {
         }
 
         AccountPermissionId accountPermissionId = new AccountPermissionId(accountId, permissionId);
-        RolePermissionId rolePermissionId = new RolePermissionId(account.getRole().getRoleId(), permissionId);
+        RolePermissionId rolePermissionId = new RolePermissionId();
+        rolePermissionId.setRoleId(account.getRole().getRoleId());
+        rolePermissionId.setPermissionId(permissionId);
         if (accountPermissionRepository.existsById(accountPermissionId) || rolePermissionRepository.existsById(rolePermissionId)) {
             throw new RuntimeException("This permission has already been assigned to this account.");
         }
@@ -155,18 +157,22 @@ public class AccountServiceImpl implements AccountService {
 
         Long roleId = account.getRole().getRoleId();
         Page<PermissionResponse> permissionsByRole = rolePermissionRepository.findAllByRole_RoleId(roleId, pageable)
-            .map(rolePermission -> new PermissionResponse(
-                rolePermission.getPermission().getId(), 
-                rolePermission.getPermission().getPermissionName(),
-                rolePermission.getPermission().getDetail()
-            ));
+            .map(rolePermission -> {
+                PermissionResponse r = new PermissionResponse();
+                r.setPermissionId(rolePermission.getPermission().getPermissionId());
+                r.setPermissionName(rolePermission.getPermission().getPermissionName());
+                r.setDetail(rolePermission.getPermission().getDetail());
+                return r;
+            });
 
         Page<PermissionResponse> permissionsByAccount = accountPermissionRepository.findAllByAccount_AccountId(accountId, pageable)
-            .map(accountPermission -> new PermissionResponse(
-                accountPermission.getPermission().getId(),
-                accountPermission.getPermission().getPermissionName(),
-                accountPermission.getPermission().getDetail()
-            ));
+            .map(accountPermission -> {
+                PermissionResponse r = new PermissionResponse();
+                r.setPermissionId(accountPermission.getPermission().getPermissionId());
+                r.setPermissionName(accountPermission.getPermission().getPermissionName());
+                r.setDetail(accountPermission.getPermission().getDetail());
+                return r;
+            });
 
         Map<String, Object> response = new HashMap<>();
         response.put("permissionsByRole", permissionsByRole);

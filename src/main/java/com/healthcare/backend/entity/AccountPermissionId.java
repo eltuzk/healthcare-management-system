@@ -1,32 +1,17 @@
-package com.healthcare.backend.entity;
+﻿package com.healthcare.backend.entity;
 
+import lombok.Getter;
+import lombok.Setter;
 import java.io.Serializable;
 
+@Getter
+@Setter
 public class AccountPermissionId implements Serializable {
     private Long accountId;
     private Long permissionId;
-    
-    public AccountPermissionId() {
-    }
 
     public AccountPermissionId(Long accountId, Long permissionId) {
         this.accountId = accountId;
-        this.permissionId = permissionId;
-    }
-
-    public Long getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
-    }
-
-    public Long getPermissionId() {
-        return permissionId;
-    }
-
-    public void setPermissionId(Long permissionId) {
         this.permissionId = permissionId;
     }
 
@@ -60,6 +45,4 @@ public class AccountPermissionId implements Serializable {
             return false;
         return true;
     }
-
-    
 }

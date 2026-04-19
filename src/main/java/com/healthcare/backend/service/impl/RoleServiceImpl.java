@@ -1,138 +1,76 @@
 package com.healthcare.backend.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import java.util.List;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import com.healthcare.backend.dto.request.RoleRequest;
-import com.healthcare.backend.dto.response.PermissionResponse;
 import com.healthcare.backend.dto.response.RoleResponse;
-import com.healthcare.backend.entity.Permission;
 import com.healthcare.backend.entity.Role;
-import com.healthcare.backend.entity.RolePermission;
-import com.healthcare.backend.entity.RolePermissionId;
+import com.healthcare.backend.exception.BusinessException;
+import com.healthcare.backend.exception.DuplicateResourceException;
+import com.healthcare.backend.exception.ResourceNotFoundException;
+import com.healthcare.backend.mapper.RoleMapper;
 import com.healthcare.backend.repository.AccountRepository;
-import com.healthcare.backend.repository.PermissionRepository;
-import com.healthcare.backend.repository.RolePermissionRepository;
 import com.healthcare.backend.repository.RoleRepository;
 import com.healthcare.backend.service.RoleService;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class RoleServiceImpl implements RoleService {
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private RolePermissionRepository rolePermissionRepository;
-    @Autowired
-    private PermissionRepository permissionRepository;
-    @Autowired
-    private AccountRepository accountRepository;
+
+    private final RoleRepository roleRepository;
+    private final RoleMapper roleMapper;
+    private final AccountRepository accountRepository;
 
     @Override
-    public Page<RoleResponse> getAllRoles(Pageable pageable) {
-        return roleRepository.findAll(pageable)
-            .map(role -> new RoleResponse(role.getRoleId(), role.getRoleName(), role.getDescription()));
+    @Transactional(readOnly = true)
+    public List<RoleResponse> getAll() {
+        return roleRepository.findAll().stream().map(roleMapper::toResponse).toList();
     }
 
     @Override
-    public RoleResponse getRoleById(Long id) {
-        return roleRepository.findById(id)
-            .map(role -> new RoleResponse(role.getRoleId(), role.getRoleName(), role.getDescription()))
-            .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
+    @Transactional(readOnly = true)
+    public RoleResponse getById(Long id) {
+        return roleMapper.toResponse(findOrThrow(id));
     }
 
     @Override
-    public RoleResponse createRole(RoleRequest roleRequest) {
-        if (roleRepository.existsByRoleName(roleRequest.getRoleName().toUpperCase())) {
-            throw new RuntimeException("Role name already exists: " + roleRequest.getRoleName());
+    public RoleResponse create(RoleRequest request) {
+        if (roleRepository.existsByRoleName(request.getRoleName())) {
+            throw new DuplicateResourceException("Role name already exists: " + request.getRoleName());
         }
 
-        Role temp = new Role();
-        temp.setRoleName(roleRequest.getRoleName().toUpperCase());
-        temp.setDescription(roleRequest.getDescription());
-
-        Role savedRole = roleRepository.save(temp);
-        return new RoleResponse(savedRole.getRoleId(), savedRole.getRoleName(), savedRole.getDescription());
+        return roleMapper.toResponse(roleRepository.save(roleMapper.toEntity(request)));
     }
 
     @Override
-    public RoleResponse updateRole(Long id, RoleRequest roleRequest) {
-        Role existingRole = roleRepository.findById(id).orElse(null);
-        if (existingRole == null) {
-            throw new RuntimeException("Role not found with id: " + id);
+    public RoleResponse update(Long id, RoleRequest request) {
+        Role entity = findOrThrow(id);
+
+        if (roleRepository.existsByRoleNameAndRoleIdNot(request.getRoleName(), id)) {
+            throw new DuplicateResourceException("Role name already exists: " + request.getRoleName());
         }
 
-        if(roleRepository.existsByRoleNameAndRoleIdNot(roleRequest.getRoleName(), id)) {
-            throw new RuntimeException("Role name already exists: " + roleRequest.getRoleName());
-        };
-        existingRole.setRoleName(roleRequest.getRoleName().toUpperCase());
-        existingRole.setDescription(roleRequest.getDescription());
+        roleMapper.updateEntityFromRequest(request, entity);
 
-        Role updatedRole = roleRepository.save(existingRole);
-        return new RoleResponse(updatedRole.getRoleId(), updatedRole.getRoleName(), updatedRole.getDescription());
+        return roleMapper.toResponse(roleRepository.save(entity));
     }
 
     @Override
-    public void deleteRole (Long id) {
-        Role existingRole = roleRepository.findById(id).orElse(null);
-        if(existingRole == null) {
-            throw new RuntimeException("Role not found with id: " + id);
-        }
+    public void delete(Long id) {
+        findOrThrow(id);
 
-        boolean isUsedByAccounts = accountRepository.existsByRole_RoleId(id);
-        if (isUsedByAccounts) {
-            throw new RuntimeException("Cannot delete role: This role is currently assigned to existing accounts.");
-        }
-
-        boolean isUsedByPermissions = rolePermissionRepository.existsByRole_RoleId(id);
-        if (isUsedByPermissions) {
-            throw new RuntimeException("Cannot delete role: This role is currently assigned and has existing permissions.");
+        if (accountRepository.existsByRole_RoleId(id)) {
+            throw new BusinessException("Cannot delete role: it is assigned to one or more accounts");
         }
 
         roleRepository.deleteById(id);
-        return;
     }
 
-    @Override
-    public void addPermissionToRole(Long roleId, Long permissionId) {
-        Role tmp_Role = roleRepository.findById(roleId)
-            .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
-        
-        Permission tmp_Permission = permissionRepository.findById(permissionId)
-            .orElseThrow(() -> new RuntimeException("Permission not found with id: " + permissionId));
-
-        RolePermissionId tmp_Id = new RolePermissionId(roleId, permissionId);
-        if (rolePermissionRepository.existsById(tmp_Id)) {
-            throw new RuntimeException("This permission has already been assigned to this role.");
-        }
-
-        RolePermission tmp_RolePermission = new RolePermission(tmp_Id, tmp_Role, tmp_Permission);
-        rolePermissionRepository.save(tmp_RolePermission);
-    }
-
-    @Override
-    public void removePermissionFromRole(Long roleId, Long permissionId) {
-        roleRepository.findById(roleId)
-            .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
-        
-        permissionRepository.findById(permissionId)
-            .orElseThrow(() -> new RuntimeException("Permission not found with id: " + permissionId));
-
-        RolePermissionId tmp_Id = new RolePermissionId(roleId, permissionId);
-        if (!rolePermissionRepository.existsById(tmp_Id)) {
-            throw new RuntimeException("This role does not have this permission.");
-        }
-
-        rolePermissionRepository.deleteById(tmp_Id);
-    }
-
-    @Override
-    public Page<PermissionResponse> getPermissionsOfRole(Long roleId, Pageable pageable) {
-        roleRepository.findById(roleId)
-            .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
-
-        return rolePermissionRepository.findAllByRole_RoleId(roleId, pageable)
-            .map(rolePermission -> new PermissionResponse(rolePermission.getPermission().getId(), rolePermission.getPermission().getPermissionName(), rolePermission.getPermission().getDetail()));
+    private Role findOrThrow(Long id) {
+        return roleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + id));
     }
 }

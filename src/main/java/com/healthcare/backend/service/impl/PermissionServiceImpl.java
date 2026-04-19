@@ -1,73 +1,85 @@
 package com.healthcare.backend.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.healthcare.backend.dto.request.PermissionRequest;
 import com.healthcare.backend.dto.response.PermissionResponse;
 import com.healthcare.backend.entity.Permission;
+import com.healthcare.backend.exception.BusinessException;
+import com.healthcare.backend.exception.DuplicateResourceException;
+import com.healthcare.backend.exception.ResourceNotFoundException;
+import com.healthcare.backend.mapper.PermissionMapper;
 import com.healthcare.backend.repository.AccountPermissionRepository;
 import com.healthcare.backend.repository.PermissionRepository;
 import com.healthcare.backend.repository.RolePermissionRepository;
 import com.healthcare.backend.service.PermissionService;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class PermissionServiceImpl implements PermissionService {
-    @Autowired
-    private PermissionRepository permissionRepository;
 
-    @Autowired
-    private RolePermissionRepository rolePermissionRepository;
-
-    @Autowired
-    private AccountPermissionRepository accountPermissionRepository;
+    private final PermissionRepository permissionRepository;
+    private final PermissionMapper permissionMapper;
+    private final RolePermissionRepository rolePermissionRepository;
+    private final AccountPermissionRepository accountPermissionRepository;
 
     @Override
-    public Page<PermissionResponse> getAllPermissions(Pageable pageable) {
-        return permissionRepository.findAll(pageable)
-            .map(permission -> new PermissionResponse(permission.getId(), permission.getPermissionName(), permission.getDetail()));
+    @Transactional(readOnly = true)
+    public List<PermissionResponse> getAll() {
+        return permissionRepository.findAll().stream().map(permissionMapper::toResponse).toList();
     }
 
     @Override
-    public PermissionResponse getPermissionById(Long id) {
-        return permissionRepository.findById(id)
-            .map(permission -> new PermissionResponse(permission.getId(), permission.getPermissionName(), permission.getDetail()))
-            .orElseThrow(() -> new RuntimeException("Permission not found with id: " + id));
+    @Transactional(readOnly = true)
+    public PermissionResponse getById(Long id) {
+        return permissionMapper.toResponse(findOrThrow(id));
     }
 
     @Override
-    public PermissionResponse createPermission(PermissionRequest permissionRequest) {
-        if(permissionRepository.existsByPermissionName(permissionRequest.getPermissionName())) {
-            throw new RuntimeException("Permission name already exists: " + permissionRequest.getPermissionName());
+    public PermissionResponse create(PermissionRequest request) {
+        if (permissionRepository.existsByPermissionName(request.getPermissionName())) {
+            throw new DuplicateResourceException("Permission name already exists: " + request.getPermissionName());
         }
 
-        Permission temp = new Permission();
-        temp.setPermissionName(permissionRequest.getPermissionName());
-        temp.setDetail(permissionRequest.getDetail());
-
-        Permission res = permissionRepository.save(temp);
-        return new PermissionResponse(res.getId(), res.getPermissionName(), res.getDetail());
+        return permissionMapper.toResponse(permissionRepository.save(permissionMapper.toEntity(request)));
     }
 
     @Override
-    public void deletePermission(Long id) {
-        Permission existingPermission = permissionRepository.findById(id).orElse(null);
-        if (existingPermission == null) {
-            throw new RuntimeException("Permission not found with id: " + id);
+    public PermissionResponse update(Long id, PermissionRequest request) {
+        Permission entity = findOrThrow(id);
+
+        if (permissionRepository.existsByPermissionNameAndPermissionIdNot(request.getPermissionName(), id)) {
+            throw new DuplicateResourceException("Permission name already exists: " + request.getPermissionName());
         }
 
-        boolean isUsedByRole = rolePermissionRepository.existsByPermission_PermissionId(id);
-        if (isUsedByRole) {
-            throw new RuntimeException("Cannot delete permission: This permission is currently assigned and has been existing roles.");
+        permissionMapper.updateEntityFromRequest(request, entity);
+
+        return permissionMapper.toResponse(permissionRepository.save(entity));
+    }
+
+    @Override
+    public void delete(Long id) {
+        findOrThrow(id);
+
+        if (rolePermissionRepository.existsByPermission_PermissionId(id)) {
+            throw new BusinessException("Cannot delete permission: it is assigned to one or more roles");
         }
 
-        boolean isUsedByAccount = accountPermissionRepository.existsByPermission_PermissionId(id);
-        if (isUsedByAccount) {
-            throw new RuntimeException("Cannot delete permission: This permission is currently assigned and has been existing accounts.");
+        if (accountPermissionRepository.existsByPermission_PermissionId(id)) {
+            throw new BusinessException("Cannot delete permission: it is assigned to one or more accounts");
         }
 
         permissionRepository.deleteById(id);
+    }
+
+    private Permission findOrThrow(Long id) {
+        return permissionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Permission not found: " + id));
     }
 }

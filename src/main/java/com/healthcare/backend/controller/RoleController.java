@@ -1,9 +1,8 @@
 package com.healthcare.backend.controller;
 
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,71 +15,48 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.healthcare.backend.dto.request.RoleRequest;
-import com.healthcare.backend.dto.response.PermissionResponse;
 import com.healthcare.backend.dto.response.RoleResponse;
 import com.healthcare.backend.service.RoleService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/roles")
+@RequiredArgsConstructor
 public class RoleController {
-    @Autowired
-    private RoleService roleService;
+
+    private final RoleService roleService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Page<RoleResponse>> getAllRoles(@ParameterObject Pageable pageable) {
-        Page<RoleResponse> res = roleService.getAllRoles(pageable);
-        return ResponseEntity.ok(res);
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<RoleResponse>> getAll() {
+        return ResponseEntity.ok(roleService.getAll());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<RoleResponse> getRoleById(@PathVariable Long id) {
-        RoleResponse res = roleService.getRoleById(id);
-        return ResponseEntity.ok(res);
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<RoleResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(roleService.getById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<RoleResponse> createRole(@Valid @RequestBody RoleRequest roleRequest) {
-        RoleResponse res = roleService.createRole(roleRequest);
-        return ResponseEntity.ok(res);
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<RoleResponse> create(@Valid @RequestBody RoleRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(roleService.create(request));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<RoleResponse> updateRole(@PathVariable Long id, @Valid @RequestBody RoleRequest roleRequest) {
-        RoleResponse res = roleService.updateRole(id, roleRequest);
-        return ResponseEntity.ok(res);
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<RoleResponse> update(@PathVariable Long id, @Valid @RequestBody RoleRequest request) {
+        return ResponseEntity.ok(roleService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<String> deleteRole(@PathVariable Long id) {
-        roleService.deleteRole(id);
-        return ResponseEntity.ok("Role deleted successfully");
-    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        roleService.delete(id);
 
-    @PostMapping("/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<String> addPermissionToRole(@PathVariable Long roleId, @PathVariable Long permissionId) {
-        roleService.addPermissionToRole(roleId, permissionId);
-        return ResponseEntity.ok("Permission added successfully.");
-    }
-
-    @GetMapping("/{roleId}/permissions")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Page<PermissionResponse>> getPermissionsByRole (@PathVariable Long roleId, @ParameterObject Pageable pageable) {
-        Page<PermissionResponse> res = roleService.getPermissionsOfRole(roleId, pageable);
-        return ResponseEntity.ok(res);
-    }
-
-    @DeleteMapping("/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<String> removePermissionFromRole (@PathVariable Long roleId, @PathVariable Long permissionId) {
-        roleService.removePermissionFromRole(roleId, permissionId);
-        return ResponseEntity.ok("Permission deleted successfully.");
+        return ResponseEntity.noContent().build();
     }
 }
