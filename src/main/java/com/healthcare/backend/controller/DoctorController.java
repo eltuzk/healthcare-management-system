@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.healthcare.backend.dto.request.DoctorRequestDTO;
-import com.healthcare.backend.dto.response.DoctorResponseDTO;
-import com.healthcare.backend.service.DoctorServiceInterface;
+import com.healthcare.backend.dto.request.DoctorRequest;
+import com.healthcare.backend.dto.response.DoctorResponse;
+import com.healthcare.backend.service.DoctorService;
 
 import jakarta.validation.Valid;
 
@@ -25,35 +25,35 @@ import jakarta.validation.Valid;
 @RequestMapping("/doctors")
 public class DoctorController {
     @Autowired
-    private DoctorServiceInterface doctorService;
+    private DoctorService doctorService;
 
     @GetMapping
-    public ResponseEntity<Page<DoctorResponseDTO>> getAllDoctors(
+    public ResponseEntity<Page<DoctorResponse>> getAllDoctors(
         @ParameterObject Pageable pageable,
         @RequestParam(required = false) String specialization
     ) {
-        Page<DoctorResponseDTO> res = doctorService.getAllDoctors(null, specialization);
+        Page<DoctorResponse> res = doctorService.getAllDoctors(null, specialization);
         return ResponseEntity.ok(res);
     }
 
     @GetMapping("/{doctorId}")
-    public ResponseEntity<DoctorResponseDTO> getDoctorById(@PathVariable Long doctorId) {
-        DoctorResponseDTO res = doctorService.getDoctorById(doctorId);
+    public ResponseEntity<DoctorResponse> getDoctorById(@PathVariable Long doctorId) {
+        DoctorResponse res = doctorService.getDoctorById(doctorId);
         return ResponseEntity.ok(res);
     }
 
     @PostMapping
-    public ResponseEntity<DoctorResponseDTO> createDoctor(@Valid @RequestBody DoctorRequestDTO doctorRequest) {
-        DoctorResponseDTO res = doctorService.createDoctor(doctorRequest);
+    public ResponseEntity<DoctorResponse> createDoctor(@Valid @RequestBody DoctorRequest doctorRequest) {
+        DoctorResponse res = doctorService.createDoctor(doctorRequest);
         return ResponseEntity.ok(res);
     }
 
     @PutMapping("/{doctorId}")
-    public ResponseEntity<DoctorResponseDTO> updateDoctor(
+    public ResponseEntity<DoctorResponse> updateDoctor(
         @PathVariable Long doctorId,
-        @Valid @RequestBody DoctorRequestDTO doctorRequest
+        @Valid @RequestBody DoctorRequest doctorRequest
     ) {
-        DoctorResponseDTO res = doctorService.updateDoctor(doctorRequest, doctorId);
+        DoctorResponse res = doctorService.updateDoctor(doctorRequest, doctorId);
         return ResponseEntity.ok(res);
     }
 

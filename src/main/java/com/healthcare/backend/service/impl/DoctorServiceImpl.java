@@ -6,19 +6,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.healthcare.backend.dto.request.DoctorRequestDTO;
-import com.healthcare.backend.dto.response.DoctorResponseDTO;
+import com.healthcare.backend.dto.request.DoctorRequest;
+import com.healthcare.backend.dto.response.DoctorResponse;
 import com.healthcare.backend.entity.Account;
 import com.healthcare.backend.entity.Doctor;
 import com.healthcare.backend.mapper.DoctorMapper;
 import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.DoctorRepository;
-import com.healthcare.backend.service.DoctorServiceInterface;
+import com.healthcare.backend.service.DoctorService;
 
 import jakarta.annotation.Nullable;
 
 @Service
-public class DoctorServiceImpl implements DoctorServiceInterface {
+public class DoctorServiceImpl implements DoctorService {
     @Autowired
     private DoctorRepository doctorRepository;
 
@@ -30,13 +30,13 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<DoctorResponseDTO> getAllDoctors(Pageable pageable, @Nullable String specialization) {
+    public Page<DoctorResponse> getAllDoctors(Pageable pageable, @Nullable String specialization) {
         return doctorRepository.findDoctorsBySpecialization(pageable, specialization).map(doctorMapper::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public DoctorResponseDTO getDoctorById(Long doctorId) {
+    public DoctorResponse getDoctorById(Long doctorId) {
         return doctorRepository.findById(doctorId)
         .map(doctorMapper::toDto)
         .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
@@ -44,7 +44,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
 
     @Override
     @Transactional
-    public DoctorResponseDTO createDoctor(DoctorRequestDTO doctorRequest) {
+    public DoctorResponse createDoctor(DoctorRequest doctorRequest) {
         Account account = accountRepository.findByEmail(doctorRequest.getAccountEmail())
             .orElseThrow(() -> new RuntimeException("Account not found by this email."));
         if(doctorRepository.existsByAccount_Email(doctorRequest.getAccountEmail())) {
@@ -70,7 +70,7 @@ public class DoctorServiceImpl implements DoctorServiceInterface {
     }
 
     @Override
-    public DoctorResponseDTO updateDoctor(DoctorRequestDTO doctorRequest, Long doctorId) {
+    public DoctorResponse updateDoctor(DoctorRequest doctorRequest, Long doctorId) {
         Doctor doctor = doctorRepository.findById(doctorId)
             .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
         

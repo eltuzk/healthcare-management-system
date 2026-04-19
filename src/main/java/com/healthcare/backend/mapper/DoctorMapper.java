@@ -2,18 +2,18 @@ package com.healthcare.backend.mapper;
 
 import org.springframework.stereotype.Component;
 
-import com.healthcare.backend.dto.request.DoctorRequestDTO;
-import com.healthcare.backend.dto.response.DoctorResponseDTO;
+import com.healthcare.backend.dto.request.DoctorRequest;
+import com.healthcare.backend.dto.response.DoctorResponse;
 import com.healthcare.backend.entity.Doctor;
 
 @Component
 public class DoctorMapper {
-    public DoctorResponseDTO toDto(Doctor doctor) {
+    public DoctorResponse toDto(Doctor doctor) {
         if (doctor == null) {
             return null;
         }
 
-        DoctorResponseDTO response = new DoctorResponseDTO();
+        DoctorResponse response = new DoctorResponse();
         response.setDoctorId(doctor.getDoctorId());
         response.setFullName(doctor.getFullName());
         response.setSpecialization(doctor.getSpecialization());
@@ -35,7 +35,7 @@ public class DoctorMapper {
         return response;
     }
 
-    public Doctor createEntityFromDto(DoctorRequestDTO requestDTO) {
+    public Doctor createEntityFromDto(DoctorRequest requestDTO) {
         if (requestDTO == null) return null;
 
         Doctor doctor = new Doctor();
@@ -56,7 +56,7 @@ public class DoctorMapper {
         return doctor;
     }
 
-    public void updateEntityFromDto(Doctor doctor, DoctorRequestDTO requestDTO) {
+    public void updateEntityFromDto(Doctor doctor, DoctorRequest requestDTO) {
         if (requestDTO == null || doctor == null) return;
 
         doctor.setFullName(requestDTO.getFullName());

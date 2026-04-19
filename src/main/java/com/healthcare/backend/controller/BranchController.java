@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.healthcare.backend.dto.request.BranchRequestDto;
-import com.healthcare.backend.dto.response.BranchResponseDto;
-import com.healthcare.backend.service.IBranchService;
+import com.healthcare.backend.dto.request.BranchRequest;
+import com.healthcare.backend.dto.response.BranchResponse;
+import com.healthcare.backend.service.BranchService;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
@@ -24,25 +24,25 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/branches")
 @RequiredArgsConstructor
 public class BranchController {
-    private final IBranchService branchService;
+    private final BranchService branchService;
     @GetMapping
-    public ResponseEntity<List<BranchResponseDto>> getAll() {
+    public ResponseEntity<List<BranchResponse>> getAll() {
         return ResponseEntity.ok(branchService.getAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BranchResponseDto> getById(@PathVariable Integer id) {
+    public ResponseEntity<BranchResponse> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(branchService.getbyId(id));
     }
 
     @PostMapping
-    public ResponseEntity<BranchResponseDto> create(@Valid @RequestBody BranchRequestDto request) {
+    public ResponseEntity<BranchResponse> create(@Valid @RequestBody BranchRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(branchService.create(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BranchResponseDto> update(@PathVariable Integer id,
-                                                  @Valid @RequestBody BranchRequestDto request) {
+    public ResponseEntity<BranchResponse> update(@PathVariable Integer id,
+                                                 @Valid @RequestBody BranchRequest request) {
         return ResponseEntity.ok(branchService.update(id, request));
     }
 

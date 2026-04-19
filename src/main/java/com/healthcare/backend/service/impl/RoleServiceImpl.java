@@ -5,9 +5,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.healthcare.backend.dto.request.RoleRequestDTO;
-import com.healthcare.backend.dto.response.PermissionResponseDTO;
-import com.healthcare.backend.dto.response.RoleResponseDTO;
+import com.healthcare.backend.dto.request.RoleRequest;
+import com.healthcare.backend.dto.response.PermissionResponse;
+import com.healthcare.backend.dto.response.RoleResponse;
 import com.healthcare.backend.entity.Permission;
 import com.healthcare.backend.entity.Role;
 import com.healthcare.backend.entity.RolePermission;
@@ -16,10 +16,10 @@ import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.PermissionRepository;
 import com.healthcare.backend.repository.RolePermissionRepository;
 import com.healthcare.backend.repository.RoleRepository;
-import com.healthcare.backend.service.RoleServiceInterface;
+import com.healthcare.backend.service.RoleService;
 
 @Service
-public class RoleServiceImpl implements RoleServiceInterface {
+public class RoleServiceImpl implements RoleService {
     @Autowired
     private RoleRepository roleRepository;
     @Autowired
@@ -30,47 +30,47 @@ public class RoleServiceImpl implements RoleServiceInterface {
     private AccountRepository accountRepository;
 
     @Override
-    public Page<RoleResponseDTO> getAllRoles(Pageable pageable) {
+    public Page<RoleResponse> getAllRoles(Pageable pageable) {
         return roleRepository.findAll(pageable)
-            .map(role -> new RoleResponseDTO(role.getRoleId(), role.getRoleName(), role.getDescription()));
+            .map(role -> new RoleResponse(role.getRoleId(), role.getRoleName(), role.getDescription()));
     }
 
     @Override
-    public RoleResponseDTO getRoleById(Long id) {
+    public RoleResponse getRoleById(Long id) {
         return roleRepository.findById(id)
-            .map(role -> new RoleResponseDTO(role.getRoleId(), role.getRoleName(), role.getDescription()))
+            .map(role -> new RoleResponse(role.getRoleId(), role.getRoleName(), role.getDescription()))
             .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
     }
 
     @Override
-    public RoleResponseDTO createRole(RoleRequestDTO roleRequestDTO) {
-        if (roleRepository.existsByRoleName(roleRequestDTO.getRoleName().toUpperCase())) {
-            throw new RuntimeException("Role name already exists: " + roleRequestDTO.getRoleName());
+    public RoleResponse createRole(RoleRequest roleRequest) {
+        if (roleRepository.existsByRoleName(roleRequest.getRoleName().toUpperCase())) {
+            throw new RuntimeException("Role name already exists: " + roleRequest.getRoleName());
         }
 
         Role temp = new Role();
-        temp.setRoleName(roleRequestDTO.getRoleName().toUpperCase());
-        temp.setDescription(roleRequestDTO.getDescription());
+        temp.setRoleName(roleRequest.getRoleName().toUpperCase());
+        temp.setDescription(roleRequest.getDescription());
 
         Role savedRole = roleRepository.save(temp);
-        return new RoleResponseDTO(savedRole.getRoleId(), savedRole.getRoleName(), savedRole.getDescription());
+        return new RoleResponse(savedRole.getRoleId(), savedRole.getRoleName(), savedRole.getDescription());
     }
 
     @Override
-    public RoleResponseDTO updateRole(Long id, RoleRequestDTO roleRequestDTO) {
+    public RoleResponse updateRole(Long id, RoleRequest roleRequest) {
         Role existingRole = roleRepository.findById(id).orElse(null);
         if (existingRole == null) {
             throw new RuntimeException("Role not found with id: " + id);
         }
 
-        if(roleRepository.existsByRoleNameAndRoleIdNot(roleRequestDTO.getRoleName(), id)) {
-            throw new RuntimeException("Role name already exists: " + roleRequestDTO.getRoleName());
+        if(roleRepository.existsByRoleNameAndRoleIdNot(roleRequest.getRoleName(), id)) {
+            throw new RuntimeException("Role name already exists: " + roleRequest.getRoleName());
         };
-        existingRole.setRoleName(roleRequestDTO.getRoleName().toUpperCase());
-        existingRole.setDescription(roleRequestDTO.getDescription());
+        existingRole.setRoleName(roleRequest.getRoleName().toUpperCase());
+        existingRole.setDescription(roleRequest.getDescription());
 
         Role updatedRole = roleRepository.save(existingRole);
-        return new RoleResponseDTO(updatedRole.getRoleId(), updatedRole.getRoleName(), updatedRole.getDescription());
+        return new RoleResponse(updatedRole.getRoleId(), updatedRole.getRoleName(), updatedRole.getDescription());
     }
 
     @Override
@@ -128,11 +128,11 @@ public class RoleServiceImpl implements RoleServiceInterface {
     }
 
     @Override
-    public Page<PermissionResponseDTO> getPermissionsOfRole(Long roleId, Pageable pageable) {
+    public Page<PermissionResponse> getPermissionsOfRole(Long roleId, Pageable pageable) {
         roleRepository.findById(roleId)
             .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
 
         return rolePermissionRepository.findAllByRole_RoleId(roleId, pageable)
-            .map(rolePermission -> new PermissionResponseDTO(rolePermission.getPermission().getId(), rolePermission.getPermission().getPermissionName(), rolePermission.getPermission().getDetail()));
+            .map(rolePermission -> new PermissionResponse(rolePermission.getPermission().getId(), rolePermission.getPermission().getPermissionName(), rolePermission.getPermission().getDetail()));
     }
 }

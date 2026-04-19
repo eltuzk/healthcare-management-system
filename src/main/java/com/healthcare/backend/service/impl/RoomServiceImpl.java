@@ -1,7 +1,7 @@
 package com.healthcare.backend.service.impl;
 
-import com.healthcare.backend.dto.request.RoomRequestDTO;
-import com.healthcare.backend.dto.response.RoomResponseDTO;
+import com.healthcare.backend.dto.request.RoomRequest;
+import com.healthcare.backend.dto.response.RoomResponse;
 import com.healthcare.backend.entity.Branch;
 import com.healthcare.backend.entity.Room;
 import com.healthcare.backend.entity.RoomType;
@@ -9,7 +9,7 @@ import com.healthcare.backend.repository.BedRepository;
 import com.healthcare.backend.repository.BranchRepository;
 import com.healthcare.backend.repository.RoomRepository;
 import com.healthcare.backend.repository.RoomTypeRepository;
-import com.healthcare.backend.service.RoomServiceInterface;
+import com.healthcare.backend.service.RoomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class RoomServiceImpl implements RoomServiceInterface {
+public class RoomServiceImpl implements RoomService {
 
     @Autowired
     private RoomRepository roomRepository;
@@ -31,8 +31,8 @@ public class RoomServiceImpl implements RoomServiceInterface {
     @Autowired
     private BedRepository bedRepository;
 
-    private RoomResponseDTO toDTO(Room room) {
-        return new RoomResponseDTO(
+    private RoomResponse toDTO(Room room) {
+        return new RoomResponse(
                 room.getRoomId(),
                 room.getRoomCode(),
                 room.getPosition(),
@@ -45,7 +45,7 @@ public class RoomServiceImpl implements RoomServiceInterface {
     }
 
     @Override
-    public List<RoomResponseDTO> getAllRooms(Long roomTypeId) {
+    public List<RoomResponse> getAllRooms(Long roomTypeId) {
         List<Room> rooms = (roomTypeId != null)
                 ? roomRepository.findByRoomType_RoomTypeId(roomTypeId)
                 : roomRepository.findAll();
@@ -56,14 +56,14 @@ public class RoomServiceImpl implements RoomServiceInterface {
     }
 
     @Override
-    public RoomResponseDTO getRoomById(Long id) {
+    public RoomResponse getRoomById(Long id) {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room not found with id: " + id));
         return toDTO(room);
     }
 
     @Override
-    public RoomResponseDTO createRoom(RoomRequestDTO request) {
+    public RoomResponse createRoom(RoomRequest request) {
         if (roomRepository.existsByRoomCode(request.getRoomCode())) {
             throw new RuntimeException("Room code already exists: " + request.getRoomCode());
         }
@@ -86,7 +86,7 @@ public class RoomServiceImpl implements RoomServiceInterface {
     }
 
     @Override
-    public RoomResponseDTO updateRoom(Long id, RoomRequestDTO request) {
+    public RoomResponse updateRoom(Long id, RoomRequest request) {
         Room existing = roomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room not found with id: " + id));
 

@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.healthcare.backend.dto.request.RoleRequestDTO;
-import com.healthcare.backend.dto.response.PermissionResponseDTO;
-import com.healthcare.backend.dto.response.RoleResponseDTO;
-import com.healthcare.backend.service.RoleServiceInterface;
+import com.healthcare.backend.dto.request.RoleRequest;
+import com.healthcare.backend.dto.response.PermissionResponse;
+import com.healthcare.backend.dto.response.RoleResponse;
+import com.healthcare.backend.service.RoleService;
 
 import jakarta.validation.Valid;
 
@@ -26,33 +26,33 @@ import jakarta.validation.Valid;
 @RequestMapping("/roles")
 public class RoleController {
     @Autowired
-    private RoleServiceInterface roleService;
+    private RoleService roleService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Page<RoleResponseDTO>> getAllRoles(@ParameterObject Pageable pageable) {
-        Page<RoleResponseDTO> res = roleService.getAllRoles(pageable);
+    public ResponseEntity<Page<RoleResponse>> getAllRoles(@ParameterObject Pageable pageable) {
+        Page<RoleResponse> res = roleService.getAllRoles(pageable);
         return ResponseEntity.ok(res);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<RoleResponseDTO> getRoleById(@PathVariable Long id) {
-        RoleResponseDTO res = roleService.getRoleById(id);
+    public ResponseEntity<RoleResponse> getRoleById(@PathVariable Long id) {
+        RoleResponse res = roleService.getRoleById(id);
         return ResponseEntity.ok(res);
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<RoleResponseDTO> createRole(@Valid @RequestBody RoleRequestDTO roleRequestDTO) {
-        RoleResponseDTO res = roleService.createRole(roleRequestDTO);
+    public ResponseEntity<RoleResponse> createRole(@Valid @RequestBody RoleRequest roleRequest) {
+        RoleResponse res = roleService.createRole(roleRequest);
         return ResponseEntity.ok(res);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<RoleResponseDTO> updateRole(@PathVariable Long id, @Valid @RequestBody RoleRequestDTO roleRequestDTO) {
-        RoleResponseDTO res = roleService.updateRole(id, roleRequestDTO);
+    public ResponseEntity<RoleResponse> updateRole(@PathVariable Long id, @Valid @RequestBody RoleRequest roleRequest) {
+        RoleResponse res = roleService.updateRole(id, roleRequest);
         return ResponseEntity.ok(res);
     }
 
@@ -72,8 +72,8 @@ public class RoleController {
 
     @GetMapping("/{roleId}/permissions")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Page<PermissionResponseDTO>> getPermissionsByRole (@PathVariable Long roleId, @ParameterObject Pageable pageable) {
-        Page<PermissionResponseDTO> res = roleService.getPermissionsOfRole(roleId, pageable);
+    public ResponseEntity<Page<PermissionResponse>> getPermissionsByRole (@PathVariable Long roleId, @ParameterObject Pageable pageable) {
+        Page<PermissionResponse> res = roleService.getPermissionsOfRole(roleId, pageable);
         return ResponseEntity.ok(res);
     }
 
