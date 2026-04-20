@@ -1,4 +1,6 @@
 package com.healthcare.backend.entity;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -14,6 +16,8 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "room")
+@Getter
+@Setter
 public class Room {
 
     @Id
@@ -40,63 +44,5 @@ public class Room {
 
     @OneToMany(mappedBy = "room")
     private List<Bed> beds;
-
-    public Room() {
-    }
-
-    public Long getRoomId() {
-        return roomId;
-    }
-
-    public void setRoomId(Long roomId) {
-        this.roomId = roomId;
-    }
-
-    public String getRoomCode() {
-        return roomCode;
-    }
-
-    public void setRoomCode(String roomCode) {
-        this.roomCode = roomCode;
-    }
-
-    public String getPosition() {
-        return position;
-    }
-
-    public void setPosition(String position) {
-        this.position = position;
-    }
-
-    public String getNote() {
-        return note;
-    }
-
-    public void setNote(String note) {
-        this.note = note;
-    }
-
-    public RoomType getRoomType() {
-        return roomType;
-    }
-
-    public void setRoomType(RoomType roomType) {
-        this.roomType = roomType;
-    }
-
-    public Branch getBranch() {
-        return branch;
-    }
-
-    public void setBranch(Branch branch) {
-        this.branch = branch;
-    }
-
-    public List<Bed> getBeds() {
-        return beds;
-    }
-
-    public void setBeds(List<Bed> beds) {
-        this.beds = beds;
-    }
 }
+

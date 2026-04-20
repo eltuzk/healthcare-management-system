@@ -6,10 +6,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "role_permission")
+@Table(name = "ROLEPERMISSION")
+@Getter
+@Setter
+@NoArgsConstructor
 public class RolePermission {
+
     @EmbeddedId
     private RolePermissionId rolePermissionId;
 
@@ -17,42 +24,9 @@ public class RolePermission {
     @MapsId("roleId")
     @JoinColumn(name = "role_id")
     private Role role;
-    
+
     @ManyToOne
     @MapsId("permissionId")
     @JoinColumn(name = "permission_id")
     private Permission permission;
-
-    public RolePermission() {
-    }
-
-    public RolePermission(RolePermissionId rolePermissionId, Role role, Permission permission) {
-        this.rolePermissionId = rolePermissionId;
-        this.role = role;
-        this.permission = permission;
-    }
-
-    public RolePermissionId getRolePermissionID() {
-        return rolePermissionId;
-    }
-
-    public void setRolePermissionID(RolePermissionId rolePermissionID) {
-        this.rolePermissionId = rolePermissionID;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public Permission getPermission() {
-        return permission;
-    }
-
-    public void setPermission(Permission permission) {
-        this.permission = permission;
-    }
 }

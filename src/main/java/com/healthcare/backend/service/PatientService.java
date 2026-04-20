@@ -1,19 +1,21 @@
 package com.healthcare.backend.service;
 
+import com.healthcare.backend.dto.request.PatientRequest;
+import com.healthcare.backend.dto.response.PatientResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import com.healthcare.backend.dto.request.PatientRequest;
-import com.healthcare.backend.dto.response.PatientResponse;
-
 public interface PatientService {
-    Page<PatientResponse> getAllPatients(Pageable pageable);
 
-    PatientResponse getPatientById(Long patientId);
+    Page<PatientResponse> getAll(Pageable pageable);
 
-    PatientResponse createPatient(PatientRequest patientRequest);
+    PatientResponse getById(Long id);
 
-    PatientResponse updatePatient(Long patientId, PatientRequest patientRequest);
+    PatientResponse create(PatientRequest request);
 
-    void deletePatient(Long patientId);
+    PatientResponse update(Long id, PatientRequest request);
+
+    void delete(Long id);
+
+    PatientResponse getMe();
 }

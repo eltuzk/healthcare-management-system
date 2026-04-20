@@ -7,12 +7,12 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.healthcare.backend.service.EmailServiceInterface;
+import com.healthcare.backend.service.EmailService;
 
 import jakarta.mail.internet.MimeMessage;
 
 @Service
-public class EmailServiceImpl implements EmailServiceInterface {
+public class EmailServiceImpl implements EmailService {
     @Autowired
     private JavaMailSender mailSender;
 

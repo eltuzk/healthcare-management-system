@@ -1,120 +1,103 @@
 package com.healthcare.backend.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.healthcare.backend.dto.request.DoctorRequest;
+import com.healthcare.backend.dto.response.DoctorResponse;
+import com.healthcare.backend.entity.Account;
+import com.healthcare.backend.entity.Doctor;
+import com.healthcare.backend.exception.DuplicateResourceException;
+import com.healthcare.backend.exception.ResourceNotFoundException;
+import com.healthcare.backend.mapper.DoctorMapper;
+import com.healthcare.backend.repository.AccountRepository;
+import com.healthcare.backend.repository.DoctorRepository;
+import com.healthcare.backend.service.DoctorService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.healthcare.backend.dto.request.DoctorRequestDTO;
-import com.healthcare.backend.dto.response.DoctorResponseDTO;
-import com.healthcare.backend.entity.Account;
-import com.healthcare.backend.entity.Doctor;
-import com.healthcare.backend.mapper.DoctorMapper;
-import com.healthcare.backend.repository.AccountRepository;
-import com.healthcare.backend.repository.DoctorRepository;
-import com.healthcare.backend.service.DoctorServiceInterface;
-
-import jakarta.annotation.Nullable;
-
 @Service
-public class DoctorServiceImpl implements DoctorServiceInterface {
-    @Autowired
-    private DoctorRepository doctorRepository;
+@RequiredArgsConstructor
+public class DoctorServiceImpl implements DoctorService {
 
-    @Autowired
-    private DoctorMapper doctorMapper;
-
-    @Autowired
-    private AccountRepository accountRepository;
+    private final DoctorRepository doctorRepository;
+    private final AccountRepository accountRepository;
+    private final DoctorMapper doctorMapper;
 
     @Override
     @Transactional(readOnly = true)
-    public Page<DoctorResponseDTO> getAllDoctors(Pageable pageable, @Nullable String specialization) {
-        return doctorRepository.findDoctorsBySpecialization(pageable, specialization).map(doctorMapper::toDto);
+    public Page<DoctorResponse> getAll(Pageable pageable) {
+        return doctorRepository.findAllByIsActive(true, pageable).map(doctorMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public DoctorResponseDTO getDoctorById(Long doctorId) {
-        return doctorRepository.findById(doctorId)
-        .map(doctorMapper::toDto)
-        .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
+    public DoctorResponse getById(Long doctorId) {
+        return doctorMapper.toResponse(findOrThrow(doctorId));
     }
 
     @Override
     @Transactional
-    public DoctorResponseDTO createDoctor(DoctorRequestDTO doctorRequest) {
-        Account account = accountRepository.findByEmail(doctorRequest.getAccountEmail())
-            .orElseThrow(() -> new RuntimeException("Account not found by this email."));
-        if(doctorRepository.existsByAccount_Email(doctorRequest.getAccountEmail())) {
-            throw new RuntimeException("This account being used.");
-        }
-        if(!"DOCTOR".equals(account.getRole().getRoleName())) {
-            throw new RuntimeException("This account invalid.");
+    public DoctorResponse create(DoctorRequest request) {
+        Account account = accountRepository.findById(request.getAccountId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với id: " + request.getAccountId()));
+
+        if (!Integer.valueOf(1).equals(account.getIsActive())) {
+            throw new ResourceNotFoundException("Tài khoản không hoạt động với id: " + request.getAccountId());
         }
 
-        if(doctorRepository.existsByLicenseNum(doctorRequest.getLicenseNum())) {
-            throw new RuntimeException("This license number already exists.");
+        if (doctorRepository.existsByAccount_AccountId(request.getAccountId())) {
+            throw new DuplicateResourceException("Account đã được liên kết với bác sĩ khác");
         }
 
-        if(doctorRepository.existsByIdentityNum(doctorRequest.getIdentityNum())) {
-            throw new RuntimeException("This identify number already exists.");
+        if (doctorRepository.existsByLicenseNum(request.getLicenseNum())) {
+            throw new DuplicateResourceException("Số giấy phép hành nghề đã tồn tại: " + request.getLicenseNum());
         }
 
-        Doctor doctor = doctorMapper.createEntityFromDto(doctorRequest);
+        if (request.getIdentityNum() != null && doctorRepository.existsByIdentityNum(request.getIdentityNum())) {
+            throw new DuplicateResourceException("Số CCCD đã tồn tại: " + request.getIdentityNum());
+        }
+
+        Doctor doctor = doctorMapper.toEntity(request);
         doctor.setAccount(account);
+        doctor.setActive(true);
 
-        doctorRepository.save(doctor);
-        return doctorMapper.toDto(doctor);
-    }
-
-    @Override
-    public DoctorResponseDTO updateDoctor(DoctorRequestDTO doctorRequest, Long doctorId) {
-        Doctor doctor = doctorRepository.findById(doctorId)
-            .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
-        
-        String newEmail = doctorRequest.getAccountEmail();
-        if (newEmail != null && !newEmail.equals(doctor.getAccount().getEmail())) {
-            Account newAccount = accountRepository.findByEmail(newEmail)
-                    .orElseThrow(() -> new RuntimeException("New account not found."));
-            
-            if (doctorRepository.existsByAccount_Email(newEmail)) {
-                throw new RuntimeException("The new account is already linked to another doctor.");
-            }
-            doctor.setAccount(newAccount);
-        }
-
-        String newLicense = doctorRequest.getLicenseNum();
-        if (newLicense != null && !newLicense.equals(doctor.getLicenseNum())) {
-            if (doctorRepository.existsByLicenseNum(newLicense)) {
-                throw new RuntimeException("This license number already exists.");
-            }
-        }
-
-        String newIdentity = doctorRequest.getIdentityNum();
-        if (newIdentity != null && !newIdentity.equals(doctor.getIdentityNum())) {
-            if (doctorRepository.existsByIdentityNum(newIdentity)) {
-                throw new RuntimeException("This identity number already exists.");
-            }
-        }
-
-        doctorMapper.updateEntityFromDto(doctor, doctorRequest);
-
-        doctor.getAccount().setActive(doctor.isActive());
-
-        doctorRepository.save(doctor);
-        return doctorMapper.toDto(doctor);
+        return doctorMapper.toResponse(doctorRepository.save(doctor));
     }
 
     @Override
     @Transactional
-    public void deleteDoctor(Long doctorId) {
-        Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
-        
+    public DoctorResponse update(Long doctorId, DoctorRequest request) {
+        Doctor doctor = findOrThrow(doctorId);
+
+        if (doctorRepository.existsByLicenseNumAndDoctorIdNot(request.getLicenseNum(), doctorId)) {
+            throw new DuplicateResourceException("Số giấy phép hành nghề đã tồn tại: " + request.getLicenseNum());
+        }
+
+        if (request.getIdentityNum() != null
+                && doctorRepository.existsByIdentityNumAndDoctorIdNot(request.getIdentityNum(), doctorId)) {
+            throw new DuplicateResourceException("Số CCCD đã tồn tại: " + request.getIdentityNum());
+        }
+
+        doctorMapper.updateEntityFromRequest(request, doctor);
+
+        return doctorMapper.toResponse(doctorRepository.save(doctor));
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long doctorId) {
+        Doctor doctor = findOrThrow(doctorId);
         doctor.setActive(false);
-        doctor.getAccount().setActive(false);
         doctorRepository.save(doctor);
+    }
+
+    private Doctor findOrThrow(Long doctorId) {
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bác sĩ với id: " + doctorId));
+        if (!doctor.isActive()) {
+            throw new ResourceNotFoundException("Không tìm thấy bác sĩ với id: " + doctorId);
+        }
+        return doctor;
     }
 }

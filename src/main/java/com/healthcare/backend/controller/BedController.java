@@ -1,8 +1,8 @@
 package com.healthcare.backend.controller;
 
-import com.healthcare.backend.dto.request.BedRequestDTO;
-import com.healthcare.backend.dto.response.BedResponseDTO;
-import com.healthcare.backend.service.BedServiceInterface;
+import com.healthcare.backend.dto.request.BedRequest;
+import com.healthcare.backend.dto.response.BedResponse;
+import com.healthcare.backend.service.BedService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,22 +15,22 @@ import java.util.List;
 public class BedController {
 
     @Autowired
-    private BedServiceInterface bedService;
+    private BedService bedService;
 
     @GetMapping("/rooms/{roomId}/beds")
-    public ResponseEntity<List<BedResponseDTO>> getBedsByRoom(@PathVariable Long roomId) {
+    public ResponseEntity<List<BedResponse>> getBedsByRoom(@PathVariable Long roomId) {
         return ResponseEntity.ok(bedService.getBedsByRoom(roomId));
     }
 
     @PostMapping("/rooms/{roomId}/beds")
-    public ResponseEntity<BedResponseDTO> addBed(@PathVariable Long roomId,
-                                                 @Valid @RequestBody BedRequestDTO request) {
+    public ResponseEntity<BedResponse> addBed(@PathVariable Long roomId,
+                                              @Valid @RequestBody BedRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bedService.addBed(roomId, request));
     }
 
     @PutMapping("/beds/{id}")
-    public ResponseEntity<BedResponseDTO> updateBed(@PathVariable Long id,
-                                                    @Valid @RequestBody BedRequestDTO request) {
+    public ResponseEntity<BedResponse> updateBed(@PathVariable Long id,
+                                                 @Valid @RequestBody BedRequest request) {
         return ResponseEntity.ok(bedService.updateBed(id, request));
     }
 

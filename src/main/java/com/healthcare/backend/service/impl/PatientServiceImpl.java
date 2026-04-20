@@ -1,120 +1,112 @@
 package com.healthcare.backend.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.healthcare.backend.dto.request.PatientRequest;
 import com.healthcare.backend.dto.response.PatientResponse;
 import com.healthcare.backend.entity.Account;
 import com.healthcare.backend.entity.Patient;
+import com.healthcare.backend.exception.DuplicateResourceException;
+import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.PatientMapper;
 import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.PatientRepository;
 import com.healthcare.backend.service.PatientService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@RestController
+@Service
+@RequiredArgsConstructor
 public class PatientServiceImpl implements PatientService {
-    @Autowired
-    private PatientRepository patientRepository;
 
-    @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
-    private PatientMapper patientMapper;
+    private final PatientRepository patientRepository;
+    private final AccountRepository accountRepository;
+    private final PatientMapper patientMapper;
 
     @Override
-    public Page<PatientResponse> getAllPatients(Pageable pageable) {
-        return patientRepository.findAll(pageable).map(patientMapper::toDto);
+    @Transactional(readOnly = true)
+    public Page<PatientResponse> getAll(Pageable pageable) {
+        return patientRepository.findAllByIsActive(1, pageable).map(patientMapper::toResponse);
     }
 
     @Override
-    public PatientResponse getPatientById(Long patientId) {
-        return patientRepository.findById(patientId)
-            .map(patientMapper::toDto)
-            .orElseThrow(() -> new RuntimeException("Patient not found with: " + patientId));
+    @Transactional(readOnly = true)
+    public PatientResponse getById(Long id) {
+        return patientMapper.toResponse(findOrThrow(id));
     }
 
     @Override
-    public PatientResponse createPatient(PatientRequest patientRequest) {
-        if(patientRepository.existsByPhone(patientRequest.getPhone())) {
-            throw new RuntimeException("This number phone already exists.");
-        }
+    @Transactional
+    public PatientResponse create(PatientRequest request) {
+        Account account = null;
+        if (request.getAccountId() != null) {
+            account = accountRepository.findById(request.getAccountId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với id: " + request.getAccountId()));
 
-        if(patientRepository.existsByIdentityNum(patientRequest.getIdentityNum())) {
-            throw new RuntimeException("This identity number already exists.");
-        }
-
-        Patient newPatient = patientMapper.createEntityFromDto(patientRequest);
-
-        String email = patientRequest.getAccountEmail();
-        if(email != null) {
-            Account account = accountRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Account not found."));
-            
-            if (!"PATIENT".equals(account.getRole().getRoleName())) {
-                throw new RuntimeException("This account is not a PATIENT role.");
+            if (!Integer.valueOf(1).equals(account.getIsActive())) {
+                throw new ResourceNotFoundException("Tài khoản không hoạt động với id: " + request.getAccountId());
             }
 
-            if(patientRepository.existsByAccount_Email(email)) {
-                throw new RuntimeException("This account is already linked.");
+            if (patientRepository.existsByAccount_AccountId(request.getAccountId())) {
+                throw new DuplicateResourceException("Tài khoản đã được liên kết với bệnh nhân khác");
             }
-
-            newPatient.setAccount(account);
         }
 
-        patientRepository.save(newPatient);
-        return patientMapper.toDto(newPatient); 
+        if (request.getIdentityNum() != null && patientRepository.existsByIdentityNum(request.getIdentityNum())) {
+            throw new DuplicateResourceException("Số CCCD đã tồn tại: " + request.getIdentityNum());
+        }
+
+        Patient patient = patientMapper.toEntity(request);
+        patient.setIsActive(1);
+        patient.setAccount(account);
+
+        return patientMapper.toResponse(patientRepository.save(patient));
     }
 
     @Override
-    public PatientResponse updatePatient(Long patientId, PatientRequest patientRequest) {
-        Patient patient = patientRepository.findById(patientId).orElse(null);
-        if(patient == null) {
-            throw new RuntimeException("Patient not found with id: " + patientId);
+    @Transactional
+    public PatientResponse update(Long id, PatientRequest request) {
+        Patient patient = findOrThrow(id);
+
+        if (request.getIdentityNum() != null
+                && patientRepository.existsByIdentityNumAndPatientIdNot(request.getIdentityNum(), id)) {
+            throw new DuplicateResourceException("Số CCCD đã tồn tại: " + request.getIdentityNum());
         }
 
-        String newEmail = null;
-        if (patient.getAccount() != null) {
-            newEmail = patient.getAccount().getEmail();
-        }
-        if (newEmail != null && !newEmail.equals(patient.getAccount().getEmail())) {
-            Account newAccount = accountRepository.findByEmail(newEmail)
-                    .orElseThrow(() -> new RuntimeException("New account not found."));
-            
-            if (patientRepository.existsByAccount_Email(newEmail)) {
-                throw new RuntimeException("The new account is already linked to another doctor.");
-            }
-            patient.setAccount(newAccount);
-        }
+        patientMapper.updateEntityFromRequest(request, patient);
 
-        String newIdentity = patientRequest.getIdentityNum();
-        if (newIdentity != null && !newIdentity.equals(patient.getIdentityNum())) {
-            if (patientRepository.existsByIdentityNum(newIdentity)) {
-                throw new RuntimeException("This identity number already exists.");
-            }
-        }
-
-        patientMapper.updatePatientFromDto(patient, patientRequest);
-
-        patientRepository.save(patient);
-        return patientMapper.toDto(patient); 
+        return patientMapper.toResponse(patientRepository.save(patient));
     }
 
     @Override
-    public void deletePatient(Long patientId) {
-        Patient patient = patientRepository.findById(patientId).orElse(null);
-        if(patient == null) throw new RuntimeException("Patient not found with id: " + patientId);
-
-        patient.setIsActive(false);
-
-        if(patient.getAccount() != null) {
-            
-        }
-        
+    @Transactional
+    public void delete(Long id) {
+        Patient patient = findOrThrow(id);
+        patient.setIsActive(0);
         patientRepository.save(patient);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public PatientResponse getMe() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Account account = accountRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + email));
+
+        Patient patient = patientRepository.findByAccount_AccountId(account.getAccountId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hồ sơ bệnh nhân cho tài khoản: " + email));
+
+        return patientMapper.toResponse(patient);
+    }
+
+    private Patient findOrThrow(Long id) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bệnh nhân với id: " + id));
+        if (!Integer.valueOf(1).equals(patient.getIsActive())) {
+            throw new ResourceNotFoundException("Không tìm thấy bệnh nhân với id: " + id);
+        }
+        return patient;
+    }
 }

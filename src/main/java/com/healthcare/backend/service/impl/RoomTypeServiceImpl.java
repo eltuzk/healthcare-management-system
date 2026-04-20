@@ -1,11 +1,11 @@
 package com.healthcare.backend.service.impl;
 
-import com.healthcare.backend.dto.request.RoomTypeRequestDTO;
-import com.healthcare.backend.dto.response.RoomTypeResponseDTO;
+import com.healthcare.backend.dto.request.RoomTypeRequest;
+import com.healthcare.backend.dto.response.RoomTypeResponse;
 import com.healthcare.backend.entity.RoomType;
 import com.healthcare.backend.repository.RoomRepository;
 import com.healthcare.backend.repository.RoomTypeRepository;
-import com.healthcare.backend.service.RoomTypeServiceInterface;
+import com.healthcare.backend.service.RoomTypeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class RoomTypeServiceImpl implements RoomTypeServiceInterface {
+public class RoomTypeServiceImpl implements RoomTypeService {
 
     @Autowired
     private RoomTypeRepository roomTypeRepository;
@@ -22,22 +22,22 @@ public class RoomTypeServiceImpl implements RoomTypeServiceInterface {
     private RoomRepository roomRepository;
 
     @Override
-    public List<RoomTypeResponseDTO> getAllRoomTypes() {
+    public List<RoomTypeResponse> getAllRoomTypes() {
         return roomTypeRepository.findAll()
                 .stream()
-                .map(rt -> new RoomTypeResponseDTO(rt.getRoomTypeId(), rt.getRoomTypeName()))
+                .map(rt -> new RoomTypeResponse(rt.getRoomTypeId(), rt.getRoomTypeName()))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public RoomTypeResponseDTO getRoomTypeById(Long id) {
+    public RoomTypeResponse getRoomTypeById(Long id) {
         RoomType roomType = roomTypeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room type not found with id: " + id));
-        return new RoomTypeResponseDTO(roomType.getRoomTypeId(), roomType.getRoomTypeName());
+        return new RoomTypeResponse(roomType.getRoomTypeId(), roomType.getRoomTypeName());
     }
 
     @Override
-    public RoomTypeResponseDTO createRoomType(RoomTypeRequestDTO request) {
+    public RoomTypeResponse createRoomType(RoomTypeRequest request) {
         if (roomTypeRepository.existsByRoomTypeName(request.getRoomTypeName())) {
             throw new RuntimeException("Room type name already exists: " + request.getRoomTypeName());
         }
@@ -46,11 +46,11 @@ public class RoomTypeServiceImpl implements RoomTypeServiceInterface {
         roomType.setRoomTypeName(request.getRoomTypeName());
 
         RoomType saved = roomTypeRepository.save(roomType);
-        return new RoomTypeResponseDTO(saved.getRoomTypeId(), saved.getRoomTypeName());
+        return new RoomTypeResponse(saved.getRoomTypeId(), saved.getRoomTypeName());
     }
 
     @Override
-    public RoomTypeResponseDTO updateRoomType(Long id, RoomTypeRequestDTO request) {
+    public RoomTypeResponse updateRoomType(Long id, RoomTypeRequest request) {
         RoomType existing = roomTypeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room type not found with id: " + id));
 
@@ -61,7 +61,7 @@ public class RoomTypeServiceImpl implements RoomTypeServiceInterface {
         existing.setRoomTypeName(request.getRoomTypeName());
 
         RoomType updated = roomTypeRepository.save(existing);
-        return new RoomTypeResponseDTO(updated.getRoomTypeId(), updated.getRoomTypeName());
+        return new RoomTypeResponse(updated.getRoomTypeId(), updated.getRoomTypeName());
     }
 
     @Override

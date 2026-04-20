@@ -1,63 +1,70 @@
 package com.healthcare.backend.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.healthcare.backend.dto.request.AuthRequestDTO;
-import com.healthcare.backend.dto.request.ForgotPassword_EmailRequestDTO;
-import com.healthcare.backend.dto.request.RegisterRequestDTO;
-import com.healthcare.backend.dto.request.ResetPasswordRequestDTO;
-import com.healthcare.backend.dto.response.AuthResponseDTO;
-import com.healthcare.backend.dto.response.RegisterResponseDTO;
-import com.healthcare.backend.service.AuthServiceInterface;
-
+import com.healthcare.backend.dto.request.AuthRequest;
+import com.healthcare.backend.dto.request.ChangePasswordRequest;
+import com.healthcare.backend.dto.request.ForgotPasswordRequest;
+import com.healthcare.backend.dto.request.RegisterRequest;
+import com.healthcare.backend.dto.request.ResetPasswordRequest;
+import com.healthcare.backend.dto.response.AuthResponse;
+import com.healthcare.backend.dto.response.RegisterResponse;
+import com.healthcare.backend.service.AuthService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
-    @Autowired
-    private AuthServiceInterface authServiceInterface;
+
+    private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponseDTO> register(@Valid @RequestBody RegisterRequestDTO registerRequestDTO) {
-        RegisterResponseDTO res = authServiceInterface.register(registerRequestDTO);
-        return ResponseEntity.ok(res);
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
+        return ResponseEntity.ok(authService.register(registerRequest));
     }
 
     @PostMapping("/register/verification-email")
-    public ResponseEntity<String> verifyEmail(@Valid @RequestParam("token") String token) {
-        try {
-            authServiceInterface.verifyEmail(token);
-            return ResponseEntity.ok("Verify successfully.");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("The verification link is invalid or has expired.");
-        }
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok("Verify successfully.");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody AuthRequestDTO authRequestDTO) {
-        AuthResponseDTO res = authServiceInterface.login(authRequestDTO);
+    public ResponseEntity<String> login(@Valid @RequestBody AuthRequest authRequest) {
+        AuthResponse res = authService.login(authRequest);
         return ResponseEntity.ok(res.getAccessToken());
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPassword_EmailRequestDTO forgotPasswordRequest) {
-        authServiceInterface.processForgotPassword(forgotPasswordRequest);
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        authService.processForgotPassword(forgotPasswordRequest);
         return ResponseEntity.ok("Mail sent successfully. Please check your email.");
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(
-        @RequestParam("token") String token, 
-        @Valid @RequestBody ResetPasswordRequestDTO resetPasswordRequest
+        @RequestParam String token,
+        @Valid @RequestBody ResetPasswordRequest resetPasswordRequest
     ) {
-        authServiceInterface.executeResetPassword(token, resetPasswordRequest);
+        authService.executeResetPassword(token, resetPasswordRequest);
         return ResponseEntity.ok("Password reset successfully.");
+    }
+
+    @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> changePassword(
+        Authentication auth,
+        @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        authService.changePassword(auth.getName(), request);
+        return ResponseEntity.noContent().build();
     }
 }

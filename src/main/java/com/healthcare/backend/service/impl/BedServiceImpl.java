@@ -1,12 +1,12 @@
 package com.healthcare.backend.service.impl;
 
-import com.healthcare.backend.dto.request.BedRequestDTO;
-import com.healthcare.backend.dto.response.BedResponseDTO;
+import com.healthcare.backend.dto.request.BedRequest;
+import com.healthcare.backend.dto.response.BedResponse;
 import com.healthcare.backend.entity.Bed;
 import com.healthcare.backend.entity.Room;
 import com.healthcare.backend.repository.BedRepository;
 import com.healthcare.backend.repository.RoomRepository;
-import com.healthcare.backend.service.BedServiceInterface;
+import com.healthcare.backend.service.BedService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class BedServiceImpl implements BedServiceInterface {
+public class BedServiceImpl implements BedService {
 
     @Autowired
     private BedRepository bedRepository;
@@ -22,8 +22,8 @@ public class BedServiceImpl implements BedServiceInterface {
     @Autowired
     private RoomRepository roomRepository;
 
-    private BedResponseDTO toDTO(Bed bed) {
-        return new BedResponseDTO(
+    private BedResponse toDTO(Bed bed) {
+        return new BedResponse(
                 bed.getBedId(),
                 bed.getPrice(),
                 bed.getStatus().name(),
@@ -32,7 +32,7 @@ public class BedServiceImpl implements BedServiceInterface {
     }
 
     @Override
-    public List<BedResponseDTO> getBedsByRoom(Long roomId) {
+    public List<BedResponse> getBedsByRoom(Long roomId) {
         roomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found with id: " + roomId));
 
@@ -43,7 +43,7 @@ public class BedServiceImpl implements BedServiceInterface {
     }
 
     @Override
-    public BedResponseDTO addBed(Long roomId, BedRequestDTO request) {
+    public BedResponse addBed(Long roomId, BedRequest request) {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found with id: " + roomId));
 
@@ -57,7 +57,7 @@ public class BedServiceImpl implements BedServiceInterface {
     }
 
     @Override
-    public BedResponseDTO updateBed(Long bedId, BedRequestDTO request) {
+    public BedResponse updateBed(Long bedId, BedRequest request) {
         Bed existing = bedRepository.findById(bedId)
                 .orElseThrow(() -> new RuntimeException("Bed not found with id: " + bedId));
 

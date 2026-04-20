@@ -1,17 +1,15 @@
 package com.healthcare.backend.entity;
 
-import java.util.List;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "room_type")
+@Table(name = "ROOM_TYPE")
+@Getter
+@Setter
+@NoArgsConstructor
 public class RoomType {
 
     @Id
@@ -19,36 +17,6 @@ public class RoomType {
     @Column(name = "room_type_id")
     private Long roomTypeId;
 
-    @Column(name = "room_type_name", nullable = false, unique = true, length = 100)
+    @Column(name = "room_type_name", unique = true, nullable = false, length = 100)
     private String roomTypeName;
-
-    @OneToMany(mappedBy = "roomType")
-    private List<Room> rooms;
-
-    public RoomType() {
-    }
-
-    public Long getRoomTypeId() {
-        return roomTypeId;
-    }
-
-    public void setRoomTypeId(Long roomTypeId) {
-        this.roomTypeId = roomTypeId;
-    }
-
-    public String getRoomTypeName() {
-        return roomTypeName;
-    }
-
-    public void setRoomTypeName(String roomTypeName) {
-        this.roomTypeName = roomTypeName;
-    }
-
-    public List<Room> getRooms() {
-        return rooms;
-    }
-
-    public void setRooms(List<Room> rooms) {
-        this.rooms = rooms;
-    }
 }

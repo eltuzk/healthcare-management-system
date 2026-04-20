@@ -6,42 +6,25 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "role")
+@Table(name = "ROLE")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Role {
+
     @Id
-    @GeneratedValue (strategy = GenerationType.IDENTITY)
-    @Column(name = "roleId")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "role_id")
     private Long roleId;
 
-    @Column(name = "roleName", nullable = false, unique = true, length = 100)
+    @Column(name = "role_name", nullable = false, unique = true, length = 100)
     private String roleName;
 
     @Column(name = "description")
     private String description;
-
-    public Long getRoleId() {
-        return roleId;
-    }
-
-    public void setRoleId(Long roleId) {
-        this.roleId = roleId;
-    }
-
-    public String getRoleName() {
-        return roleName;
-    }
-
-    public void setRoleName(String roleName) {
-        this.roleName = roleName;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }

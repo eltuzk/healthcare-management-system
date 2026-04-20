@@ -1,56 +1,62 @@
 package com.healthcare.backend.controller;
 
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.healthcare.backend.dto.request.PermissionRequestDTO;
-import com.healthcare.backend.dto.response.PermissionResponseDTO;
-import com.healthcare.backend.service.PermissionServiceInterface;
+import com.healthcare.backend.dto.request.PermissionRequest;
+import com.healthcare.backend.dto.response.PermissionResponse;
+import com.healthcare.backend.service.PermissionService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/permissions")
+@RequiredArgsConstructor
 public class PermissionController {
-    @Autowired
-    private PermissionServiceInterface permissionService;
+
+    private final PermissionService permissionService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Page<PermissionResponseDTO>> getAllPermissions(@ParameterObject Pageable pageable) {
-        Page<PermissionResponseDTO> res = permissionService.getAllPermissions(pageable);
-        return ResponseEntity.ok(res);
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<PermissionResponse>> getAll() {
+        return ResponseEntity.ok(permissionService.getAll());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<PermissionResponseDTO> getPermissionById(@PathVariable Long id) {
-        PermissionResponseDTO res = permissionService.getPermissionById(id);
-        return ResponseEntity.ok(res);
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<PermissionResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(permissionService.getById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<PermissionResponseDTO> createPermission(@Valid @RequestBody PermissionRequestDTO permissionRequestDTO) {
-        PermissionResponseDTO res = permissionService.createPermission(permissionRequestDTO);
-        return ResponseEntity.ok(res);
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<PermissionResponse> create(@Valid @RequestBody PermissionRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(permissionService.create(request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<PermissionResponse> update(@PathVariable Long id, @Valid @RequestBody PermissionRequest request) {
+        return ResponseEntity.ok(permissionService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<String> deletePermission(@PathVariable Long id) {
-        permissionService.deletePermission(id);
-        return ResponseEntity.ok("Permission deleted successfully");
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        permissionService.delete(id);
+
+        return ResponseEntity.noContent().build();
     }
 }

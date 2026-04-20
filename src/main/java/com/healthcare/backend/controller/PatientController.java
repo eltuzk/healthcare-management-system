@@ -1,65 +1,60 @@
 package com.healthcare.backend.controller;
 
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.healthcare.backend.dto.request.PatientRequest;
 import com.healthcare.backend.dto.response.PatientResponse;
 import com.healthcare.backend.service.PatientService;
-
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/patients")
+@RequiredArgsConstructor
 public class PatientController {
-    @Autowired
-    private PatientService patientService;
+
+    private final PatientService patientService;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'RECEPTIONIST', 'DOCTOR')")
-    public ResponseEntity<Page<PatientResponse>> getAllPatients(@ParameterObject Pageable pageable) {
-        Page<PatientResponse> res = patientService.getAllPatients(pageable);
-        return ResponseEntity.ok(res);
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    public ResponseEntity<Page<PatientResponse>> getAll(@ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(patientService.getAll(pageable));
     }
 
-    @GetMapping("/{patientId}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'RECEPTIONIST', 'DOCTOR') or (hasAuthority('PATIENT') and principal.patient = #patientId)")
-    public ResponseEntity<PatientResponse> getPatientById(@PathVariable Long patientId) {
-        PatientResponse res = patientService.getPatientById(patientId);
-        return ResponseEntity.ok(res);
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    public ResponseEntity<PatientResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(patientService.getById(id));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    public ResponseEntity<PatientResponse> getMe() {
+        return ResponseEntity.ok(patientService.getMe());
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'RECEPTIONIST')")
-    public ResponseEntity<PatientResponse> createPatient(@Valid @RequestBody PatientRequest patientRequest) {
-        PatientResponse res = patientService.createPatient(patientRequest);
-        return ResponseEntity.ok(res);
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    public ResponseEntity<PatientResponse> create(@Valid @RequestBody PatientRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(patientService.create(request));
     }
 
-    @PutMapping("/{patientId}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'RECEPTIONIST') or (hasAuthority('PATIENT') and principal.patient == #patientId)")
-    public ResponseEntity<PatientResponse> updatePatient(@PathVariable Long patientId, @Valid @RequestBody PatientRequest patientRequest) {
-        PatientResponse res = patientService.updatePatient(patientId, patientRequest);
-        return ResponseEntity.ok(res);
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    public ResponseEntity<PatientResponse> update(@PathVariable Long id,
+                                                  @Valid @RequestBody PatientRequest request) {
+        return ResponseEntity.ok(patientService.update(id, request));
     }
 
-    @DeleteMapping("/{patientId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<String> deletePatient(@PathVariable Long patientId) {
-        patientService.deletePatient(patientId);
-        return ResponseEntity.ok("Deleted successfully.");
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        patientService.delete(id);
+        return ResponseEntity.noContent().build();
     }
-
 }

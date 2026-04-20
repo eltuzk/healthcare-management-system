@@ -1,7 +1,7 @@
 package com.healthcare.backend.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,5 +12,5 @@ import com.healthcare.backend.entity.AccountPermissionId;
 public interface AccountPermissionRepository extends JpaRepository<AccountPermission, AccountPermissionId> {
     boolean existsByPermission_PermissionId(Long permissionId);
 
-    Page<AccountPermission> findAllByAccount_AccountId (Long accountId, Pageable pageable);
+    List<AccountPermission> findAllByAccount_AccountId(Long accountId);
 }

@@ -1,77 +1,93 @@
 package com.healthcare.backend.mapper;
 
-import org.springframework.stereotype.Component;
-
-import com.healthcare.backend.dto.request.DoctorRequestDTO;
-import com.healthcare.backend.dto.response.DoctorResponseDTO;
+import com.healthcare.backend.dto.request.DoctorRequest;
+import com.healthcare.backend.dto.response.DoctorResponse;
 import com.healthcare.backend.entity.Doctor;
+import org.springframework.stereotype.Component;
 
 @Component
 public class DoctorMapper {
-    public DoctorResponseDTO toDto(Doctor doctor) {
-        if (doctor == null) {
-            return null;
-        }
 
-        DoctorResponseDTO response = new DoctorResponseDTO();
+    public DoctorResponse toResponse(Doctor doctor) {
+        if (doctor == null) return null;
+
+        DoctorResponse response = new DoctorResponse();
         response.setDoctorId(doctor.getDoctorId());
         response.setFullName(doctor.getFullName());
+        response.setQualification(doctor.getQualification());
         response.setSpecialization(doctor.getSpecialization());
         response.setLicenseNum(doctor.getLicenseNum());
-        response.setQualification(doctor.getQualification());
-        response.setExperience(doctor.getExperience());
+        response.setIdentityNum(doctor.getIdentityNum());
         response.setGender(doctor.getGender());
         response.setPhone(doctor.getPhone());
         response.setAddress(doctor.getAddress());
-        response.setHireDate(doctor.getHireDate());
-        response.setIdentityNum(doctor.getIdentityNum());
         response.setDateOfBirth(doctor.getDateOfBirth());
-        response.setStatus(doctor.isActive());
+        response.setHireDate(doctor.getHireDate());
+        response.setExperience(doctor.getExperience());
+        response.setActive(doctor.isActive());
 
         if (doctor.getAccount() != null) {
-            response.setAccountEmail(doctor.getAccount().getEmail());
+            response.setAccountId(doctor.getAccount().getAccountId());
+            response.setEmail(doctor.getAccount().getEmail());
         }
-        
+
         return response;
     }
 
-    public Doctor createEntityFromDto(DoctorRequestDTO requestDTO) {
-        if (requestDTO == null) return null;
+    public Doctor toEntity(DoctorRequest request) {
+        if (request == null) return null;
 
         Doctor doctor = new Doctor();
-        
-        doctor.setFullName(requestDTO.getFullName());
-        doctor.setSpecialization(requestDTO.getSpecialization());
-        doctor.setLicenseNum(requestDTO.getLicenseNum());
-        doctor.setQualification(requestDTO.getQualification());
-        doctor.setExperience(requestDTO.getExperience());
-        doctor.setGender(requestDTO.getGender());
-        doctor.setPhone(requestDTO.getPhone());
-        doctor.setAddress(requestDTO.getAddress());
-        doctor.setHireDate(requestDTO.getHireDate());
-        doctor.setIdentityNum(requestDTO.getIdentityNum());
-        doctor.setDateOfBirth(requestDTO.getDateOfBirth());
-        doctor.setActive(requestDTO.isStatus());
+        doctor.setFullName(request.getFullName());
+        doctor.setQualification(request.getQualification());
+        doctor.setSpecialization(request.getSpecialization());
+        doctor.setLicenseNum(request.getLicenseNum());
+        doctor.setIdentityNum(request.getIdentityNum());
+        doctor.setGender(request.getGender());
+        doctor.setPhone(request.getPhone());
+        doctor.setAddress(request.getAddress());
+        doctor.setDateOfBirth(request.getDateOfBirth());
+        doctor.setHireDate(request.getHireDate());
+        doctor.setExperience(request.getExperience());
 
         return doctor;
     }
 
-    public void updateEntityFromDto(Doctor doctor, DoctorRequestDTO requestDTO) {
-        if (requestDTO == null || doctor == null) return;
+    public void updateEntityFromRequest(DoctorRequest request, Doctor doctor) {
+        if (request == null || doctor == null) return;
 
-        doctor.setFullName(requestDTO.getFullName());
-        doctor.setSpecialization(requestDTO.getSpecialization());
-        doctor.setLicenseNum(requestDTO.getLicenseNum());
-        doctor.setQualification(requestDTO.getQualification());
-        doctor.setExperience(requestDTO.getExperience());
-        doctor.setGender(requestDTO.getGender());
-        doctor.setPhone(requestDTO.getPhone());
-        doctor.setAddress(requestDTO.getAddress());
-        doctor.setIdentityNum(requestDTO.getIdentityNum());
-        doctor.setDateOfBirth(requestDTO.getDateOfBirth());
-        doctor.setHireDate(requestDTO.getHireDate());
-        doctor.setActive(requestDTO.isStatus());
+        if (request.getFullName() != null && !request.getFullName().isBlank()) {
+            doctor.setFullName(request.getFullName());
+        }
+        if (request.getLicenseNum() != null && !request.getLicenseNum().isBlank()) {
+            doctor.setLicenseNum(request.getLicenseNum());
+        }
+        if (request.getIdentityNum() != null) {
+            doctor.setIdentityNum(request.getIdentityNum());
+        }
+        if (request.getQualification() != null) {
+            doctor.setQualification(request.getQualification());
+        }
+        if (request.getSpecialization() != null) {
+            doctor.setSpecialization(request.getSpecialization());
+        }
+        if (request.getGender() != null) {
+            doctor.setGender(request.getGender());
+        }
+        if (request.getPhone() != null) {
+            doctor.setPhone(request.getPhone());
+        }
+        if (request.getAddress() != null) {
+            doctor.setAddress(request.getAddress());
+        }
+        if (request.getDateOfBirth() != null) {
+            doctor.setDateOfBirth(request.getDateOfBirth());
+        }
+        if (request.getHireDate() != null) {
+            doctor.setHireDate(request.getHireDate());
+        }
+        if (request.getExperience() != null) {
+            doctor.setExperience(request.getExperience());
+        }
     }
-
-    
 }

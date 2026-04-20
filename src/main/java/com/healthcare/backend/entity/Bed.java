@@ -1,4 +1,6 @@
 package com.healthcare.backend.entity;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
@@ -15,6 +17,8 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "bed")
+@Getter
+@Setter
 public class Bed {
 
     public enum BedStatus {
@@ -36,39 +40,5 @@ public class Bed {
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
-
-    public Bed() {
-    }
-
-    public Long getBedId() {
-        return bedId;
-    }
-
-    public void setBedId(Long bedId) {
-        this.bedId = bedId;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public BedStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(BedStatus status) {
-        this.status = status;
-    }
-
-    public Room getRoom() {
-        return room;
-    }
-
-    public void setRoom(Room room) {
-        this.room = room;
-    }
 }
+
