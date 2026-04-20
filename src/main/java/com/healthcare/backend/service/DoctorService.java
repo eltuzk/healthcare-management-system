@@ -1,21 +1,19 @@
 package com.healthcare.backend.service;
 
+import com.healthcare.backend.dto.request.DoctorRequest;
+import com.healthcare.backend.dto.response.DoctorResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import com.healthcare.backend.dto.request.DoctorRequest;
-import com.healthcare.backend.dto.response.DoctorResponse;
-
-import jakarta.annotation.Nullable;
-
 public interface DoctorService {
-    Page<DoctorResponse> getAllDoctors(Pageable pageable, @Nullable String specialization);
 
-    DoctorResponse getDoctorById(Long doctorId);
+    Page<DoctorResponse> getAll(Pageable pageable);
 
-    DoctorResponse createDoctor(DoctorRequest doctorRequest);
+    DoctorResponse getById(Long doctorId);
 
-    DoctorResponse updateDoctor(DoctorRequest doctorRequest, Long doctorId);
+    DoctorResponse create(DoctorRequest request);
 
-    void deleteDoctor(Long doctorId);
+    DoctorResponse update(Long doctorId, DoctorRequest request);
+
+    void delete(Long doctorId);
 }

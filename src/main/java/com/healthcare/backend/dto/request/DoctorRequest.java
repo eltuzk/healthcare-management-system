@@ -1,55 +1,45 @@
 package com.healthcare.backend.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDate;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import lombok.Data;
-
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 public class DoctorRequest {
-    @NotBlank(message = "This field is required.")
-    @Email(message = "Email invalid.")
-    private String accountEmail;
 
-    @NotBlank(message = "This field is required.")
-    @Size(max = 100)
+    @NotNull(message = "ID tài khoản không được để trống")
+    private Long accountId;
+
+    @NotBlank(message = "Họ tên không được để trống")
     private String fullName;
 
-    @NotBlank(message = "This field is required.")
-    private String specialization;
-
-    @NotBlank(message = "This field is required.")
+    @NotBlank(message = "Số giấy phép không được để trống")
     private String licenseNum;
 
-    @NotBlank(message = "This field is required.")
-    private String qualification;
-
-    @NotBlank(message = "This field is required.")
-    private String experience;
-
-    @NotBlank(message = "This field is required.")
-    private String gender;
-
-    @Pattern(regexp = "^(0|\\+84)(3|5|7|8|9)[0-9]{8}$", message = "Invalid phone number")
-    @NotBlank(message = "This field is required.")
-    private String phone;
-
-    @NotBlank(message = "This field is required.")
-    private String address;
-
-    @PastOrPresent(message = "Hire date must be in the past or present")    
-    private LocalDate hireDate;
-
-    @NotBlank(message = "This field is required.")
     private String identityNum;
 
-    @PastOrPresent(message = "Date of birth must be in the past or present")
+    private String qualification;
+
+    private String specialization;
+
+    private String gender;
+
+    private String phone;
+
+    private String address;
+
+    @PastOrPresent(message = "Ngày sinh không được lớn hơn hiện tại")
     private LocalDate dateOfBirth;
 
-    private boolean status;
+    @PastOrPresent(message = "Ngày vào làm không được lớn hơn hiện tại")
+    private LocalDate hireDate;
 
+    private Integer experience;
 }

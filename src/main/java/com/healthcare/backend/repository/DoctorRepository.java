@@ -1,27 +1,30 @@
 package com.healthcare.backend.repository;
 
-import java.util.Optional;
-
+import com.healthcare.backend.entity.Doctor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.healthcare.backend.entity.Doctor;
-
-import jakarta.annotation.Nullable;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
-    @Query("SELECT d FROM Doctor d WHERE (:specialization IS NULL OR d.specialization = :specialization)")
-    Page<Doctor> findDoctorsBySpecialization(Pageable pageable, @Nullable String specialization);
 
-    boolean existsByAccount_Email(String email);
+    List<Doctor> findAllByIsActive(boolean isActive);
+
+    Page<Doctor> findAllByIsActive(boolean isActive, Pageable pageable);
+
+    Optional<Doctor> findByAccount_AccountId(Long accountId);
+
+    boolean existsByAccount_AccountId(Long accountId);
 
     boolean existsByLicenseNum(String licenseNum);
 
+    boolean existsByLicenseNumAndDoctorIdNot(String licenseNum, Long doctorId);
+
     boolean existsByIdentityNum(String identityNum);
 
-    Optional<Doctor> findByAccount_AccountId(Long accountId);
+    boolean existsByIdentityNumAndDoctorIdNot(String identityNum, Long doctorId);
 }
