@@ -5,10 +5,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AccountResponse {
+public class AccountPermissionResponse {
     private Long accountId;
     private String email;
-    private Long roleId;
-    private String roleName;
-    private Integer isActive;
+    private Long permissionId;
+    private String permissionName;
 }

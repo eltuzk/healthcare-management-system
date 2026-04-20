@@ -1,37 +1,33 @@
-﻿package com.healthcare.backend.entity;
-import lombok.Getter;
-import lombok.Setter;
+package com.healthcare.backend.entity;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "account_permission")
+@Table(name = "ACCOUNT_PERMISSION")
 @Getter
 @Setter
+@NoArgsConstructor
 public class AccountPermission {
+
     @EmbeddedId
     private AccountPermissionId accountPermissionId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("accountId")
-    @JoinColumn(name = "account_Id")
+    @JoinColumn(name = "account_id")
     private Account account;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("permissionId")
-    @JoinColumn(name = "permission_Id")
+    @JoinColumn(name = "permission_id")
     private Permission permission;
-
-    public AccountPermission() {}
-
-    public AccountPermission(AccountPermissionId accountPermissionId, Account account, Permission permission) {
-        this.accountPermissionId = accountPermissionId;
-        this.account = account;
-        this.permission = permission;
-    }
 }

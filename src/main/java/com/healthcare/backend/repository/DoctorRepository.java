@@ -1,5 +1,7 @@
 package com.healthcare.backend.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,4 +22,6 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     boolean existsByLicenseNum(String licenseNum);
 
     boolean existsByIdentityNum(String identityNum);
+
+    Optional<Doctor> findByAccount_AccountId(Long accountId);
 }
