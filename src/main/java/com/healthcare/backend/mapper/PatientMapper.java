@@ -1,71 +1,55 @@
 package com.healthcare.backend.mapper;
 
-import java.time.format.DateTimeFormatter;
-
-import org.springframework.stereotype.Component;
-
 import com.healthcare.backend.dto.request.PatientRequest;
 import com.healthcare.backend.dto.response.PatientResponse;
 import com.healthcare.backend.entity.Patient;
+import org.springframework.stereotype.Component;
 
 @Component
 public class PatientMapper {
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    
-    public PatientResponse toDto(Patient patient) {
-        if(patient == null) return null;
 
+    public Patient toEntity(PatientRequest request) {
+        Patient entity = new Patient();
+        entity.setFullName(request.getFullName());
+        entity.setGender(request.getGender());
+        entity.setDateOfBirth(request.getDateOfBirth());
+        entity.setPhone(request.getPhone());
+        entity.setAddress(request.getAddress());
+        entity.setIdentityNum(request.getIdentityNum());
+        entity.setMedicalHistory(request.getMedicalHistory());
+        entity.setAllergy(request.getAllergy());
+        // account and isActive are set by service
+        return entity;
+    }
+
+    public PatientResponse toResponse(Patient entity) {
         PatientResponse response = new PatientResponse();
-        response.setPatientId(patient.getPatientId());
-        response.setFullName(patient.getFullName());
-        response.setGender(patient.getGender());
-        response.setPhone(patient.getPhone());
-        response.setAddress(patient.getAddress());
-        response.setIdentityNum(patient.getIdentityNum());
-        response.setMedicalHistory(patient.getMedicalHistory());
-        response.setAllergy(patient.getAllergy());
-        response.setIsActive(patient.getIsActive());
-
-        if (patient.getAccount() != null) {
-            response.setAccountEmail(patient.getAccount().getEmail());
+        response.setPatientId(entity.getPatientId());
+        response.setFullName(entity.getFullName());
+        response.setGender(entity.getGender());
+        response.setDateOfBirth(entity.getDateOfBirth());
+        response.setPhone(entity.getPhone());
+        response.setAddress(entity.getAddress());
+        response.setIdentityNum(entity.getIdentityNum());
+        response.setMedicalHistory(entity.getMedicalHistory());
+        response.setAllergy(entity.getAllergy());
+        response.setIsActive(entity.getIsActive());
+        if (entity.getAccount() != null) {
+            response.setAccountId(entity.getAccount().getAccountId());
+            response.setEmail(entity.getAccount().getEmail());
         }
-
-        if (patient.getDateOfBirth() != null) {
-            response.setDateOfBirth(patient.getDateOfBirth().format(FORMATTER));
-        }
-
         return response;
     }
-    
-    public Patient createEntityFromDto(PatientRequest request) {
-        if (request == null) return null;
 
-        Patient patient = new Patient();
-        
-        patient.setFullName(request.getFullName());
-        patient.setGender(request.getGender());
-        patient.setPhone(request.getPhone());
-        patient.setAddress(request.getAddress());
-        patient.setIdentityNum(request.getIdentityNum());
-        patient.setAllergy(request.getAllergy());
-        patient.setIsActive(request.getIsActive());
-        patient.setMedicalHistory(request.getMedicalHistory());
-        patient.setDateOfBirth(request.getDateOfBirth());
-
-        return patient;
-    }
-
-    public void updatePatientFromDto(Patient patient, PatientRequest request) {
-        if (request == null || patient == null) return;
-
-        patient.setFullName(request.getFullName());
-        patient.setGender(request.getGender());
-        patient.setPhone(request.getPhone());
-        patient.setAddress(request.getAddress());
-        patient.setAllergy(request.getAllergy());
-        patient.setIsActive(request.getIsActive());
-        patient.setMedicalHistory(request.getMedicalHistory());
-        patient.setIdentityNum(request.getIdentityNum());
-        patient.setDateOfBirth(request.getDateOfBirth());
+    public void updateEntityFromRequest(PatientRequest request, Patient entity) {
+        if (request.getFullName() != null) entity.setFullName(request.getFullName());
+        if (request.getGender() != null) entity.setGender(request.getGender());
+        if (request.getDateOfBirth() != null) entity.setDateOfBirth(request.getDateOfBirth());
+        if (request.getPhone() != null) entity.setPhone(request.getPhone());
+        if (request.getAddress() != null) entity.setAddress(request.getAddress());
+        if (request.getIdentityNum() != null) entity.setIdentityNum(request.getIdentityNum());
+        if (request.getMedicalHistory() != null) entity.setMedicalHistory(request.getMedicalHistory());
+        if (request.getAllergy() != null) entity.setAllergy(request.getAllergy());
+        // accountId is NOT updated
     }
 }

@@ -1,20 +1,26 @@
 package com.healthcare.backend.dto.response;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+
+import java.time.LocalDate;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class PatientResponse {
+
     private Long patientId;
-    private String accountEmail;
+    private Long accountId;
+    private String email;
     private String fullName;
     private String gender;
-    private String dateOfBirth;
+    private LocalDate dateOfBirth;
     private String phone;
     private String address;
     private String identityNum;
     private String medicalHistory;
     private String allergy;
-    private Boolean isActive;
+    private Integer isActive;
 }
