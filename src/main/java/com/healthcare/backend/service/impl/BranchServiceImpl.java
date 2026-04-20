@@ -1,71 +1,75 @@
 package com.healthcare.backend.service.impl;
-import lombok.RequiredArgsConstructor;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Service;
 
 import com.healthcare.backend.dto.request.BranchRequest;
 import com.healthcare.backend.dto.response.BranchResponse;
+import com.healthcare.backend.entity.Branch;
+import com.healthcare.backend.exception.DuplicateResourceException;
+import com.healthcare.backend.exception.ResourceNotFoundException;
+import com.healthcare.backend.mapper.BranchMapper;
 import com.healthcare.backend.repository.BranchRepository;
 import com.healthcare.backend.service.BranchService;
-import com.healthcare.backend.entity.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class BranchServiceImpl implements BranchService {
+
     private final BranchRepository branchRepository;
-    private BranchResponse toResponse(Branch branch) {
-        return BranchResponse.builder()
-                .branchId(branch.getBranchId())
-                .branchName(branch.getBranchName())
-                .branchAddress(branch.getBranchAddress())
-                .branchHotline(branch.getBranchHotline())
-                .build();
-    }
-    private Branch toEntity(BranchRequest request) {
-        return Branch.builder()
-                .branchName(request.getBranchName())
-                .branchAddress(request.getBranchAddress())
-                .branchHotline(request.getBranchHotline())
-                .build();
-    }
-        @Override
+    private final BranchMapper branchMapper;
+
+    @Override
+    @Transactional(readOnly = true)
     public List<BranchResponse> getAll() {
         return branchRepository.findAll()
                 .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+                .map(branchMapper::toResponse)
+                .toList();
     }
-    @Override
-    public BranchResponse getbyId(Integer id) {
-        Branch branch = branchRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khong tim thay chi nhanh: " + id));
-        return toResponse(branch);
-    }
-    @Override
-    public BranchResponse update(Integer id, BranchRequest request)
-    {
-        Branch branch = branchRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khong tim thay chi nhanh:  " + id));
 
-        branch.setBranchName(request.getBranchName());
-        branch.setBranchAddress(request.getBranchAddress());
-        branch.setBranchHotline(request.getBranchHotline());
+    @Override
+    @Transactional(readOnly = true)
+    public BranchResponse getById(Long id) {
+        return branchMapper.toResponse(findOrThrow(id));
+    }
 
-        return toResponse(branchRepository.save(branch));
-    }
     @Override
-    public BranchResponse create(BranchRequest BranchRequest)
-    {
-        Branch saved= branchRepository.save(toEntity(BranchRequest));
-        return toResponse(saved);
-    }
-    @Override
-    public void delete(Integer id) {
-        if (!branchRepository.existsById(id)) {
-            throw new RuntimeException("Khong tim thay chi nhanh " + id);
+    @Transactional
+    public BranchResponse create(BranchRequest request) {
+        if (branchRepository.existsByBranchName(request.getBranchName())) {
+            throw new DuplicateResourceException("Tên chi nhánh đã tồn tại: " + request.getBranchName());
         }
+
+        Branch branch = branchMapper.toEntity(request);
+        return branchMapper.toResponse(branchRepository.save(branch));
+    }
+
+    @Override
+    @Transactional
+    public BranchResponse update(Long id, BranchRequest request) {
+        Branch branch = findOrThrow(id);
+
+        if (request.getBranchName() != null
+                && branchRepository.existsByBranchNameAndBranchIdNot(request.getBranchName(), id)) {
+            throw new DuplicateResourceException("Tên chi nhánh đã tồn tại: " + request.getBranchName());
+        }
+
+        branchMapper.updateEntityFromRequest(request, branch);
+        return branchMapper.toResponse(branchRepository.save(branch));
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        findOrThrow(id);
         branchRepository.deleteById(id);
+    }
+
+    private Branch findOrThrow(Long id) {
+        return branchRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chi nhánh với id: " + id));
     }
 }

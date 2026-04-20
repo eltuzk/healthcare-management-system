@@ -1,28 +1,28 @@
 package com.healthcare.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "Branch")
+@Table(name = "BRANCH")
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Branch {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "BranchId")
-    private Integer branchId;
+    @Column(name = "branch_id")
+    private Long branchId;
 
-    @Column(name = "BranchName", nullable = false, length = 255)
+    @Column(name = "branch_name", unique = true, nullable = false, length = 200)
     private String branchName;
 
-    @Column(name = "BranchAddress", length = 500)
+    @Column(name = "branch_address", nullable = false, length = 500)
     private String branchAddress;
 
-    @Column(name = "BranchHotline", length = 20)
+    @Column(name = "branch_hotline", length = 20)
     private String branchHotline;
 }
