@@ -41,5 +41,5 @@ public class DoctorRequest {
     @PastOrPresent(message = "Ngày vào làm không được lớn hơn hiện tại")
     private LocalDate hireDate;
 
-    private Integer experience;
+    private String experience;
 }

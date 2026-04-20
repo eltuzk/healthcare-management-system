@@ -1,31 +1,16 @@
 package com.healthcare.backend.dto.response;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class RoomTypeResponse {
 
     private Long roomTypeId;
     private String roomTypeName;
-
-    public RoomTypeResponse() {
-    }
-
-    public RoomTypeResponse(Long roomTypeId, String roomTypeName) {
-        this.roomTypeId = roomTypeId;
-        this.roomTypeName = roomTypeName;
-    }
-
-    public Long getRoomTypeId() {
-        return roomTypeId;
-    }
-
-    public void setRoomTypeId(Long roomTypeId) {
-        this.roomTypeId = roomTypeId;
-    }
-
-    public String getRoomTypeName() {
-        return roomTypeName;
-    }
-
-    public void setRoomTypeName(String roomTypeName) {
-        this.roomTypeName = roomTypeName;
-    }
 }
+

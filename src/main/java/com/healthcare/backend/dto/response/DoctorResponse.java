@@ -37,7 +37,7 @@ public class DoctorResponse {
 
     private LocalDate hireDate;
 
-    private Integer experience;
+    private String experience;
 
-    private Integer isActive;
+    private boolean isActive;
 }

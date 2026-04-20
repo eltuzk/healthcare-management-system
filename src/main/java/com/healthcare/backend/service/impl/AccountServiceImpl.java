@@ -92,7 +92,7 @@ public class AccountServiceImpl implements AccountService {
         });
 
         patientRepository.findByAccount_AccountId(id).ifPresent(patient -> {
-            patient.setIsActive(false);
+            patient.setIsActive(0);
             patientRepository.save(patient);
         });
     }

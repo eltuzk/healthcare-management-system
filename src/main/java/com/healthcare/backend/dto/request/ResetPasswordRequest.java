@@ -1,38 +1,27 @@
 package com.healthcare.backend.dto.request;
+import lombok.Getter;
+import lombok.Setter;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-
+@Getter
+@Setter
 public class ResetPasswordRequest {
-    @NotBlank(message = "This field is required.")
+    @NotBlank(message = "Mật khẩu mới không được để trống")
     @Pattern(
         regexp = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$",
-        message = "Password must be at least 8 characters long, containing at least one uppercase letter, one number, and one special character."
+        message = "Mật khẩu không đúng định dạng"
     )
     private String newPassword;
 
-    @NotBlank(message = "This field is required.")
+    @NotBlank(message = "Xác nhận mật khẩu mới không được để trống")
     @Pattern(
         regexp = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$",
-        message = "Password must be at least 8 characters long, containing at least one uppercase letter, one number, and one special character."
+        message = "Mật khẩu không đúng định dạng"
     )
     private String confirmNewPassword;
-
-    public String getNewPassword() {
-        return newPassword;
-    }
-
-    public void setNewPassword(String newPassword) {
-        this.newPassword = newPassword;
-    }
-
-    public String getConfirmNewPassword() {
-        return confirmNewPassword;
-    }
-
-    public void setConfirmNewPassword(String confirmNewPassword) {
-        this.confirmNewPassword = confirmNewPassword;
-    }
-
-    
 }
+
+
+
+

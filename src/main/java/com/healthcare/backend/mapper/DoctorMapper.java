@@ -24,7 +24,7 @@ public class DoctorMapper {
         response.setDateOfBirth(doctor.getDateOfBirth());
         response.setHireDate(doctor.getHireDate());
         response.setExperience(doctor.getExperience());
-        response.setIsActive(doctor.getIsActive());
+        response.setActive(doctor.isActive());
 
         if (doctor.getAccount() != null) {
             response.setAccountId(doctor.getAccount().getAccountId());
