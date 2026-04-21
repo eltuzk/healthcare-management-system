@@ -4,8 +4,6 @@ spring:
 
   # DATABASE — Oracle
   datasource:
-    # Format: jdbc:oracle:thin:@<host>:<port>/<service_name>
-    # Ví dụ:  jdbc:oracle:thin:@localhost:1521/XEPDB1
     url: jdbc:oracle:thin:@//161.35.109.58:1521/XEPDB1
     username: system  # Ví dụ: healthcare
     password: Test@123User
