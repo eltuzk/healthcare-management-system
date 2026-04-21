@@ -6,9 +6,9 @@ spring:
   datasource:
     # Format: jdbc:oracle:thin:@<host>:<port>/<service_name>
     # Ví dụ:  jdbc:oracle:thin:@localhost:1521/XEPDB1
-    url: YOUR_ORACLE_JDBC_URL
-    username: YOUR_DB_USERNAME       # Ví dụ: healthcare
-    password: YOUR_DB_PASSWORD
+    url: jdbc:oracle:thin:@//161.35.109.58:1521/XEPDB1
+    username: system  # Ví dụ: healthcare
+    password: Test@123User
     driver-class-name: oracle.jdbc.OracleDriver
 
   # JPA / HIBERNATE
@@ -25,7 +25,7 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-    baseline-version: 0
+    baseline-version: 2
     validate-on-migrate: true
 
   # MAIL — Gmail SMTP
@@ -46,3 +46,8 @@ spring:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+jwt:
+  secret: daylamedicalmanagementsystem
+  access-token-expiration-ms: 900000
+  verification-token-expiration-ms: 86400000
