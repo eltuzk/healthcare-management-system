@@ -4,11 +4,13 @@ import com.healthcare.backend.dto.request.DoctorRequest;
 import com.healthcare.backend.dto.response.DoctorResponse;
 import com.healthcare.backend.entity.Account;
 import com.healthcare.backend.entity.Doctor;
+import com.healthcare.backend.entity.Specialty;
 import com.healthcare.backend.exception.DuplicateResourceException;
 import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.DoctorMapper;
 import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.DoctorRepository;
+import com.healthcare.backend.repository.SpecialtyRepository;
 import com.healthcare.backend.service.DoctorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,7 @@ public class DoctorServiceImpl implements DoctorService {
 
     private final DoctorRepository doctorRepository;
     private final AccountRepository accountRepository;
+    private final SpecialtyRepository specialtyRepository;
     private final DoctorMapper doctorMapper;
 
     @Override
@@ -58,8 +61,11 @@ public class DoctorServiceImpl implements DoctorService {
             throw new DuplicateResourceException("Số CCCD đã tồn tại: " + request.getIdentityNum());
         }
 
+        Specialty specialty = findActiveSpecialtyOrThrow(request.getSpecialtyId());
         Doctor doctor = doctorMapper.toEntity(request);
         doctor.setAccount(account);
+        doctor.setSpecialty(specialty);
+        doctor.setSpecialization(specialty.getSpecialtyName());
         doctor.setActive(true);
 
         return doctorMapper.toResponse(doctorRepository.save(doctor));
@@ -69,6 +75,7 @@ public class DoctorServiceImpl implements DoctorService {
     @Transactional
     public DoctorResponse update(Long doctorId, DoctorRequest request) {
         Doctor doctor = findOrThrow(doctorId);
+        Specialty specialty = findActiveSpecialtyOrThrow(request.getSpecialtyId());
 
         if (doctorRepository.existsByLicenseNumAndDoctorIdNot(request.getLicenseNum(), doctorId)) {
             throw new DuplicateResourceException("Số giấy phép hành nghề đã tồn tại: " + request.getLicenseNum());
@@ -80,6 +87,8 @@ public class DoctorServiceImpl implements DoctorService {
         }
 
         doctorMapper.updateEntityFromRequest(request, doctor);
+        doctor.setSpecialty(specialty);
+        doctor.setSpecialization(specialty.getSpecialtyName());
 
         return doctorMapper.toResponse(doctorRepository.save(doctor));
     }
@@ -99,5 +108,14 @@ public class DoctorServiceImpl implements DoctorService {
             throw new ResourceNotFoundException("Không tìm thấy bác sĩ với id: " + doctorId);
         }
         return doctor;
+    }
+
+    private Specialty findActiveSpecialtyOrThrow(Long specialtyId) {
+        Specialty specialty = specialtyRepository.findById(specialtyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chuyên khoa với id: " + specialtyId));
+        if (!specialty.isActive()) {
+            throw new ResourceNotFoundException("Không tìm thấy chuyên khoa với id: " + specialtyId);
+        }
+        return specialty;
     }
 }

@@ -51,3 +51,10 @@ jwt:
   secret: daylamedicalmanagementsystem
   access-token-expiration-ms: 900000
   verification-token-expiration-ms: 86400000
+
+sepay:
+  webhook-secret: CHANGE_ME_SEPAY_SECRET
+  account-number: "0123499999"
+
+appointments:
+  payment-expiry-scan-delay-ms: 60000
