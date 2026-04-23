@@ -17,5 +17,5 @@ public interface PatientService {
 
     void delete(Long id);
 
-    PatientResponse getMe();
+    PatientResponse getMe(String email);
 }
