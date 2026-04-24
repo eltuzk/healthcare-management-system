@@ -2,6 +2,7 @@ package com.healthcare.backend.controller;
 
 import com.healthcare.backend.dto.request.PatientRequest;
 import com.healthcare.backend.dto.response.PatientResponse;
+import com.healthcare.backend.security.UserPrincipal;
 import com.healthcare.backend.service.PatientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -34,8 +36,8 @@ public class PatientController {
 
     @GetMapping("/me")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
-    public ResponseEntity<PatientResponse> getMe() {
-        return ResponseEntity.ok(patientService.getMe());
+    public ResponseEntity<PatientResponse> getMe(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(patientService.getMe(userPrincipal.email()));
     }
 
     @PostMapping

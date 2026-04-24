@@ -2,7 +2,7 @@ package com.healthcare.backend.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +15,7 @@ import com.healthcare.backend.dto.request.RegisterRequest;
 import com.healthcare.backend.dto.request.ResetPasswordRequest;
 import com.healthcare.backend.dto.response.AuthResponse;
 import com.healthcare.backend.dto.response.RegisterResponse;
+import com.healthcare.backend.security.UserPrincipal;
 import com.healthcare.backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -61,10 +62,11 @@ public class AuthController {
     @PostMapping("/change-password")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changePassword(
-        Authentication auth,
+        @AuthenticationPrincipal UserPrincipal userPrincipal,
         @Valid @RequestBody ChangePasswordRequest request
     ) {
-        authService.changePassword(auth.getName(), request);
+        
+        authService.changePassword(userPrincipal.email(), request);
         return ResponseEntity.noContent().build();
     }
 }

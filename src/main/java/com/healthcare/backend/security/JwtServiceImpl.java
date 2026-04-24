@@ -17,7 +17,7 @@ public class JwtServiceImpl implements JwtServiceInterface {
 
     public String generateVerificationToken(String email) {
         return Jwts.builder()
-                .claim("email", email)
+                .subject(email)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(SECRET_KEY)

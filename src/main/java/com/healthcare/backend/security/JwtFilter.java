@@ -36,7 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 String email = jwtService.extractEmail(token).toString();
                 Long accountId = jwtService.extractAccountId(token);
 
-                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(roleName));                
+                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + roleName));                
 
                 UserPrincipal principal = new UserPrincipal(accountId, email, roleName);
 
