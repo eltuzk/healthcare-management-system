@@ -1,26 +1,42 @@
 package com.healthcare.backend.security;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtServiceImpl implements JwtServiceInterface {
-    private final static SecretKey SECRET_KEY = Jwts.SIG.HS256.key().build();
-    private final static long EXPIRATION_TIME = 86400000;
+    private final SecretKey secretKey;
+    private final long accessTokenExpirationMs;
+    private final long verificationTokenExpirationMs;
+
+    public JwtServiceImpl(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.access-token-expiration-ms}") long accessTokenExpirationMs,
+            @Value("${jwt.verification-token-expiration-ms}") long verificationTokenExpirationMs
+    ) {
+        this.secretKey = Keys.hmacShaKeyFor(hashSecret(secret));
+        this.accessTokenExpirationMs = accessTokenExpirationMs;
+        this.verificationTokenExpirationMs = verificationTokenExpirationMs;
+    }
 
     public String generateVerificationToken(String email) {
         return Jwts.builder()
                 .claim("email", email)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SECRET_KEY)
+                .expiration(new Date(System.currentTimeMillis() + verificationTokenExpirationMs))
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -30,15 +46,15 @@ public class JwtServiceImpl implements JwtServiceInterface {
                 .claim("accountId", accountId)
                 .claim("roleName", roleName)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 900000))
-                .signWith(SECRET_KEY)
+                .expiration(new Date(System.currentTimeMillis() + accessTokenExpirationMs))
+                .signWith(secretKey)
                 .compact();
     }
 
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                .verifyWith(SECRET_KEY)
+                .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -52,7 +68,7 @@ public class JwtServiceImpl implements JwtServiceInterface {
 
     public String extractEmail(String token) {
         JwtParser jwtParser = Jwts.parser()
-                .verifyWith(SECRET_KEY)
+                .verifyWith(secretKey)
                 .build();
         
         return jwtParser.parseSignedClaims(token)
@@ -62,7 +78,7 @@ public class JwtServiceImpl implements JwtServiceInterface {
 
     public String extractRole(String token) {
         JwtParser jwtParser = Jwts.parser()
-                .verifyWith(SECRET_KEY)
+                .verifyWith(secretKey)
                 .build();
         
         return jwtParser.parseSignedClaims(token)
@@ -72,11 +88,30 @@ public class JwtServiceImpl implements JwtServiceInterface {
 
     public Long extractAccountId(String token) {
         JwtParser jwtParser = Jwts.parser()
-                .verifyWith(SECRET_KEY)
+                .verifyWith(secretKey)
                 .build();
-        
-        return jwtParser.parseSignedClaims(token)
+
+        Object accountId = jwtParser.parseSignedClaims(token)
                 .getPayload()
-                .get("accountId", Long.class);
+                .get("accountId");
+
+        if (accountId instanceof Number number) {
+            return number.longValue();
+        }
+
+        if (accountId instanceof String accountIdText && !accountIdText.isBlank()) {
+            return Long.valueOf(accountIdText);
+        }
+
+        throw new JwtException("Token does not contain a valid accountId claim");
+    }
+
+    private byte[] hashSecret(String secret) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return digest.digest(secret.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 algorithm is not available", ex);
+        }
     }
 }

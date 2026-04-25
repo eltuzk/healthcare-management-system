@@ -5,13 +5,15 @@ import com.healthcare.backend.dto.response.PatientResponse;
 import com.healthcare.backend.entity.Patient;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
+
 @Component
 public class PatientMapper {
 
     public Patient toEntity(PatientRequest request) {
         Patient entity = new Patient();
         entity.setFullName(request.getFullName());
-        entity.setGender(request.getGender());
+        entity.setGender(normalizeGender(request.getGender()));
         entity.setDateOfBirth(request.getDateOfBirth());
         entity.setPhone(request.getPhone());
         entity.setAddress(request.getAddress());
@@ -43,7 +45,7 @@ public class PatientMapper {
 
     public void updateEntityFromRequest(PatientRequest request, Patient entity) {
         if (request.getFullName() != null) entity.setFullName(request.getFullName());
-        if (request.getGender() != null) entity.setGender(request.getGender());
+        if (request.getGender() != null) entity.setGender(normalizeGender(request.getGender()));
         if (request.getDateOfBirth() != null) entity.setDateOfBirth(request.getDateOfBirth());
         if (request.getPhone() != null) entity.setPhone(request.getPhone());
         if (request.getAddress() != null) entity.setAddress(request.getAddress());
@@ -51,5 +53,11 @@ public class PatientMapper {
         if (request.getMedicalHistory() != null) entity.setMedicalHistory(request.getMedicalHistory());
         if (request.getAllergy() != null) entity.setAllergy(request.getAllergy());
         // accountId is NOT updated
+    }
+
+    private String normalizeGender(String gender) {
+        return gender == null || gender.isBlank()
+                ? gender
+                : gender.trim().toUpperCase(Locale.ROOT);
     }
 }

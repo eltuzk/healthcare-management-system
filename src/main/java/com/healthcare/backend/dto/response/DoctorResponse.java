@@ -23,6 +23,12 @@ public class DoctorResponse {
 
     private String specialization;
 
+    private Long specialtyId;
+
+    private String specialtyCode;
+
+    private String specialtyName;
+
     private String licenseNum;
 
     private String identityNum;

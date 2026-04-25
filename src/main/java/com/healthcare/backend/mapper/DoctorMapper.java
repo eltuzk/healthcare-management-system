@@ -5,6 +5,8 @@ import com.healthcare.backend.dto.response.DoctorResponse;
 import com.healthcare.backend.entity.Doctor;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
+
 @Component
 public class DoctorMapper {
 
@@ -15,7 +17,14 @@ public class DoctorMapper {
         response.setDoctorId(doctor.getDoctorId());
         response.setFullName(doctor.getFullName());
         response.setQualification(doctor.getQualification());
-        response.setSpecialization(doctor.getSpecialization());
+        response.setSpecialization(doctor.getSpecialty() != null
+                ? doctor.getSpecialty().getSpecialtyName()
+                : doctor.getSpecialization());
+        if (doctor.getSpecialty() != null) {
+            response.setSpecialtyId(doctor.getSpecialty().getSpecialtyId());
+            response.setSpecialtyCode(doctor.getSpecialty().getSpecialtyCode());
+            response.setSpecialtyName(doctor.getSpecialty().getSpecialtyName());
+        }
         response.setLicenseNum(doctor.getLicenseNum());
         response.setIdentityNum(doctor.getIdentityNum());
         response.setGender(doctor.getGender());
@@ -43,7 +52,7 @@ public class DoctorMapper {
         doctor.setSpecialization(request.getSpecialization());
         doctor.setLicenseNum(request.getLicenseNum());
         doctor.setIdentityNum(request.getIdentityNum());
-        doctor.setGender(request.getGender());
+        doctor.setGender(normalizeGender(request.getGender()));
         doctor.setPhone(request.getPhone());
         doctor.setAddress(request.getAddress());
         doctor.setDateOfBirth(request.getDateOfBirth());
@@ -72,7 +81,7 @@ public class DoctorMapper {
             doctor.setSpecialization(request.getSpecialization());
         }
         if (request.getGender() != null) {
-            doctor.setGender(request.getGender());
+            doctor.setGender(normalizeGender(request.getGender()));
         }
         if (request.getPhone() != null) {
             doctor.setPhone(request.getPhone());
@@ -89,5 +98,11 @@ public class DoctorMapper {
         if (request.getExperience() != null) {
             doctor.setExperience(request.getExperience());
         }
+    }
+
+    private String normalizeGender(String gender) {
+        return gender == null || gender.isBlank()
+                ? gender
+                : gender.trim().toUpperCase(Locale.ROOT);
     }
 }

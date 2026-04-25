@@ -3,6 +3,7 @@ package com.healthcare.backend.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,6 +30,10 @@ public class DoctorRequest {
 
     private String specialization;
 
+    @NotNull(message = "ID chuyên khoa không được để trống")
+    private Long specialtyId;
+
+    @Pattern(regexp = "(?i)MALE|FEMALE|OTHER", message = "Giới tính chỉ được là MALE, FEMALE hoặc OTHER")
     private String gender;
 
     private String phone;

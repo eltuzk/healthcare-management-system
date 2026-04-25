@@ -4,6 +4,8 @@ import com.healthcare.backend.entity.Doctor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -27,4 +29,12 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     boolean existsByIdentityNum(String identityNum);
 
     boolean existsByIdentityNumAndDoctorIdNot(String identityNum, Long doctorId);
+
+    @Query("""
+            select d
+            from Doctor d
+            where d.isActive = true
+              and upper(trim(d.fullName)) = upper(trim(:fullName))
+            """)
+    List<Doctor> findActiveByFullName(@Param("fullName") String fullName);
 }
