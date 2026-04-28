@@ -13,43 +13,112 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.healthcare.backend.entity.Account;
+import com.healthcare.backend.repository.AccountRepository;
+
+import lombok.extern.slf4j.Slf4j;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Component
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtServiceInterface jwtService;
+
+    @Autowired
+    private AccountRepository accountRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+        log.info("JWT filter request: method={}, uri={}, hasAuthorizationHeader={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                authHeader != null);
 
-            if (jwtService.validateToken(token) && SecurityContextHolder.getContext().getAuthentication() == null) {
-                String roleName = jwtService.extractRole(token);
-                String email = jwtService.extractEmail(token).toString();
-                Long accountId = jwtService.extractAccountId(token);
+        if (authHeader == null || authHeader.isBlank()) {
+            request.setAttribute("authError", "Missing Authorization Bearer token");
+        } else if (!authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            request.setAttribute("authError", "Authorization header must start with Bearer");
+            log.info("JWT filter skipped bearer parsing: uri={}, headerValue={}",
+                    request.getRequestURI(),
+                    authHeader);
+        } else {
+            String token = normalizeToken(authHeader.substring(7));
+            boolean validToken = !token.isBlank() && jwtService.validateToken(token);
 
-                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + roleName));                
+            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + roleName));                
 
-                UserPrincipal principal = new UserPrincipal(accountId, email, roleName);
+            if (token.isBlank()) {
+                request.setAttribute("authError", "Bearer token is blank");
+            } else if (!validToken) {
+                request.setAttribute("authError", "Invalid or expired token");
+            } else if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                try {
+                    String email = jwtService.extractEmail(token);
+                    Long accountId = jwtService.extractAccountId(token);
+                    Account account = accountRepository.findWithRoleByEmail(email).orElse(null);
+                    String roleName = account != null && account.getRole() != null
+                            ? account.getRole().getRoleName()
+                            : jwtService.extractRole(token);
+                    String authorityName = roleName != null && roleName.startsWith("ROLE_")
+                            ? roleName
+                            : "ROLE_" + roleName;
 
-                SecurityContext context = SecurityContextHolder.createEmptyContext();
-                Authentication auth = new UsernamePasswordAuthenticationToken(principal, null, authorities);
-                context.setAuthentication(auth);
+                    List<GrantedAuthority> authorities = buildAuthorities(authorityName);
 
-                SecurityContextHolder.setContext(context);
+                    UserPrincipal principal = new UserPrincipal(accountId, email, roleName);
+
+                    SecurityContext context = SecurityContextHolder.createEmptyContext();
+                    Authentication auth = new UsernamePasswordAuthenticationToken(principal, null, authorities);
+                    context.setAuthentication(auth);
+
+                    SecurityContextHolder.setContext(context);
+                    log.info("JWT filter authenticated: email={}, authority={}", email, authorityName);
+                } catch (RuntimeException ex) {
+                    request.setAttribute("authError", "Cannot read authentication data from token: " + ex.getMessage());
+                    log.warn("JWT filter failed to build authentication", ex);
+                }
             }
-
         }
         
         filterChain.doFilter(request, response);
         return;
+    }
+
+    private String normalizeToken(String token) {
+        String normalizedToken = token == null ? "" : token.trim();
+
+        if (normalizedToken.startsWith("Bearer ")) {
+            normalizedToken = normalizedToken.substring(7).trim();
+        }
+
+        if (normalizedToken.length() >= 2
+                && normalizedToken.startsWith("\"")
+                && normalizedToken.endsWith("\"")) {
+            normalizedToken = normalizedToken.substring(1, normalizedToken.length() - 1).trim();
+        }
+
+        return normalizedToken;
+    }
+
+    private List<GrantedAuthority> buildAuthorities(String authorityName) {
+        if ("ROLE_ADMIN".equals(authorityName)) {
+            return List.of(
+                    new SimpleGrantedAuthority("ROLE_ADMIN"),
+                    new SimpleGrantedAuthority("ROLE_RECEPTIONIST"),
+                    new SimpleGrantedAuthority("ROLE_DOCTOR"),
+                    new SimpleGrantedAuthority("ROLE_PATIENT"),
+                    new SimpleGrantedAuthority("ROLE_ACCOUNTANT")
+            );
+        }
+
+        return List.of(new SimpleGrantedAuthority(authorityName));
     }
 }
