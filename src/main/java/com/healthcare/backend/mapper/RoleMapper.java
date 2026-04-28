@@ -11,7 +11,7 @@ public class RoleMapper {
 
     public Role toEntity(RoleRequest request) {
         Role entity = new Role();
-        entity.setRoleName(request.getRoleName());
+        entity.setRoleName(request.getRoleName().toUpperCase());
         entity.setDescription(request.getDescription());
 
         return entity;
@@ -27,7 +27,7 @@ public class RoleMapper {
     }
 
     public void updateEntityFromRequest(RoleRequest request, Role entity) {
-        if (request.getRoleName() != null) entity.setRoleName(request.getRoleName());
+        if (request.getRoleName() != null) entity.setRoleName(request.getRoleName().toUpperCase());
         if (request.getDescription() != null) entity.setDescription(request.getDescription());
     }
 }
