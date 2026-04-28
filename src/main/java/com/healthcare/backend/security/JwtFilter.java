@@ -53,7 +53,10 @@ public class JwtFilter extends OncePerRequestFilter {
             String token = normalizeToken(authHeader.substring(7));
             boolean validToken = !token.isBlank() && jwtService.validateToken(token);
 
-                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + roleName));                
+            log.info("JWT filter token state: uri={}, tokenPresent={}, validToken={}",
+                    request.getRequestURI(),
+                    !token.isBlank(),
+                    validToken);
 
             if (token.isBlank()) {
                 request.setAttribute("authError", "Bearer token is blank");
