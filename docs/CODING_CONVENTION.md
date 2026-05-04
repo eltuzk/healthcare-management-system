@@ -14,7 +14,7 @@ Controller
     ↕ DTO (Request / Response)
 Service Interface
 Service Impl
-    ↕ Mapper (MapStruct)
+    ↕ Mapper (Thủ công)
 Repository
 Entity
 ```
@@ -29,7 +29,7 @@ Mỗi tầng có trách nhiệm rõ ràng:
 | **Repository**        | Tương tác với DB qua JPA/Hibernate. Chỉ chứa query, không có logic.                          |
 | **Entity**            | Ánh xạ trực tiếp với bảng trong DB. Không expose ra ngoài Controller.                        |
 | **DTO**               | Đối tượng truyền dữ liệu giữa Client ↔ Controller ↔ Service. Tách biệt hoàn toàn với Entity. |
-| **Mapper**            | Dùng MapStruct để convert Entity ↔ DTO. Không viết tay.                                      |
+| **Mapper**            | Convert thủ công Entity ↔ DTO. Không dùng MapStruct.           |
 
 ---
 

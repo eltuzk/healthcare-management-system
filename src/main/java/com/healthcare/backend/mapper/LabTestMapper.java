@@ -3,29 +3,48 @@ package com.healthcare.backend.mapper;
 import com.healthcare.backend.dto.request.LabTestRequest;
 import com.healthcare.backend.dto.response.LabTestResponse;
 import com.healthcare.backend.entity.LabTest;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.Named;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring")
-public interface LabTestMapper {
+@Component
+public class LabTestMapper {
 
-    @Mapping(target = "labTestId", ignore = true)
-    @Mapping(target = "isActive", constant = "1")
-    @Mapping(target = "labTestName", source = "labTestName", qualifiedByName = "normalize")
-    LabTest toEntity(LabTestRequest request);
+    public LabTest toEntity(LabTestRequest request) {
+        if (request == null) {
+            return null;
+        }
 
-    @Mapping(target = "active", expression = "java(Integer.valueOf(1).equals(labTest.getIsActive()))")
-    LabTestResponse toResponse(LabTest labTest);
+        LabTest labTest = new LabTest();
+        labTest.setLabTestName(normalize(request.getLabTestName()));
+        labTest.setPrice(request.getPrice());
+        labTest.setIsActive(1);
 
-    @Mapping(target = "labTestId", ignore = true)
-    @Mapping(target = "isActive", ignore = true)
-    @Mapping(target = "labTestName", source = "labTestName", qualifiedByName = "normalize")
-    void updateEntityFromRequest(LabTestRequest request, @MappingTarget LabTest labTest);
+        return labTest;
+    }
 
-    @Named("normalize")
-    static String normalize(String value) {
+    public void updateEntityFromRequest(LabTestRequest request, LabTest labTest) {
+        if (request == null || labTest == null) {
+            return;
+        }
+
+        labTest.setLabTestName(normalize(request.getLabTestName()));
+        labTest.setPrice(request.getPrice());
+    }
+
+    public LabTestResponse toResponse(LabTest labTest) {
+        if (labTest == null) {
+            return null;
+        }
+
+        LabTestResponse response = new LabTestResponse();
+        response.setLabTestId(labTest.getLabTestId());
+        response.setLabTestName(labTest.getLabTestName());
+        response.setPrice(labTest.getPrice());
+        response.setActive(Integer.valueOf(1).equals(labTest.getIsActive()));
+
+        return response;
+    }
+
+    private String normalize(String value) {
         return value == null ? null : value.trim();
     }
 }
