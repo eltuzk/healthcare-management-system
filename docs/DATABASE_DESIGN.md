@@ -78,12 +78,41 @@ Hệ thống được chia thành các nhóm dữ liệu chính:
 
 ## Cơ Sở Vật Chất
 
-### `BRANCH`, `ROOM_TYPE`, `ROOM`, `BED`
+### `BRANCH`
 
-- `BRANCH.branch_name` là duy nhất.
-- `ROOM_TYPE.room_type_name` là duy nhất.
-- `ROOM` thuộc một `BRANCH` và một `ROOM_TYPE`; `room_code` là duy nhất.
-- `BED` thuộc một `ROOM`, có `price >= 0`, `status` gồm `AVAILABLE`, `OCCUPIED`, `MAINTENANCE`.
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `branch_id` | NUMBER | PK | ID chi nhánh |
+| `branch_name` | VARCHAR2(200) | UQ, NN | Tên chi nhánh |
+| `branch_address` | VARCHAR2(500) | NN | Địa chỉ |
+| `branch_hotline` | VARCHAR2(20) | | Số điện thoại |
+
+### `ROOM_TYPE`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `room_type_id` | NUMBER | PK | ID loại phòng |
+| `room_type_name` | VARCHAR2(100) | UQ, NN | Tên loại phòng |
+
+### `ROOM`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `room_id` | NUMBER | PK | ID phòng |
+| `room_type_id` | NUMBER | FK -> `ROOM_TYPE`, NN | Loại phòng |
+| `branch_id` | NUMBER | FK -> `BRANCH`, NN | Chi nhánh |
+| `room_code` | VARCHAR2(50) | UQ, NN | Mã phòng (số phòng) |
+| `position` | VARCHAR2(200) | | Vị trí (tầng/khu) |
+| `note` | VARCHAR2(500) | | Ghi chú |
+
+### `BED`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `bed_id` | NUMBER | PK | ID giường |
+| `room_id` | NUMBER | FK -> `ROOM`, NN | Thuộc phòng nào |
+| `price` | NUMBER(15,2) | NN, >= 0 | Giá thuê giường/ngày |
+| `status` | VARCHAR2(20) | NN, check | `AVAILABLE`, `OCCUPIED`, `MAINTENANCE` |
 
 ## Phí Khám
 
@@ -230,35 +259,93 @@ Quy tắc nghiệp vụ:
 - Complete MR đồng thời set appointment -> `COMPLETED`.
 - MR đã `LOCKED` thì không cho sửa.
 
-## Các Bảng Request/Result
+## Các Bảng Danh Mục Kỹ Thuật
 
-### Xét Nghiệm
+### `LAB_TEST`
 
-- `LAB_TEST`: danh mục xét nghiệm, `lab_test_name` unique, `price >= 0`, `is_active`.
-- `LAB_TEST_REQUEST`: thuộc `MEDICAL_RECORD`, có `request_code` unique, `status`, `payment_status`, `total_price`, `paid_at`.
-- `LAB_TEST_REQUEST_ITEM`: composite PK `(lab_test_request_id, lab_test_id)`, lưu `snapshot_price`.
-- `LAB_TEST_RESULT`: quan hệ 1-1 với `LAB_TEST_REQUEST`.
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `lab_test_id` | NUMBER | PK | ID xét nghiệm |
+| `lab_test_name` | VARCHAR2(200) | UQ, NN | Tên xét nghiệm |
+| `price` | NUMBER(15,2) | NN, >= 0 | Giá niêm yết |
+| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
 
-### Dịch Vụ Cận Lâm Sàng
+### `MEDICAL_SERVICE`
 
-- `MEDICAL_SERVICE`: danh mục dịch vụ, `medical_service_name` unique, `price >= 0`, `is_active`.
-- `MEDICAL_SERVICE_REQUEST`: thuộc `MEDICAL_RECORD`, có `request_code` unique, `status`, `payment_status`, `total_price`.
-- `MEDICAL_SERVICE_REQUEST_ITEM`: composite PK `(med_ser_req_id, med_service_id)`, lưu `snapshot_price`.
-- `MEDICAL_SERVICE_RESULT`: quan hệ 1-1 với `MEDICAL_SERVICE_REQUEST`.
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `med_service_id` | NUMBER | PK | ID dịch vụ |
+| `medical_service_name` | VARCHAR2(200) | UQ, NN | Tên dịch vụ |
+| `price` | NUMBER(15,2) | NN, >= 0 | Giá niêm yết |
+| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
 
-### Nhập Viện
+## Quy Trình Xét Nghiệm & Dịch Vụ
 
-- `ADMISSION_REQUEST`: thuộc `PATIENT`, `MEDICAL_RECORD`, `BED`.
-- `ADMISSION_REQUEST.med_record_id` unique, mỗi MR tối đa một phiếu nhập viện.
-- `status`: `PENDING`, `ADMITTED`, `DISCHARGED`, `CANCELLED`.
-- `discharge_date` phải null hoặc >= `admission_date`.
-- `ADMISSION_RECORD`: các bản ghi sinh hiệu trong đợt nằm viện.
+### `LAB_TEST_REQUEST`
 
-### Đơn Thuốc
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `lab_test_request_id` | NUMBER | PK | ID phiếu yêu cầu |
+| `med_record_id` | NUMBER | FK -> `MEDICAL_RECORD`, NN | Hồ sơ bệnh án gốc |
+| `request_code` | VARCHAR2(100) | UQ, NN | Mã phiếu |
+| `status` | VARCHAR2(20) | NN, check | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` |
+| `payment_status` | VARCHAR2(20) | NN, check | `UNPAID`, `PAID` |
+| `total_price` | NUMBER(15,2) | >= 0 | Tổng tiền các chỉ định |
+| `note` | VARCHAR2(500) | | Ghi chú bác sĩ |
+| `created_at` | TIMESTAMP | NN | Thời điểm chỉ định |
+| `paid_at` | TIMESTAMP | | Thời điểm thanh toán |
 
-- `PRESCRIPTION`: quan hệ 1-1 với `MEDICAL_RECORD`, có `status`, `payment_status`, `total_price`.
-- `PRESCRIPTION_DETAIL`: composite PK `(prescription_id, medicine_id)`, có `quantity`, `unit`, `instruction`, `snapshot_price`.
-- Payment prescription để phase sau.
+- `LAB_TEST_REQUEST_ITEM`: Lưu chỉ định chi tiết, khóa chính `(lab_test_request_id, lab_test_id)`, snapshot giá tại thời điểm chỉ định.
+- `LAB_TEST_RESULT`: Kết quả xét nghiệm, quan hệ 1-1 với Request, lưu dữ liệu kết quả qua cột `result_data` (CLOB).
+
+### `MEDICAL_SERVICE_REQUEST`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `med_ser_req_id` | NUMBER | PK | ID phiếu yêu cầu |
+| `med_record_id` | NUMBER | FK -> `MEDICAL_RECORD`, NN | Hồ sơ bệnh án gốc |
+| `request_code` | VARCHAR2(100) | UQ, NN | Mã phiếu |
+| `status` | VARCHAR2(20) | NN, check | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` |
+| `payment_status` | VARCHAR2(20) | NN, check | `UNPAID`, `PAID` |
+| `total_price` | NUMBER(15,2) | >= 0 | Tổng tiền |
+| `currency` | VARCHAR2(10) | NN, default 'VND' | Loại tiền tệ |
+| `created_at` | TIMESTAMP | NN | Thời điểm chỉ định |
+| `paid_at` | TIMESTAMP | | Thời điểm thanh toán |
+
+- `MEDICAL_SERVICE_REQUEST_ITEM`: Chi tiết chỉ định, khóa chính `(med_ser_req_id, med_service_id)`.
+- `MEDICAL_SERVICE_RESULT`: Kết quả dịch vụ, quan hệ 1-1 với Request.
+
+## Nhập Viện (Inpatient)
+
+### `ADMISSION_REQUEST`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `admission_id` | NUMBER | PK | ID phiếu nhập viện |
+| `patient_id` | NUMBER | FK -> `PATIENT`, NN | Bệnh nhân |
+| `med_record_id` | NUMBER | FK -> `MEDICAL_RECORD`, UQ, NN | Từ bệnh án nào |
+| `bed_id` | NUMBER | FK -> `BED`, NN | Giường chỉ định |
+| `admission_date` | DATE | NN | Ngày nhập viện |
+| `discharge_date` | DATE | | Ngày xuất viện |
+| `status` | VARCHAR2(20) | NN, check | `PENDING`, `ADMITTED`, `DISCHARGED`, `CANCELLED` |
+| `total_price` | NUMBER(15,2) | >= 0 | Tiền phòng/giường |
+
+- `ADMISSION_RECORD`: Các bản ghi theo dõi (huyết áp, nhịp tim, nhiệt độ) trong quá trình nằm viện.
+
+## Đơn Thuốc
+
+### `PRESCRIPTION`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `prescription_id` | NUMBER | PK | ID đơn thuốc |
+| `med_record_id` | NUMBER | FK -> `MEDICAL_RECORD`, UQ, NN | Từ bệnh án nào |
+| `status` | VARCHAR2(20) | NN, check | `PENDING`, `DISPENSED`, `CANCELLED` |
+| `payment_status` | VARCHAR2(20) | NN, check | `UNPAID`, `PAID` |
+| `total_price` | NUMBER(15,2) | >= 0 | Tổng tiền thuốc |
+| `created_at` | TIMESTAMP | NN | Ngày kê đơn |
+
+- `PRESCRIPTION_DETAIL`: Chi tiết thuốc, khóa chính `(prescription_id, medicine_id)`, lưu `quantity`, `unit`, `instruction` và `snapshot_price`.
 
 ## Thanh Toán Và Kế Toán
 
