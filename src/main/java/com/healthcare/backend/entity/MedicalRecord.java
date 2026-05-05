@@ -71,6 +71,9 @@ public class MedicalRecord {
     @Column(name = "status", nullable = false, length = 20)
     private MedicalRecordStatus status;
 
+    @Column(name = "total_price", precision = 15, scale = 2)
+    private java.math.BigDecimal totalPrice;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
