@@ -27,7 +27,8 @@ public class LabTestRequestController {
 
     @PostMapping
     @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<ApiResponse<LabTestRequestResponse>> createRequest(@Valid @RequestBody CreateLabTestRequestRequest request) {
+    public ResponseEntity<ApiResponse<LabTestRequestResponse>> createRequest(
+            @Valid @RequestBody CreateLabTestRequestRequest request) {
         return ResponseEntity.ok(ApiResponse.success(labTestRequestService.createRequest(request)));
     }
 
@@ -56,7 +57,8 @@ public class LabTestRequestController {
 
     @GetMapping("/medical-record/{medRecordId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'TECHNICIAN')")
-    public ResponseEntity<ApiResponse<List<LabTestRequestResponse>>> getRequestsByMedRecord(@PathVariable Long medRecordId) {
+    public ResponseEntity<ApiResponse<List<LabTestRequestResponse>>> getRequestsByMedRecord(
+            @PathVariable Long medRecordId) {
         return ResponseEntity.ok(ApiResponse.success(labTestRequestService.getRequestsByMedRecord(medRecordId)));
     }
 
