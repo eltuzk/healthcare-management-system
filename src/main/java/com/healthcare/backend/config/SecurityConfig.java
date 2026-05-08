@@ -65,6 +65,7 @@ public class SecurityConfig {
                         "/swagger-ui.html",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
+                        "/revenue-report-mock.html",
                         "/api/appointments/sepay/webhook",
                         "/error")
                         .permitAll()

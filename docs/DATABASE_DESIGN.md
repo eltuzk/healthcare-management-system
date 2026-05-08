@@ -1,6 +1,6 @@
 # Thiết Kế Database - Healthcare Management System
 
-Tài liệu này mô tả database design hiện tại sau các migration `V1` đến `V15`.
+Tài liệu này mô tả database design hiện tại sau các migration `V1` đến `V17`.
 Khi thay đổi schema hoặc business rule, cần cập nhật file này cùng với [CONSTRAINTS.md](CONSTRAINTS.md).
 
 ## Quy Ước
@@ -255,7 +255,13 @@ Quy tắc nghiệp vụ:
 
 - `createFromAppointment` tạo MR ban đầu, không bắt buộc nhập conclusion.
 - MR draft có thể chưa có `clinical_conclusion` và `conclusion_type`.
+- Khi tạo MR, hệ thống tạo/cập nhật `PAYMENT_RECORD` owner medical record với tổng tiền ban đầu bằng `0`.
+- MR `DRAFT` là giai đoạn bác sĩ ghi nhận thông tin khám ban đầu và tạo phiếu xét nghiệm/dịch vụ.
+- Phiếu xét nghiệm/dịch vụ chỉ được tạo khi MR còn `DRAFT`; sau khi thanh toán và MR sang `IN_PROGRESS` thì không tạo thêm request.
+- Thanh toán medical record bằng tiền mặt phải đi qua business flow payment, sync lại tổng tiền trước khi thu và chuyển MR `DRAFT -> IN_PROGRESS`.
+- Request chỉ được cập nhật trạng thái/kết quả khi MR đang `IN_PROGRESS` và payment record của MR đã `PAID`.
 - Khi complete MR mới bắt buộc có `initial_diagnosis`, `clinical_conclusion`, `conclusion_type`.
+- MR chỉ complete khi tất cả lab test request và medical service request liên quan đã có trạng thái `RESULT_AVAILABLE`.
 - Complete MR đồng thời set appointment -> `COMPLETED`.
 - MR đã `LOCKED` thì không cho sửa.
 
@@ -288,7 +294,7 @@ Quy tắc nghiệp vụ:
 | `lab_test_request_id` | NUMBER | PK | ID phiếu yêu cầu |
 | `med_record_id` | NUMBER | FK -> `MEDICAL_RECORD`, NN | Hồ sơ bệnh án gốc |
 | `request_code` | VARCHAR2(100) | UQ, NN | Mã phiếu |
-| `status` | VARCHAR2(20) | NN, check | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` |
+| `status` | VARCHAR2(20) | NN, check | `NOT_COLLECTED`, `SAMPLE_COLLECTED`, `RESULT_AVAILABLE` |
 | `payment_status` | VARCHAR2(20) | NN, check | `UNPAID`, `PAID` |
 | `total_price` | NUMBER(15,2) | >= 0 | Tổng tiền các chỉ định |
 | `note` | VARCHAR2(500) | | Ghi chú bác sĩ |
@@ -298,6 +304,20 @@ Quy tắc nghiệp vụ:
 - `LAB_TEST_REQUEST_ITEM`: Lưu chỉ định chi tiết, khóa chính `(lab_test_request_id, lab_test_id)`, snapshot giá tại thời điểm chỉ định.
 - `LAB_TEST_RESULT`: Kết quả xét nghiệm, quan hệ 1-1 với Request, lưu dữ liệu kết quả qua cột `result_data` (CLOB).
 
+Workflow status:
+
+- `NOT_COLLECTED`: vừa tạo phiếu, chưa lấy mẫu/chưa thực hiện dịch vụ.
+- `SAMPLE_COLLECTED`: đã lấy mẫu hoặc đã tiếp nhận thực hiện, đang chờ kết quả.
+- `RESULT_AVAILABLE`: đã có bản ghi kết quả; request được xem là hoàn thành.
+
+Quy tắc request:
+
+- Request mặc định `NOT_COLLECTED`, `payment_status = UNPAID`, và snapshot giá từ danh mục tại thời điểm chỉ định.
+- Tạo request phải lock `MEDICAL_RECORD`, validate MR đang `DRAFT`, lưu request/items, sau đó sync `MEDICAL_RECORD.total_price` và `PAYMENT_RECORD.total_price`.
+- Cập nhật trạng thái thủ công chỉ cho phép chuyển sang `SAMPLE_COLLECTED`.
+- Tạo `LAB_TEST_RESULT` yêu cầu request đang `SAMPLE_COLLECTED`; sau khi tạo result, hệ thống set request `RESULT_AVAILABLE`.
+- Mỗi lab request chỉ có tối đa một result do ràng buộc unique trên `LAB_TEST_RESULT.lab_test_request_id`.
+
 ### `MEDICAL_SERVICE_REQUEST`
 
 | Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
@@ -305,7 +325,7 @@ Quy tắc nghiệp vụ:
 | `med_ser_req_id` | NUMBER | PK | ID phiếu yêu cầu |
 | `med_record_id` | NUMBER | FK -> `MEDICAL_RECORD`, NN | Hồ sơ bệnh án gốc |
 | `request_code` | VARCHAR2(100) | UQ, NN | Mã phiếu |
-| `status` | VARCHAR2(20) | NN, check | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` |
+| `status` | VARCHAR2(20) | NN, check | `NOT_COLLECTED`, `SAMPLE_COLLECTED`, `RESULT_AVAILABLE` |
 | `payment_status` | VARCHAR2(20) | NN, check | `UNPAID`, `PAID` |
 | `total_price` | NUMBER(15,2) | >= 0 | Tổng tiền |
 | `currency` | VARCHAR2(10) | NN, default 'VND' | Loại tiền tệ |
@@ -314,6 +334,15 @@ Quy tắc nghiệp vụ:
 
 - `MEDICAL_SERVICE_REQUEST_ITEM`: Chi tiết chỉ định, khóa chính `(med_ser_req_id, med_service_id)`.
 - `MEDICAL_SERVICE_RESULT`: Kết quả dịch vụ, quan hệ 1-1 với Request.
+
+Quy tắc request:
+
+- Request mặc định `NOT_COLLECTED`, `payment_status = UNPAID`, và snapshot giá từ danh mục tại thời điểm chỉ định.
+- Tạo request phải lock `MEDICAL_RECORD`, validate MR đang `DRAFT`, lưu request/items, sau đó sync `MEDICAL_RECORD.total_price` và `PAYMENT_RECORD.total_price`.
+- Cập nhật trạng thái thủ công chỉ cho phép chuyển sang `SAMPLE_COLLECTED`.
+- Tạo `MEDICAL_SERVICE_RESULT` yêu cầu request đang `SAMPLE_COLLECTED`; sau khi tạo result, hệ thống set request `RESULT_AVAILABLE`.
+- Mỗi service request chỉ có tối đa một result do ràng buộc unique trên `MEDICAL_SERVICE_RESULT.med_ser_req_id`.
+- Sau mỗi lần tạo result, workflow service kiểm tra tất cả request của MR; nếu tất cả đều `RESULT_AVAILABLE` và MR đủ điều kiện clinical thì MR và appointment được auto-complete trong cùng transaction.
 
 ## Nhập Viện (Inpatient)
 
@@ -351,7 +380,7 @@ Quy tắc nghiệp vụ:
 
 ### `PAYMENT_RECORD`
 
-Đây là bảng sổ cái thanh toán phục vụ kế toán. Ứng dụng chỉ tạo/cập nhật qua business flow; API hiện tại chỉ nên đọc.
+Đây là bảng sổ cái thanh toán phục vụ kế toán. Ứng dụng chỉ tạo/cập nhật qua business flow; API cho phép đọc sổ thanh toán và ghi nhận thanh toán tiền mặt cho medical record qua flow riêng.
 
 | Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
 | --- | --- | --- | --- |
@@ -371,6 +400,16 @@ Quy tắc owner:
 - Chính xác một trong hai cột `appointment_id` hoặc `med_record_id` phải có giá trị.
 - Appointment payment được ghi nhận khi đặt lịch/khám trực tiếp.
 - Medical record payment sẽ gom các khoản phát sinh sau khám, như xét nghiệm/dịch vụ; prescription để phase sau.
+- Khi ghi nhận thanh toán medical record, service lock MR, sync lại billing, lock payment record, validate số tiền thu khớp `total_price`, tạo `PAYMENT_TRANSACTION` gateway `CASH`, set payment `PAID`, rồi chuyển MR sang `IN_PROGRESS`.
+- Báo cáo doanh thu đọc từ `PAYMENT_TRANSACTION` thành công (`process_status = SUCCESS`) và tính theo `transaction_date`.
+- Revenue owner type được suy ra từ owner của `PAYMENT_RECORD`: có `appointment_id` là `APPOINTMENT`, có `med_record_id` là `MEDICAL_RECORD`.
+
+Báo cáo doanh thu:
+
+- API `GET /reports/revenue` chỉ dành cho `ADMIN` và `ACCOUNTANT`.
+- Filter hỗ trợ `fromDate`, `toDate`, `gateway`, `ownerType`.
+- Mặc định kỳ báo cáo là từ ngày đầu tháng hiện tại đến hôm nay nếu request không truyền date range.
+- Kết quả gồm `totalRevenue`, `transactionCount`, breakdown theo ngày, gateway và owner type.
 
 ### `PAYMENT_TRANSACTION`
 
@@ -462,3 +501,5 @@ Ghi chú hiện tại:
 - Walk-in là trường hợp đã thu tiền mặt trước, nên appointment tạo ra ở trạng thái `CHECKED_IN`.
 - Payment data phục vụ kế toán nằm ở `PAYMENT_RECORD` và `PAYMENT_TRANSACTION`; không tạo bảng payment riêng cho appointment.
 - MR draft không bắt buộc có kết luận; kết luận chỉ bắt buộc khi complete.
+- MR billing là tổng các lab test request và medical service request của MR; tổng tiền này phải sync sang payment record trước khi thu tiền.
+- Request/result flow được điều khiển bằng service transaction, không dựa vào client tự cập nhật trạng thái tùy ý.

@@ -72,7 +72,7 @@ public class MedicalServiceRequest {
             this.createdAt = LocalDateTime.now();
         }
         if (this.status == null) {
-            this.status = MedicalServiceRequestStatus.PENDING;
+            this.status = MedicalServiceRequestStatus.NOT_COLLECTED;
         }
         if (this.paymentStatus == null) {
             this.paymentStatus = PaymentStatus.UNPAID;

@@ -19,6 +19,8 @@ import com.healthcare.backend.repository.LabTestRequestRepository;
 import com.healthcare.backend.repository.LabTestResultRepository;
 import com.healthcare.backend.repository.MedicalRecordRepository;
 import com.healthcare.backend.service.LabTestRequestService;
+import com.healthcare.backend.service.MedicalRecordBillingService;
+import com.healthcare.backend.service.MedicalRecordWorkflowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +43,8 @@ public class LabTestRequestServiceImpl implements LabTestRequestService {
     private final LabTestRepository labTestRepository;
     private final LabTestRequestMapper labTestRequestMapper;
     private final LabTestResultMapper labTestResultMapper;
+    private final MedicalRecordBillingService medicalRecordBillingService;
+    private final MedicalRecordWorkflowService medicalRecordWorkflowService;
 
     @Override
     @Transactional
@@ -49,8 +53,9 @@ public class LabTestRequestServiceImpl implements LabTestRequestService {
             throw new BusinessException("At least one Lab Test must be selected");
         }
 
-        MedicalRecord medRecord = medicalRecordRepository.findById(request.getMedRecordId())
+        MedicalRecord medRecord = medicalRecordRepository.findByIdForUpdate(request.getMedRecordId())
                 .orElseThrow(() -> new ResourceNotFoundException("Medical Record not found with id: " + request.getMedRecordId()));
+        medicalRecordWorkflowService.validateCanCreateRequest(medRecord);
 
         LabTestRequest labTestRequest = new LabTestRequest();
         labTestRequest.setMedRecord(medRecord);
@@ -72,16 +77,11 @@ public class LabTestRequestServiceImpl implements LabTestRequestService {
 
         labTestRequest.setItems(items);
         labTestRequest.setTotalPrice(totalPrice);
-        labTestRequest.setStatus(LabTestRequestStatus.PENDING);
+        labTestRequest.setStatus(LabTestRequestStatus.NOT_COLLECTED);
         labTestRequest.setPaymentStatus(PaymentStatus.UNPAID);
 
         LabTestRequest savedRequest = labTestRequestRepository.save(labTestRequest);
-        
-        if (medRecord.getTotalPrice() == null) {
-            medRecord.setTotalPrice(BigDecimal.ZERO);
-        }
-        medRecord.setTotalPrice(medRecord.getTotalPrice().add(totalPrice));
-        medicalRecordRepository.save(medRecord);
+        medicalRecordBillingService.syncBilling(medRecord.getMedicalRecordId());
 
         return labTestRequestMapper.toResponse(savedRequest);
     }
@@ -121,42 +121,62 @@ public class LabTestRequestServiceImpl implements LabTestRequestService {
     @Override
     @Transactional
     public LabTestRequestResponse updateStatus(Long id, UpdateLabTestRequestStatusRequest request) {
-        LabTestRequest labTestRequest = labTestRequestRepository.findById(id)
+        LabTestRequest labTestRequest = labTestRequestRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lab Test Request not found with id: " + id));
+        medicalRecordRepository.findByIdForUpdate(labTestRequest.getMedRecord().getMedicalRecordId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Medical Record not found with id: " + labTestRequest.getMedRecord().getMedicalRecordId()
+                ));
 
         LabTestRequestStatus currentStatus = labTestRequest.getStatus();
         LabTestRequestStatus newStatus = request.getStatus();
 
-        if (currentStatus == LabTestRequestStatus.CANCELLED || currentStatus == LabTestRequestStatus.COMPLETED) {
+        medicalRecordWorkflowService.validateCanUpdateRequest(labTestRequest.getMedRecord());
+
+        if (currentStatus == LabTestRequestStatus.RESULT_AVAILABLE) {
             throw new BusinessException("Cannot update status of a " + currentStatus + " request");
         }
 
+        if (newStatus != LabTestRequestStatus.SAMPLE_COLLECTED) {
+            throw new BusinessException("Lab test request status can only be updated to SAMPLE_COLLECTED manually");
+        }
+
         labTestRequest.setStatus(newStatus);
-        return labTestRequestMapper.toResponse(labTestRequestRepository.save(labTestRequest));
+        LabTestRequest savedRequest = labTestRequestRepository.save(labTestRequest);
+        medicalRecordBillingService.syncBilling(savedRequest.getMedRecord().getMedicalRecordId());
+        return labTestRequestMapper.toResponse(savedRequest);
     }
 
     @Override
     @Transactional
     public LabTestResultResponse createResult(Long requestId, CreateLabTestResultRequest request) {
-        LabTestRequest labTestRequest = labTestRequestRepository.findById(requestId)
+        LabTestRequest labTestRequest = labTestRequestRepository.findByIdForUpdate(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lab Test Request not found with id: " + requestId));
+        medicalRecordRepository.findByIdForUpdate(labTestRequest.getMedRecord().getMedicalRecordId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Medical Record not found with id: " + labTestRequest.getMedRecord().getMedicalRecordId()
+                ));
 
-        if (labTestRequest.getStatus() == LabTestRequestStatus.CANCELLED) {
-            throw new BusinessException("Cannot add result to a CANCELLED request");
-        }
+        medicalRecordWorkflowService.validateCanUpdateRequest(labTestRequest.getMedRecord());
 
         if (labTestResultRepository.findByLabTestRequest_LabTestRequestId(requestId).isPresent()) {
             throw new DuplicateResourceException("Result already exists for this request");
+        }
+
+        if (labTestRequest.getStatus() != LabTestRequestStatus.SAMPLE_COLLECTED) {
+            throw new BusinessException("Sample must be collected before adding lab test result");
         }
 
         LabTestResult result = new LabTestResult();
         result.setLabTestRequest(labTestRequest);
         result.setResultData(request.getResultData());
         
-        labTestRequest.setStatus(LabTestRequestStatus.COMPLETED);
+        labTestRequest.setStatus(LabTestRequestStatus.RESULT_AVAILABLE);
         labTestRequestRepository.save(labTestRequest);
+        LabTestResult savedResult = labTestResultRepository.save(result);
+        medicalRecordWorkflowService.completeIfReady(labTestRequest.getMedRecord().getMedicalRecordId());
 
-        return labTestResultMapper.toResponse(labTestResultRepository.save(result));
+        return labTestResultMapper.toResponse(savedResult);
     }
 
     @Override
@@ -164,6 +184,7 @@ public class LabTestRequestServiceImpl implements LabTestRequestService {
     public LabTestResultResponse updateResult(Long resultId, UpdateLabTestResultRequest request) {
         LabTestResult result = labTestResultRepository.findById(resultId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lab Test Result not found with id: " + resultId));
+        medicalRecordWorkflowService.validateCanUpdateRequest(result.getLabTestRequest().getMedRecord());
 
         result.setResultData(request.getResultData());
         return labTestResultMapper.toResponse(labTestResultRepository.save(result));

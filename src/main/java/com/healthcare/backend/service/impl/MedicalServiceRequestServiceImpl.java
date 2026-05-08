@@ -12,7 +12,6 @@ import com.healthcare.backend.entity.MedicalServiceRequest;
 import com.healthcare.backend.entity.MedicalServiceRequestItem;
 import com.healthcare.backend.entity.MedicalServiceRequestItemId;
 import com.healthcare.backend.entity.MedicalServiceResult;
-import com.healthcare.backend.entity.enums.MedicalRecordStatus;
 import com.healthcare.backend.entity.enums.MedicalServiceRequestStatus;
 import com.healthcare.backend.exception.BusinessException;
 import com.healthcare.backend.exception.ResourceNotFoundException;
@@ -20,6 +19,8 @@ import com.healthcare.backend.repository.MedicalRecordRepository;
 import com.healthcare.backend.repository.MedicalServiceRepository;
 import com.healthcare.backend.repository.MedicalServiceRequestRepository;
 import com.healthcare.backend.repository.MedicalServiceResultRepository;
+import com.healthcare.backend.service.MedicalRecordBillingService;
+import com.healthcare.backend.service.MedicalRecordWorkflowService;
 import com.healthcare.backend.service.MedicalServiceRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -42,16 +42,15 @@ public class MedicalServiceRequestServiceImpl implements MedicalServiceRequestSe
     private final MedicalServiceResultRepository resultRepository;
     private final MedicalRecordRepository medicalRecordRepository;
     private final MedicalServiceRepository medicalServiceRepository;
+    private final MedicalRecordBillingService medicalRecordBillingService;
+    private final MedicalRecordWorkflowService medicalRecordWorkflowService;
 
     @Override
     @Transactional
     public MedicalServiceRequestResponse createRequest(CreateMedicalServiceRequestRequest requestDto) {
-        MedicalRecord medRecord = medicalRecordRepository.findById(requestDto.getMedRecordId())
+        MedicalRecord medRecord = medicalRecordRepository.findByIdForUpdate(requestDto.getMedRecordId())
                 .orElseThrow(() -> new ResourceNotFoundException("Medical Record not found with id: " + requestDto.getMedRecordId()));
-
-        if (medRecord.getStatus() == MedicalRecordStatus.LOCKED) {
-            throw new BusinessException("Cannot create request for locked medical record");
-        }
+        medicalRecordWorkflowService.validateCanCreateRequest(medRecord);
 
         if (requestDto.getMedServiceIds() == null || requestDto.getMedServiceIds().isEmpty()) {
             throw new BusinessException("At least one medical service must be selected");
@@ -82,10 +81,11 @@ public class MedicalServiceRequestServiceImpl implements MedicalServiceRequestSe
             item.setId(new MedicalServiceRequestItemId(request.getMedServiceRequestId(), service.getMedServiceId()));
             item.setMedicalServiceRequest(request);
             item.setMedicalService(service);
-            item.setSnapshotPrice(service.getPrice());
+            BigDecimal price = service.getPrice() != null ? service.getPrice() : BigDecimal.ZERO;
+            item.setSnapshotPrice(price);
 
             items.add(item);
-            totalPrice = totalPrice.add(service.getPrice());
+            totalPrice = totalPrice.add(price);
         }
 
         // 2. Update with items and total price, then save again
@@ -93,14 +93,19 @@ public class MedicalServiceRequestServiceImpl implements MedicalServiceRequestSe
         request.setTotalPrice(totalPrice);
 
         request = requestRepository.save(request);
+        medicalRecordBillingService.syncBilling(medRecord.getMedicalRecordId());
 
         return mapToResponse(request);
     }
 
     @Override
     public MedicalServiceRequestResponse getRequestById(Long id) {
-        MedicalServiceRequest request = requestRepository.findById(id)
+        MedicalServiceRequest request = requestRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Medical Service Request not found with id: " + id));
+        medicalRecordRepository.findByIdForUpdate(request.getMedRecord().getMedicalRecordId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Medical Record not found with id: " + request.getMedRecord().getMedicalRecordId()
+                ));
         return mapToResponse(request);
     }
 
@@ -128,37 +133,52 @@ public class MedicalServiceRequestServiceImpl implements MedicalServiceRequestSe
         MedicalServiceRequestStatus currentStatus = request.getStatus();
         MedicalServiceRequestStatus newStatus = requestDto.getStatus();
 
-        if (currentStatus == MedicalServiceRequestStatus.CANCELLED || currentStatus == MedicalServiceRequestStatus.COMPLETED) {
+        medicalRecordWorkflowService.validateCanUpdateRequest(request.getMedRecord());
+
+        if (currentStatus == MedicalServiceRequestStatus.RESULT_AVAILABLE) {
             throw new BusinessException("Cannot update status from " + currentStatus);
         }
 
-        if (newStatus == MedicalServiceRequestStatus.CANCELLED) {
-            request.setCancelledAt(LocalDateTime.now());
+        if (newStatus != MedicalServiceRequestStatus.SAMPLE_COLLECTED) {
+            throw new BusinessException("Medical service request status can only be updated to SAMPLE_COLLECTED manually");
         }
 
         request.setStatus(newStatus);
-        return mapToResponse(requestRepository.save(request));
+        MedicalServiceRequest savedRequest = requestRepository.save(request);
+        medicalRecordBillingService.syncBilling(savedRequest.getMedRecord().getMedicalRecordId());
+        return mapToResponse(savedRequest);
     }
 
     @Override
     @Transactional
     public MedicalServiceResultResponse createResult(Long requestId, UpdateMedicalServiceResultRequest requestDto) {
-        MedicalServiceRequest request = requestRepository.findById(requestId)
+        MedicalServiceRequest request = requestRepository.findByIdForUpdate(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Medical Service Request not found with id: " + requestId));
+        medicalRecordRepository.findByIdForUpdate(request.getMedRecord().getMedicalRecordId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Medical Record not found with id: " + request.getMedRecord().getMedicalRecordId()
+                ));
 
-        if (request.getStatus() != MedicalServiceRequestStatus.IN_PROGRESS && request.getStatus() != MedicalServiceRequestStatus.COMPLETED) {
-             // For simplicity, allow creating result when IN_PROGRESS or update to COMPLETED later. Or simply allow it.
-        }
+        medicalRecordWorkflowService.validateCanUpdateRequest(request.getMedRecord());
         
         if (resultRepository.findByMedicalServiceRequest_MedServiceRequestId(requestId).isPresent()) {
             throw new BusinessException("Result already exists for this request");
         }
 
+        if (request.getStatus() != MedicalServiceRequestStatus.SAMPLE_COLLECTED) {
+            throw new BusinessException("Request must be marked SAMPLE_COLLECTED before adding result");
+        }
+
         MedicalServiceResult result = new MedicalServiceResult();
         result.setMedicalServiceRequest(request);
         result.setResultData(requestDto.getResultData());
+        request.setStatus(MedicalServiceRequestStatus.RESULT_AVAILABLE);
+        requestRepository.save(request);
 
-        return mapToResultResponse(resultRepository.save(result));
+        MedicalServiceResult savedResult = resultRepository.save(result);
+        medicalRecordWorkflowService.completeIfReady(request.getMedRecord().getMedicalRecordId());
+
+        return mapToResultResponse(savedResult);
     }
 
     @Override
@@ -166,6 +186,9 @@ public class MedicalServiceRequestServiceImpl implements MedicalServiceRequestSe
     public MedicalServiceResultResponse updateResult(Long resultId, UpdateMedicalServiceResultRequest requestDto) {
         MedicalServiceResult result = resultRepository.findById(resultId)
                 .orElseThrow(() -> new ResourceNotFoundException("Medical Service Result not found with id: " + resultId));
+        medicalRecordWorkflowService.validateCanUpdateRequest(
+                result.getMedicalServiceRequest().getMedRecord()
+        );
 
         result.setResultData(requestDto.getResultData());
         return mapToResultResponse(resultRepository.save(result));

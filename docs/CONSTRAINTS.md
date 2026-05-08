@@ -147,7 +147,7 @@ Khi thêm migration Flyway hoặc đổi business flow, cần cập nhật file 
 
 - `LAB_TEST_REQUEST.med_record_id` tham chiếu `MEDICAL_RECORD.med_record_id`.
 - `LAB_TEST_REQUEST.request_code` là duy nhất và không được null.
-- `LAB_TEST_REQUEST.status` chỉ nhận `PENDING`, `IN_PROGRESS`, `COMPLETED`, hoặc `CANCELLED`.
+- `LAB_TEST_REQUEST.status` chỉ nhận `NOT_COLLECTED`, `SAMPLE_COLLECTED`, hoặc `RESULT_AVAILABLE`.
 - `LAB_TEST_REQUEST.payment_status` chỉ nhận `UNPAID` hoặc `PAID`.
 - `LAB_TEST_REQUEST.total_price` phải lớn hơn hoặc bằng `0`.
 - `LAB_TEST_REQUEST_ITEM` có khóa chính `(lab_test_request_id, lab_test_id)`.
@@ -155,12 +155,15 @@ Khi thêm migration Flyway hoặc đổi business flow, cần cập nhật file 
 - `LAB_TEST_REQUEST_ITEM.lab_test_id` tham chiếu `LAB_TEST.lab_test_id`.
 - `LAB_TEST_REQUEST_ITEM.snapshot_price` phải lớn hơn hoặc bằng `0`.
 - `LAB_TEST_RESULT.lab_test_request_id` là duy nhất và tham chiếu `LAB_TEST_REQUEST.lab_test_request_id`.
+- Rule service: tạo phiếu chỉ khi `MEDICAL_RECORD.status = DRAFT`.
+- Rule service: cập nhật phiếu/result chỉ khi medical record đã thanh toán và đang `IN_PROGRESS`.
+- Rule service: tạo result sẽ tự set request sang `RESULT_AVAILABLE`.
 
 ## Phiếu Dịch Vụ Cận Lâm Sàng
 
 - `MEDICAL_SERVICE_REQUEST.med_record_id` tham chiếu `MEDICAL_RECORD.med_record_id`.
 - `MEDICAL_SERVICE_REQUEST.request_code` là duy nhất và không được null.
-- `MEDICAL_SERVICE_REQUEST.status` chỉ nhận `PENDING`, `IN_PROGRESS`, `COMPLETED`, hoặc `CANCELLED`.
+- `MEDICAL_SERVICE_REQUEST.status` chỉ nhận `NOT_COLLECTED`, `SAMPLE_COLLECTED`, hoặc `RESULT_AVAILABLE`.
 - `MEDICAL_SERVICE_REQUEST.payment_status` chỉ nhận `UNPAID` hoặc `PAID`.
 - `MEDICAL_SERVICE_REQUEST.total_price` phải lớn hơn hoặc bằng `0`.
 - `MEDICAL_SERVICE_REQUEST_ITEM` có khóa chính `(med_ser_req_id, med_service_id)`.
@@ -168,6 +171,9 @@ Khi thêm migration Flyway hoặc đổi business flow, cần cập nhật file 
 - `MEDICAL_SERVICE_REQUEST_ITEM.med_service_id` tham chiếu `MEDICAL_SERVICE.med_service_id`.
 - `MEDICAL_SERVICE_REQUEST_ITEM.snapshot_price` phải lớn hơn hoặc bằng `0`.
 - `MEDICAL_SERVICE_RESULT.med_ser_req_id` là duy nhất và tham chiếu `MEDICAL_SERVICE_REQUEST.med_ser_req_id`.
+- Rule service: tạo phiếu chỉ khi `MEDICAL_RECORD.status = DRAFT`.
+- Rule service: cập nhật phiếu/result chỉ khi medical record đã thanh toán và đang `IN_PROGRESS`.
+- Rule service: tạo result sẽ tự set request sang `RESULT_AVAILABLE`.
 
 ## Đơn Thuốc
 
@@ -198,5 +204,7 @@ Khi thêm migration Flyway hoặc đổi business flow, cần cập nhật file 
 - `PAYMENT_TRANSACTION.process_status` chỉ nhận `PENDING`, `SUCCESS`, hoặc `FAILED`.
 - Rule service: số tiền thanh toán appointment phải khớp chính xác với phí khám cần thu.
 - Rule service: walk-in cash tạo `PAYMENT_TRANSACTION` gateway `CASH` kèm người thu/xác nhận.
+- Rule service: medical record cash payment phải sync billing, lock medical record/payment record, thu đúng tổng tiền, tạo `PAYMENT_TRANSACTION` gateway `CASH`, rồi chuyển MR sang `IN_PROGRESS`.
 - Rule service: webhook SePay tạo `PAYMENT_TRANSACTION` gateway `SEPAY` từ dữ liệu gateway trả về.
-- Rule API: `PaymentRecordController` chỉ đọc; payment record và transaction được sinh bởi business flow.
+- Rule API: `PaymentRecordController` cho đọc sổ thanh toán và ghi nhận thanh toán tiền mặt cho medical record qua business flow.
+- Rule API: báo cáo doanh thu chỉ đọc `PAYMENT_TRANSACTION` thành công và không tự ghi dữ liệu kế toán.
