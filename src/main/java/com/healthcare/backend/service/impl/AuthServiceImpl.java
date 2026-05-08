@@ -12,11 +12,13 @@ import com.healthcare.backend.dto.request.ResetPasswordRequest;
 import com.healthcare.backend.dto.response.AuthResponse;
 import com.healthcare.backend.dto.response.RegisterResponse;
 import com.healthcare.backend.entity.Account;
+import com.healthcare.backend.entity.Patient;
 import com.healthcare.backend.entity.Role;
 import com.healthcare.backend.exception.BusinessException;
 import com.healthcare.backend.exception.DuplicateResourceException;
 import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.repository.AccountRepository;
+import com.healthcare.backend.repository.PatientRepository;
 import com.healthcare.backend.repository.RoleRepository;
 import com.healthcare.backend.security.JwtServiceInterface;
 import com.healthcare.backend.service.AuthService;
@@ -30,11 +32,13 @@ public class AuthServiceImpl implements AuthService {
 
     private final AccountRepository accountRepository;
     private final RoleRepository roleRepository;
+    private final PatientRepository patientRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final JwtServiceInterface jwtService;
 
     @Override
+    @Transactional
     public RegisterResponse register(RegisterRequest registerRequest) {
         if (accountRepository.existsByEmail(registerRequest.getEmail()))
             throw new DuplicateResourceException("Email already exists: " + registerRequest.getEmail());
@@ -48,7 +52,14 @@ public class AuthServiceImpl implements AuthService {
         newAccount.setRole(userRole);
         newAccount.setIsActive(0);
 
-        accountRepository.save(newAccount);
+        Account savedAccount = accountRepository.save(newAccount);
+
+        Patient patient = new Patient();
+        patient.setAccount(savedAccount);
+
+        patient.setFullName("Chưa cập nhật");
+
+        patientRepository.save(patient);
 
         emailService.sendVerificationEmail(
             newAccount.getEmail(),
