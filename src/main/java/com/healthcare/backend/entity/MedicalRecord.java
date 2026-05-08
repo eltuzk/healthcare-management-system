@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -72,7 +73,7 @@ public class MedicalRecord {
     private MedicalRecordStatus status;
 
     @Column(name = "total_price", precision = 15, scale = 2)
-    private java.math.BigDecimal totalPrice;
+    private BigDecimal totalPrice;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -98,6 +99,9 @@ public class MedicalRecord {
         }
         if (status == null) {
             status = MedicalRecordStatus.DRAFT;
+        }
+        if (totalPrice == null) {
+            totalPrice = BigDecimal.ZERO;
         }
     }
 

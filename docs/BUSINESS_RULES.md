@@ -221,11 +221,16 @@ Tai lieu nay tong hop cac business rule va validation rule dang duoc the hien tr
 - Khi update medical record, client bat buoc gui `version` dang thay.
 - Neu version request khac `version_number` hien tai, reject de tranh ghi de.
 - Medical record chi sua duoc khi status la `DRAFT` hoac `IN_PROGRESS`.
-- Update medical record tu `DRAFT` se chuyen sang `IN_PROGRESS`.
+- Update noi dung medical record khong tu chuyen `DRAFT` sang `IN_PROGRESS`.
+- Bac si chi duoc tao phieu xet nghiem/dich vu khi medical record dang `DRAFT`.
+- Sau khi tao xong cac phieu chi dinh, benh nhan phai thanh toan tong tien medical record.
+- Ghi nhan thanh toan medical record thanh cong se set payment record `PAID` va chuyen medical record tu `DRAFT` sang `IN_PROGRESS`.
+- Chi duoc cap nhat trang thai/ket qua cac phieu xet nghiem/dich vu khi medical record dang `IN_PROGRESS` va da thanh toan du.
 - Complete medical record bat buoc co:
   - `initialDiagnosis`
   - `clinicalConclusion`
   - `conclusionType`
+- Complete medical record chi duoc thuc hien khi tat ca phieu xet nghiem/dich vu da co ket qua.
 - Complete medical record set status `COMPLETED`, set `completed_at`, va dong thoi set appointment thanh `COMPLETED`.
 - Chi medical record `COMPLETED` moi duoc lock.
 - Lock medical record set status `LOCKED` va `locked_at`.
@@ -240,11 +245,38 @@ Tai lieu nay tong hop cac business rule va validation rule dang duoc the hien tr
 - `COMPLETED`: ho so da hoan tat chuyen mon.
 - `LOCKED`: ho so da khoa, khong cho sua.
 
+### Phieu xet nghiem va dich vu
+
+- Phieu xet nghiem/dich vu chi duoc tao khi medical record dang `DRAFT`.
+- Khi tao phieu, service lock medical record truoc khi validate va sync billing.
+- Moi phieu phai co it nhat mot item duoc chi dinh.
+- Gia cua tung item phai duoc snapshot tai thoi diem chi dinh, khong tinh lai theo master data sau nay.
+- Tong tien medical record va payment record medical record duoc sync lai sau moi lan tao phieu.
+- Sau khi da ghi nhan thanh toan medical record va medical record chuyen sang `IN_PROGRESS`, khong duoc tao them phieu moi.
+- Chi duoc cap nhat status hoac ket qua phieu khi medical record dang `IN_PROGRESS` va payment record medical record da `PAID`.
+- Cap nhat status phieu bang tay chi duoc chuyen sang `SAMPLE_COLLECTED`.
+- Khong duoc cap nhat status phieu da `RESULT_AVAILABLE`.
+- Khong duoc tao result neu phieu chua o status `SAMPLE_COLLECTED`.
+- Tao result thanh cong se tu dong set phieu sang `RESULT_AVAILABLE`.
+- Moi phieu chi co toi da mot result; tao result trung se bi reject.
+- Sua result chi duoc phep khi medical record van dang `IN_PROGRESS` va da thanh toan du.
+- Sau moi lan tao result, he thong tu kiem tra neu tat ca phieu xet nghiem/dich vu deu da `RESULT_AVAILABLE` va medical record da du thong tin bat buoc thi tu complete medical record.
+
+### Trang thai phieu xet nghiem/dich vu
+
+- `NOT_COLLECTED`: da chi dinh, chua lay mau/chua thuc hien.
+- `SAMPLE_COLLECTED`: da lay mau/da thuc hien, dang cho ket qua.
+- `RESULT_AVAILABLE`: da co ban ghi ket qua.
+
 ## 9. Thanh Toan Va Ke Toan
 
-- `PAYMENT_RECORD` la so cai thanh toan, duoc tao/cap nhat qua business flow, API hien tai chi doc.
+- `PAYMENT_RECORD` la so cai thanh toan, duoc tao/cap nhat qua business flow.
 - Payment record phai thuoc dung mot owner: hoac `appointment_id`, hoac `med_record_id`.
 - Payment record appointment duoc tao khi tao appointment online/walk-in.
+- Payment record medical record duoc tao khi tao medical record va gom cac chi phi xet nghiem/dich vu phat sinh.
+- Thanh toan medical record yeu cau so tien khop chinh xac voi tong tien cac phieu chi dinh.
+- API ghi nhan thanh toan medical record chi cho thu tien mat sau khi medical record dang `DRAFT` va da co tong tien can thu.
+- Ghi nhan thanh toan medical record phai lock medical record, sync lai billing, lock payment record, validate amount, tao transaction, roi chuyen medical record sang `IN_PROGRESS`.
 - `request_code` cua payment record appointment hien dung `appointment_code`.
 - `total_price` va `received_amount` phai >= 0.
 - Payment status hop le: `UNPAID`, `PARTIAL`, `PAID`.
@@ -255,6 +287,15 @@ Tai lieu nay tong hop cac business rule va validation rule dang duoc the hien tr
 - Gateway `SEPAY` dung cho online banking webhook.
 - Gateway `CASH` dung cho walk-in thu tien mat.
 - Payment appointment yeu cau so tien khop chinh xac voi phi kham.
+
+### Bao cao doanh thu
+
+- Bao cao doanh thu chi tinh cac `PAYMENT_TRANSACTION` co `process_status = SUCCESS`.
+- Doanh thu duoc tinh theo `transaction_date`, khong theo ngay tao payment record.
+- Bao cao ho tro filter theo `fromDate`, `toDate`, `gateway` va owner type (`APPOINTMENT`, `MEDICAL_RECORD`).
+- Neu khong truyen khoang ngay, bao cao mac dinh lay tu dau thang hien tai den ngay hien tai.
+- Bao cao tra tong doanh thu, so giao dich, breakdown theo ngay, gateway va owner type.
+- API bao cao doanh thu la read-only va chi danh cho `ADMIN`, `ACCOUNTANT`.
 
 ## 10. Cac Rang Buoc Du Lieu Chinh
 
@@ -293,5 +334,8 @@ Tai lieu nay tong hop cac business rule va validation rule dang duoc the hien tr
 - Webhook SePay validate, khoa appointment, cap nhat paid va ghi transaction phai commit cung nhau.
 - Huy/het han appointment phai release slot trong cung transaction voi doi status.
 - Complete medical record va complete appointment phai di cung nhau.
+- Tao phieu xet nghiem/dich vu, sync billing va ghi nhan thanh toan medical record phai lock medical record de tranh tong tien bi lech.
+- Cap nhat status/result cua phieu phai lock phieu can cap nhat va validate lai medical record/payment trong cung transaction.
+- Tao result cuoi cung va auto-complete medical record phai nam trong cung transaction.
 - Queue number da cap khong duoc tai su dung de giu audit trail.
 - Gia phi kham cua appointment khong duoc tinh lai sau khi master data thay doi; phai dung snapshot tren appointment/payment record.
