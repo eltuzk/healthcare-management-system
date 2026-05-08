@@ -2,7 +2,9 @@ package com.healthcare.backend.repository;
 
 import com.healthcare.backend.entity.MedicalRecord;
 import com.healthcare.backend.entity.enums.MedicalRecordStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,6 +19,14 @@ public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Lo
     boolean existsByAppointment_AppointmentId(Long appointmentId);
 
     Optional<MedicalRecord> findByAppointment_AppointmentId(Long appointmentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select mr
+            from MedicalRecord mr
+            where mr.medicalRecordId = :medicalRecordId
+            """)
+    Optional<MedicalRecord> findByIdForUpdate(@Param("medicalRecordId") Long medicalRecordId);
 
     @Query("""
             select mr
