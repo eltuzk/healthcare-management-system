@@ -56,6 +56,7 @@ public class MedicalRecordMapper {
         response.setClinicalNotes(medicalRecord.getClinicalNotes());
         response.setTreatmentPlan(medicalRecord.getTreatmentPlan());
         response.setStatus(medicalRecord.getStatus());
+        response.setTotalPrice(medicalRecord.getTotalPrice());
         response.setCreatedAt(medicalRecord.getCreatedAt());
         response.setUpdatedAt(medicalRecord.getUpdatedAt());
         response.setCompletedAt(medicalRecord.getCompletedAt());
