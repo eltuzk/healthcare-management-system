@@ -76,6 +76,76 @@ Hệ thống được chia thành các nhóm dữ liệu chính:
 | `allergy` | VARCHAR2(1000) | | Dị ứng |
 | `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
 
+### `ACCOUNTANT`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `accountant_id` | NUMBER | PK | ID kế toán |
+| `account_id` | NUMBER | FK -> `ACCOUNT`, UQ, NN | Tài khoản đăng nhập |
+| `full_name` | VARCHAR2(200) | NN | Họ tên |
+| `qualification` | VARCHAR2(200) | | Bằng cấp |
+| `identity_num` | VARCHAR2(50) | UQ | CCCD/CMND |
+| `gender` | VARCHAR2(10) | check | `MALE`, `FEMALE`, `OTHER` |
+| `phone` | VARCHAR2(20) | | Số điện thoại |
+| `address` | VARCHAR2(500) | | Địa chỉ |
+| `date_of_birth` | DATE | | Ngày sinh |
+| `hire_date` | DATE | | Ngày vào làm |
+| `experience` | NUMBER | | Số năm kinh nghiệm |
+| `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
+
+### `RECEPTIONIST`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `receptionist_id` | NUMBER | PK | ID lễ tân |
+| `account_id` | NUMBER | FK -> `ACCOUNT`, UQ, NN | Tài khoản đăng nhập |
+| `full_name` | VARCHAR2(200) | NN | Họ tên |
+| `identity_num` | VARCHAR2(50) | UQ | CCCD/CMND |
+| `gender` | VARCHAR2(10) | check | `MALE`, `FEMALE`, `OTHER` |
+| `phone` | VARCHAR2(20) | | Số điện thoại |
+| `address` | VARCHAR2(500) | | Địa chỉ |
+| `date_of_birth` | DATE | | Ngày sinh |
+| `hire_date` | DATE | | Ngày vào làm |
+| `shift` | VARCHAR2(50) | | Ca làm việc |
+| `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
+
+### `PHARMACIST`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `pharmacist_id` | NUMBER | PK | ID dược sĩ |
+| `account_id` | NUMBER | FK -> `ACCOUNT`, UQ, NN | Tài khoản đăng nhập |
+| `full_name` | VARCHAR2(200) | NN | Họ tên |
+| `qualification` | VARCHAR2(200) | | Bằng cấp |
+| `license_num` | VARCHAR2(100) | UQ, NN | Chứng chỉ hành nghề |
+| `identity_num` | VARCHAR2(50) | UQ | CCCD/CMND |
+| `gender` | VARCHAR2(10) | check | `MALE`, `FEMALE`, `OTHER` |
+| `phone` | VARCHAR2(20) | | Số điện thoại |
+| `address` | VARCHAR2(500) | | Địa chỉ |
+| `date_of_birth` | DATE | | Ngày sinh |
+| `hire_date` | DATE | | Ngày vào làm |
+| `experience` | NUMBER | | Số năm kinh nghiệm |
+| `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
+
+### `TECHNICIAN`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `technician_id` | NUMBER | PK | ID kỹ thuật viên |
+| `account_id` | NUMBER | FK -> `ACCOUNT`, UQ, NN | Tài khoản đăng nhập |
+| `full_name` | VARCHAR2(200) | NN | Họ tên |
+| `qualification` | VARCHAR2(200) | | Bằng cấp |
+| `specialty_area` | VARCHAR2(200) | | Lĩnh vực chuyên môn (vd: X-Quang, Xét nghiệm...) |
+| `license_num` | VARCHAR2(100) | UQ | Chứng chỉ hành nghề |
+| `identity_num` | VARCHAR2(50) | UQ | CCCD/CMND |
+| `gender` | VARCHAR2(10) | check | `MALE`, `FEMALE`, `OTHER` |
+| `phone` | VARCHAR2(20) | | Số điện thoại |
+| `address` | VARCHAR2(500) | | Địa chỉ |
+| `date_of_birth` | DATE | | Ngày sinh |
+| `hire_date` | DATE | | Ngày vào làm |
+| `experience` | NUMBER | | Số năm kinh nghiệm |
+| `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
+
 ## Cơ Sở Vật Chất
 
 ### `BRANCH`
