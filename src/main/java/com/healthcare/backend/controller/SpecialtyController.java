@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/specialties")
+@RequestMapping("/api/specialties")
 @RequiredArgsConstructor
 public class SpecialtyController {
 

@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController
-@RequestMapping("/doctors")
+@RequestMapping("/api/doctors")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 public class DoctorController {
@@ -52,8 +52,7 @@ public class DoctorController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<DoctorResponse> update(
             @PathVariable Long doctorId,
-            @Valid @RequestBody DoctorRequest request
-    ) {
+            @Valid @RequestBody DoctorRequest request) {
         return ResponseEntity.ok(doctorService.update(doctorId, request));
     }
 

@@ -17,7 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/medical-service-requests")
+@RequestMapping("/api/medical-service-requests")
 @RequiredArgsConstructor
 public class MedicalServiceRequestController {
 

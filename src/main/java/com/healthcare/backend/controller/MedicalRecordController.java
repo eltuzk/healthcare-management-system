@@ -24,7 +24,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/medical-records")
+@RequestMapping("/api/medical-records")
 @RequiredArgsConstructor
 public class MedicalRecordController {
 

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class AdmissionController {
 
@@ -52,7 +52,8 @@ public class AdmissionController {
 
     @PutMapping("/admission-requests/{id}/status")
     @PreAuthorize("hasAnyAuthority('ROLE_DOCTOR', 'ROLE_RECEPTIONIST')")
-    public ResponseEntity<AdmissionRequestResponse> updateStatus(@PathVariable Long id, @Valid @RequestBody AdmissionStatusUpdateRequest request) {
+    public ResponseEntity<AdmissionRequestResponse> updateStatus(@PathVariable Long id,
+            @Valid @RequestBody AdmissionStatusUpdateRequest request) {
         return ResponseEntity.ok(admissionService.updateStatus(id, request));
     }
 
@@ -68,13 +69,15 @@ public class AdmissionController {
 
     @PostMapping("/admission-requests/{admissionId}/records")
     @PreAuthorize("hasAnyAuthority('ROLE_DOCTOR', 'ROLE_NURSE')")
-    public ResponseEntity<AdmissionRecordResponse> createRecord(@PathVariable Long admissionId, @Valid @RequestBody AdmissionRecordRequest request) {
+    public ResponseEntity<AdmissionRecordResponse> createRecord(@PathVariable Long admissionId,
+            @Valid @RequestBody AdmissionRecordRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(admissionService.createRecord(admissionId, request));
     }
 
     @PutMapping("/admission-records/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_DOCTOR', 'ROLE_NURSE')")
-    public ResponseEntity<AdmissionRecordResponse> updateRecord(@PathVariable Long id, @Valid @RequestBody AdmissionRecordRequest request) {
+    public ResponseEntity<AdmissionRecordResponse> updateRecord(@PathVariable Long id,
+            @Valid @RequestBody AdmissionRecordRequest request) {
         return ResponseEntity.ok(admissionService.updateRecord(id, request));
     }
 }

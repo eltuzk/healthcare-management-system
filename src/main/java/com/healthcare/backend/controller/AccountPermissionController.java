@@ -18,7 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/account-permissions")
+@RequestMapping("/api/account-permissions")
 @RequiredArgsConstructor
 public class AccountPermissionController {
 

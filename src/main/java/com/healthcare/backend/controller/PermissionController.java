@@ -22,7 +22,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/permissions")
+@RequestMapping("/api/permissions")
 @RequiredArgsConstructor
 public class PermissionController {
 
@@ -48,7 +48,8 @@ public class PermissionController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<PermissionResponse> update(@PathVariable Long id, @Valid @RequestBody PermissionRequest request) {
+    public ResponseEntity<PermissionResponse> update(@PathVariable Long id,
+            @Valid @RequestBody PermissionRequest request) {
         return ResponseEntity.ok(permissionService.update(id, request));
     }
 

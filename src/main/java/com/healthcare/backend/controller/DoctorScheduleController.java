@@ -26,7 +26,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/doctor-schedules")
+@RequestMapping("/api/doctor-schedules")
 @RequiredArgsConstructor
 public class DoctorScheduleController {
 

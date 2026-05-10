@@ -11,7 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/lab-test-results")
+@RequestMapping("/api/lab-test-results")
 @RequiredArgsConstructor
 public class LabTestResultController {
 

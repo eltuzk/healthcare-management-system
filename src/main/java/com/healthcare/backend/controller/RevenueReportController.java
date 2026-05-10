@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/reports")
+@RequestMapping("/api/reports")
 @RequiredArgsConstructor
 public class RevenueReportController {
 
@@ -27,10 +27,7 @@ public class RevenueReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(required = false) String gateway,
-            @RequestParam(required = false) RevenueOwnerType ownerType
-    ) {
+            @RequestParam(required = false) RevenueOwnerType ownerType) {
         return ResponseEntity.ok(revenueReportService.getRevenueReport(fromDate, toDate, gateway, ownerType));
     }
 }
-
-
