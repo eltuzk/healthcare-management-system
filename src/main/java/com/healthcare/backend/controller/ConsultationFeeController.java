@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/consultation-fees")
+@RequestMapping("/consultation-fees")
 @RequiredArgsConstructor
 public class ConsultationFeeController {
 
@@ -48,8 +48,7 @@ public class ConsultationFeeController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ConsultationFeeResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody ConsultationFeeRequest request
-    ) {
+            @Valid @RequestBody ConsultationFeeRequest request) {
         return ResponseEntity.ok(consultationFeeService.update(id, request));
     }
 

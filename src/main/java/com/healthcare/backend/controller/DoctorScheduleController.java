@@ -26,7 +26,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/doctor-schedules")
+@RequestMapping("/doctor-schedules")
 @RequiredArgsConstructor
 public class DoctorScheduleController {
 
@@ -46,8 +46,7 @@ public class DoctorScheduleController {
     public ResponseEntity<List<DoctorScheduleResponse>> getAll(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) Long doctorId,
-            @RequestParam(required = false) Long roomId
-    ) {
+            @RequestParam(required = false) Long roomId) {
         return ResponseEntity.ok(doctorScheduleService.getAll(date, doctorId, roomId));
     }
 
@@ -59,8 +58,7 @@ public class DoctorScheduleController {
     @PutMapping("/{id}")
     public ResponseEntity<DoctorScheduleResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateDoctorScheduleRequest request
-    ) {
+            @Valid @RequestBody UpdateDoctorScheduleRequest request) {
         return ResponseEntity.ok(doctorScheduleService.update(id, request));
     }
 

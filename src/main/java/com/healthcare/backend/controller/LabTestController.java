@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/lab-tests")
+@RequestMapping("/lab-tests")
 @RequiredArgsConstructor
 public class LabTestController {
 
@@ -41,8 +41,7 @@ public class LabTestController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LabTestResponse> updateLabTest(
             @PathVariable Long id,
-            @Valid @RequestBody LabTestRequest request
-    ) {
+            @Valid @RequestBody LabTestRequest request) {
         return ResponseEntity.ok(labTestService.updateLabTest(id, request));
     }
 

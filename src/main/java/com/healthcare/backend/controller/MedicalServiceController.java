@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/medical-services")
+@RequestMapping("/medical-services")
 @RequiredArgsConstructor
 public class MedicalServiceController {
 
@@ -34,19 +34,16 @@ public class MedicalServiceController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MedicalServiceResponse> createMedicalService(
-            @Valid @RequestBody MedicalServiceRequest request
-    ) {
+            @Valid @RequestBody MedicalServiceRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                medicalServiceService.createMedicalService(request)
-        );
+                medicalServiceService.createMedicalService(request));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MedicalServiceResponse> updateMedicalService(
             @PathVariable Long id,
-            @Valid @RequestBody MedicalServiceRequest request
-    ) {
+            @Valid @RequestBody MedicalServiceRequest request) {
         return ResponseEntity.ok(medicalServiceService.updateMedicalService(id, request));
     }
 
