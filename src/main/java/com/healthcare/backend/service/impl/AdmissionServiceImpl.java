@@ -11,6 +11,7 @@ import com.healthcare.backend.entity.Bed;
 import com.healthcare.backend.entity.MedicalRecord;
 import com.healthcare.backend.entity.Patient;
 import com.healthcare.backend.entity.enums.AdmissionStatus;
+import com.healthcare.backend.entity.enums.MedicalRecordStatus;
 import com.healthcare.backend.exception.DuplicateResourceException;
 import com.healthcare.backend.exception.BusinessException;
 import com.healthcare.backend.exception.ResourceNotFoundException;
@@ -81,6 +82,10 @@ public class AdmissionServiceImpl implements AdmissionService {
         MedicalRecord medicalRecord = medicalRecordRepository.findById(request.getMedRecordId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Medical record not found with id: " + request.getMedRecordId()));
+
+        if (medicalRecord.getStatus() != MedicalRecordStatus.COMPLETED) {
+            throw new BusinessException("Medical record must be COMPLETED before requesting admission");
+        }
 
         if (admissionRequestRepository.existsByMedicalRecord_MedicalRecordId(request.getMedRecordId())) {
             throw new DuplicateResourceException("This medical record already has an admission request");
