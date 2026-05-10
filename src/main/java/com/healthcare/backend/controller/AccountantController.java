@@ -28,12 +28,6 @@ public class AccountantController {
         return ResponseEntity.ok(accountantService.getById(id));
     }
 
-    @PostMapping
-    public ResponseEntity<AccountantResponse> createAccountant(@Valid @RequestBody AccountantRequest request) {
-        AccountantResponse response = accountantService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<AccountantResponse> updateAccountant(
             @PathVariable Long id, 

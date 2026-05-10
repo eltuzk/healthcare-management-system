@@ -12,10 +12,8 @@ public interface AccountantService {
 
     AccountantResponse getById(Long id);
 
-    AccountantResponse create(AccountantRequest request);
-
     AccountantResponse update(Long id, AccountantRequest request);
 
     void delete(Long id);
-    
+
 }
