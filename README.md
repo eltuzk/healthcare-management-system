@@ -77,4 +77,4 @@ com.healthcare.backend
 | 2 | 24520247 | Nguyễn Lê Bảo Đan | https://github.com/bdan0412 | 24520247@gm.uit.edu.vn |
 | 3 | 24520479 | Phan Thế Hiển | https://github.com/eltuzk | 24520479@gm.uit.edu.vn |
 | 4 | 24520304 | Đào Trọng Định | https://github.com/dinh404 | 24520304@gm.uit.edu.vn |
-| 5 | 24520678 | Nguyễn Hoàng Quốc Huy | https://github.com/xxx | 24520678@gm.uit.edu.vn |
+| 5 | 24520678 | Nguyễn Hoàng Quốc Huy | https://github.com/nguyenhoangquochuyqnm-sketch | 24520678@gm.uit.edu.vn |
