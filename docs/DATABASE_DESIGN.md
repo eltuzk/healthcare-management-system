@@ -361,7 +361,28 @@ Quy tắc request:
 
 - `ADMISSION_RECORD`: Các bản ghi theo dõi (huyết áp, nhịp tim, nhiệt độ) trong quá trình nằm viện.
 
-## Đơn Thuốc
+## Kho Thuốc Và Đơn Thuốc
+
+### `MEDICINE`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `medicine_id` | NUMBER | PK | ID thuốc |
+| `medicine_name` | VARCHAR2(200) | UQ, NN | Tên thuốc |
+| `price` | NUMBER(15,2) | NN, >= 0 | Giá bán |
+| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
+
+### `MEDICINE_LOT`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `lot_id` | NUMBER | PK | ID lô thuốc |
+| `medicine_id` | NUMBER | FK -> `MEDICINE`, NN | Thuộc thuốc nào |
+| `lot_number` | VARCHAR2(100) | NN | Số lô |
+| `quantity` | NUMBER(10) | NN, >= 0 | Số lượng tồn kho |
+| `supplier` | VARCHAR2(200) | | Nhà cung cấp |
+| `manufacturing_date` | DATE | | Ngày sản xuất |
+| `expiry_date` | DATE | NN | Ngày hết hạn |
 
 ### `PRESCRIPTION`
 
@@ -373,8 +394,18 @@ Quy tắc request:
 | `payment_status` | VARCHAR2(20) | NN, check | `UNPAID`, `PAID` |
 | `total_price` | NUMBER(15,2) | >= 0 | Tổng tiền thuốc |
 | `created_at` | TIMESTAMP | NN | Ngày kê đơn |
+| `paid_at` | TIMESTAMP | | Thời điểm thanh toán |
 
-- `PRESCRIPTION_DETAIL`: Chi tiết thuốc, khóa chính `(prescription_id, medicine_id)`, lưu `quantity`, `unit`, `instruction` và `snapshot_price`.
+### `PRESCRIPTION_DETAIL`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `prescription_id` | NUMBER | PK, FK -> `PRESCRIPTION` | Đơn thuốc |
+| `medicine_id` | NUMBER | PK, FK -> `MEDICINE` | Thuốc |
+| `quantity` | NUMBER(10) | NN, > 0 | Số lượng |
+| `unit` | VARCHAR2(50) | NN | Đơn vị tính |
+| `snapshot_price` | NUMBER(15,2) | NN, >= 0 | Giá thuốc tại thời điểm kê đơn |
+| `instruction` | VARCHAR2(500) | | Hướng dẫn sử dụng |
 
 ## Thanh Toán Và Kế Toán
 
@@ -482,6 +513,7 @@ Ghi chú hiện tại:
 | `MEDICAL_RECORD` | `LAB_TEST_REQUEST` | `LAB_TEST_REQUEST.med_record_id` |
 | `MEDICAL_RECORD` | `MEDICAL_SERVICE_REQUEST` | `MEDICAL_SERVICE_REQUEST.med_record_id` |
 | `PAYMENT_RECORD` | `PAYMENT_TRANSACTION` | `PAYMENT_TRANSACTION.payment_record_id` |
+| `MEDICINE` | `MEDICINE_LOT` | `MEDICINE_LOT.medicine_id` |
 
 ### Quan Hệ N-N Qua Junction Table
 
