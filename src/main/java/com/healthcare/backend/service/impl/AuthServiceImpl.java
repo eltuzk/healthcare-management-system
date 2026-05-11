@@ -92,7 +92,7 @@ public class AuthServiceImpl implements AuthService {
             account.getAccountId(), account.getEmail(), account.getRole().getRoleName()
         );
 
-        return new AuthResponse(accessToken);
+        return new AuthResponse(accessToken, account.getRole().getRoleName());
     }
 
     @Override
