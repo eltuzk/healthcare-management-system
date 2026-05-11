@@ -35,7 +35,7 @@ public class RoomController {
 
     @PutMapping("/{id}")
     public ResponseEntity<RoomResponse> updateRoom(@PathVariable Long id,
-                                                   @Valid @RequestBody RoomRequest request) {
+            @Valid @RequestBody RoomRequest request) {
         return ResponseEntity.ok(roomService.updateRoom(id, request));
     }
 

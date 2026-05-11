@@ -48,8 +48,7 @@ public class SpecialtyController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<SpecialtyResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody SpecialtyRequest request
-    ) {
+            @Valid @RequestBody SpecialtyRequest request) {
         return ResponseEntity.ok(specialtyService.update(id, request));
     }
 

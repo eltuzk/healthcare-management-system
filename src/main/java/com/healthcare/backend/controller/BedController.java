@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequestMapping("/api")
 public class BedController {
 
     @Autowired
@@ -24,13 +25,13 @@ public class BedController {
 
     @PostMapping("/rooms/{roomId}/beds")
     public ResponseEntity<BedResponse> addBed(@PathVariable Long roomId,
-                                              @Valid @RequestBody BedRequest request) {
+            @Valid @RequestBody BedRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bedService.addBed(roomId, request));
     }
 
     @PutMapping("/beds/{id}")
     public ResponseEntity<BedResponse> updateBed(@PathVariable Long id,
-                                                 @Valid @RequestBody BedRequest request) {
+            @Valid @RequestBody BedRequest request) {
         return ResponseEntity.ok(bedService.updateBed(id, request));
     }
 

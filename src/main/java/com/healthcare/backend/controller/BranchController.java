@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/branches")
+@RequestMapping("/api/branches")
 @RequiredArgsConstructor
 public class BranchController {
 
@@ -40,7 +40,7 @@ public class BranchController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<BranchResponse> update(@PathVariable Long id,
-                                                 @Valid @RequestBody BranchRequest request) {
+            @Valid @RequestBody BranchRequest request) {
         return ResponseEntity.ok(branchService.update(id, request));
     }
 

@@ -19,7 +19,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/payment-records")
+@RequestMapping("/api/payment-records")
 @RequiredArgsConstructor
 public class PaymentRecordController {
 
@@ -30,8 +30,7 @@ public class PaymentRecordController {
     public ResponseEntity<List<PaymentRecordResponse>> getAll(
             @RequestParam(required = false) PaymentStatus paymentStatus,
             @RequestParam(required = false) Long appointmentId,
-            @RequestParam(required = false) Long medicalRecordId
-    ) {
+            @RequestParam(required = false) Long medicalRecordId) {
         return ResponseEntity.ok(paymentRecordService.getAll(paymentStatus, appointmentId, medicalRecordId));
     }
 
@@ -45,8 +44,7 @@ public class PaymentRecordController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_ACCOUNTANT', 'ROLE_RECEPTIONIST')")
     public ResponseEntity<PaymentRecordResponse> recordMedicalRecordCashPayment(
             @PathVariable Long medicalRecordId,
-            @Valid @RequestBody RecordMedicalRecordPaymentRequest request
-    ) {
+            @Valid @RequestBody RecordMedicalRecordPaymentRequest request) {
         return ResponseEntity.ok(paymentRecordService.recordMedicalRecordCashPayment(medicalRecordId, request));
     }
 }

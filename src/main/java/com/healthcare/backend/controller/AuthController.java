@@ -21,7 +21,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -51,9 +51,8 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(
-        @RequestParam String token,
-        @Valid @RequestBody ResetPasswordRequest resetPasswordRequest
-    ) {
+            @RequestParam String token,
+            @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
         authService.executeResetPassword(token, resetPasswordRequest);
         return ResponseEntity.ok("Password reset successfully.");
     }
@@ -61,10 +60,9 @@ public class AuthController {
     @PostMapping("/change-password")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changePassword(
-        @AuthenticationPrincipal UserPrincipal userPrincipal,
-        @Valid @RequestBody ChangePasswordRequest request
-    ) {
-        
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+
         authService.changePassword(userPrincipal.email(), request);
         return ResponseEntity.noContent().build();
     }

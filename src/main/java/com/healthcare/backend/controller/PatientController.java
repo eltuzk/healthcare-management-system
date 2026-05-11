@@ -16,7 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/patients")
+@RequestMapping("/api/patients")
 @RequiredArgsConstructor
 public class PatientController {
 
@@ -49,7 +49,7 @@ public class PatientController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public ResponseEntity<PatientResponse> update(@PathVariable Long id,
-                                                  @Valid @RequestBody PatientRequest request) {
+            @Valid @RequestBody PatientRequest request) {
         return ResponseEntity.ok(patientService.update(id, request));
     }
 
