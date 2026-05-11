@@ -1,6 +1,6 @@
 # Thiết Kế Database - Healthcare Management System
 
-Tài liệu này mô tả database design hiện tại sau các migration `V1` đến `V17`.
+Tài liệu này mô tả database design hiện tại sau các migration `V1` đến `V18`.
 Khi thay đổi schema hoặc business rule, cần cập nhật file này cùng với [CONSTRAINTS.md](CONSTRAINTS.md).
 
 ## Quy Ước
@@ -75,6 +75,17 @@ Hệ thống được chia thành các nhóm dữ liệu chính:
 | `medical_history` | CLOB | | Tiền sử bệnh |
 | `allergy` | VARCHAR2(1000) | | Dị ứng |
 | `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
+
+### `PATIENT_INSURANCE`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `patient_insurance_id` | NUMBER | PK | ID bảo hiểm |
+| `patient_id` | NUMBER | FK -> `PATIENT`, NN | Bệnh nhân |
+| `insurance_num` | VARCHAR2(100) | UQ, NN | Số thẻ bảo hiểm |
+| `status` | VARCHAR2(20) | NN, check | `ACTIVE`, `EXPIRED`, `SUSPENDED` |
+| `expiry_date` | DATE | NN | Ngày hết hạn |
+| `coverage_percent` | NUMBER(5,2) | NN, check | % bảo hiểm chi trả (0-100) |
 
 ### `ACCOUNTANT`
 
@@ -355,6 +366,27 @@ Quy tắc nghiệp vụ:
 | `price` | NUMBER(15,2) | NN, >= 0 | Giá niêm yết |
 | `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
 
+### `MEDICINE`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `medicine_id` | NUMBER | PK | ID thuốc |
+| `medicine_name` | VARCHAR2(200) | UQ, NN | Tên thuốc |
+| `price` | NUMBER(15,2) | NN, >= 0 | Giá niêm yết |
+| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
+
+### `MEDICINE_LOT`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `lot_id` | NUMBER | PK | ID lô thuốc |
+| `medicine_id` | NUMBER | FK -> `MEDICINE`, NN | Thuốc |
+| `lot_number` | VARCHAR2(100) | NN | Số lô |
+| `quantity` | NUMBER(10) | NN, >= 0 | Số lượng tồn |
+| `supplier` | VARCHAR2(200) | | Nhà cung cấp |
+| `manufacturing_date`| DATE | | Ngày sản xuất |
+| `expiry_date` | DATE | NN | Ngày hết hạn |
+
 ## Quy Trình Xét Nghiệm & Dịch Vụ
 
 ### `LAB_TEST_REQUEST`
@@ -510,14 +542,45 @@ Quy tắc gateway:
 
 ## Bảng Xác Thực Và Phân Quyền
 
-### `ROLE`, `PERMISSION`, `ROLE_PERMISSION`, `ACCOUNT`, `ACCOUNT_PERMISSION`
+### `ROLE`
 
-- `ROLE.role_name` unique.
-- `PERMISSION.permission_name` unique.
-- `ROLE_PERMISSION` PK `(role_id, permission_id)`.
-- `ACCOUNT.email` unique; `ACCOUNT.role_id` FK -> `ROLE`.
-- `ACCOUNT_PERMISSION` PK `(account_id, permission_id)`.
-- Quyền thực tế của user = quyền theo role + quyền bổ sung theo account.
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `role_id` | NUMBER | PK | ID role |
+| `role_name` | VARCHAR2(100) | UQ, NN | Tên role (ADMIN, DOCTOR, ...) |
+| `description` | VARCHAR2(500) | | Mô tả |
+
+### `PERMISSION`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `permission_id` | NUMBER | PK | ID quyền |
+| `permission_name` | VARCHAR2(100) | UQ, NN | Tên quyền |
+| `detail` | VARCHAR2(500) | | Chi tiết |
+
+### `ROLE_PERMISSION`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `role_id` | NUMBER | PK, FK | Link tới `ROLE` |
+| `permission_id` | NUMBER | PK, FK | Link tới `PERMISSION` |
+
+### `ACCOUNT`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `account_id` | NUMBER | PK | ID tài khoản |
+| `email` | VARCHAR2(255) | UQ, NN | Email đăng nhập |
+| `password_hash` | VARCHAR2(255) | NN | Password đã hash |
+| `role_id` | NUMBER | FK -> `ROLE`, NN | Role chính |
+| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
+
+### `ACCOUNT_PERMISSION`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `account_id` | NUMBER | PK, FK | Link tới `ACCOUNT` |
+| `permission_id` | NUMBER | PK, FK | Link tới `PERMISSION` |
 
 Ghi chú hiện tại:
 
