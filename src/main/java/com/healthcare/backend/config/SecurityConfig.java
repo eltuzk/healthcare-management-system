@@ -70,7 +70,7 @@ public class SecurityConfig {
                         "/error")
                         .permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         // .anyRequest().permitAll()
                         .anyRequest().authenticated()
                 )
