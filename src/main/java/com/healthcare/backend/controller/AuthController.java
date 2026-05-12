@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.healthcare.backend.dto.request.AuthRequest;
 import com.healthcare.backend.dto.request.ChangePasswordRequest;
 import com.healthcare.backend.dto.request.ForgotPasswordRequest;
+import com.healthcare.backend.dto.request.GoogleLoginRequest;
 import com.healthcare.backend.dto.request.RegisterRequest;
 import com.healthcare.backend.dto.request.ResetPasswordRequest;
 import com.healthcare.backend.dto.response.AuthResponse;
@@ -41,6 +42,11 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest authRequest) {
         return ResponseEntity.ok(authService.login(authRequest));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
+        return ResponseEntity.ok(authService.loginWithGoogle(googleLoginRequest));
     }
 
     @PostMapping("/forgot-password")
