@@ -16,7 +16,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "bed")
+@Table(name = "BED")
 @Getter
 @Setter
 public class Bed {

@@ -25,6 +25,15 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ArrayList;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -59,8 +68,8 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DoctorScheduleResponse> getAll(LocalDate date, Long doctorId, Long roomId) {
-        return doctorScheduleRepository.findAllByFilters(date, doctorId, roomId)
+    public List<DoctorScheduleResponse> getAll(LocalDate date, LocalDate startDate, LocalDate endDate, Long doctorId, Long roomId) {
+        return doctorScheduleRepository.findAllByFilters(date, startDate, endDate, doctorId, roomId)
                 .stream()
                 .sorted(Comparator
                         .comparing(DoctorSchedule::getScheduleDate)
@@ -73,7 +82,113 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
     @Override
     @Transactional
     public DoctorScheduleImportResponse importSchedules(MultipartFile file) {
-        throw new BusinessException("Chuc nang import lich lam viec bac si chua duoc hoan tat");
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("File tải lên trống");
+        }
+
+        List<DoctorSchedule> savedSchedules = new ArrayList<>();
+
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+
+            // Bỏ qua dòng tiêu đề (index 0)
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                String doctorName = getCellValueAsString(row.getCell(0));
+                String roomCode = getCellValueAsString(row.getCell(1));
+
+                if (doctorName.isEmpty() && roomCode.isEmpty()) {
+                    continue; // Bỏ qua dòng trống
+                }
+
+                LocalDate scheduleDate = getCellValueAsDate(row.getCell(2));
+                String shiftStr = getCellValueAsString(row.getCell(3));
+
+                int currentRow = i + 1;
+
+                // 1. Tìm bác sĩ
+                List<Doctor> doctors = doctorRepository.findActiveByFullName(doctorName);
+                if (doctors.isEmpty()) {
+                    throw new BusinessException("Không tìm thấy bác sĩ đang hoạt động với tên: " + doctorName + " ở dòng " + currentRow);
+                }
+                Doctor doctor = doctors.get(0);
+
+                // 2. Tìm phòng
+                Room room = roomRepository.findByRoomCodeNormalized(roomCode)
+                        .orElseThrow(() -> new BusinessException("Không tìm thấy phòng với mã: " + roomCode + " ở dòng " + currentRow));
+
+                // 3. Validate ngày trực
+                if (scheduleDate == null) {
+                    throw new BusinessException("Ngày trực không hợp lệ ở dòng " + currentRow);
+                }
+                validateScheduleDate(scheduleDate);
+
+                // 4. Validate ca trực
+                ShiftType shift;
+                try {
+                    shift = ShiftType.valueOf(shiftStr.toUpperCase().trim());
+                } catch (IllegalArgumentException e) {
+                    throw new BusinessException("Ca trực không hợp lệ (MORNING, AFTERNOON, EVENING, NIGHT): " + shiftStr + " ở dòng " + currentRow);
+                }
+
+                // 5. Kiểm tra trùng lịch
+                validateDuplicateDoctorShift(doctor.getDoctorId(), scheduleDate, shift, null);
+                validateDuplicateRoomShift(room.getRoomId(), scheduleDate, shift, null);
+
+                // 6. Tạo lịch
+                DoctorSchedule schedule = new DoctorSchedule();
+                schedule.setDoctor(doctor);
+                schedule.setRoom(room);
+                schedule.setScheduleDate(scheduleDate);
+                schedule.setShift(shift);
+                schedule.setMaxCapacity(0); // Cho mặc định = 0
+                schedule.setCurrentBookingCount(0); 
+                schedule.setLastQueueNumber(0);     
+                schedule.setNote(null);             
+
+                savedSchedules.add(saveWithDuplicateHandling(schedule));
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException("Lỗi khi đọc file Excel: " + e.getMessage());
+        }
+
+        List<DoctorScheduleResponse> responses = savedSchedules.stream()
+                .map(doctorScheduleMapper::toResponse)
+                .toList();
+
+        return new DoctorScheduleImportResponse(responses.size(), responses);
+    }
+
+    private String getCellValueAsString(Cell cell) {
+        if (cell == null) return "";
+        if (cell.getCellType() == CellType.STRING) {
+            return cell.getStringCellValue().trim();
+        } else if (cell.getCellType() == CellType.NUMERIC) {
+            return String.valueOf((int) cell.getNumericCellValue());
+        }
+        return "";
+    }
+
+    private LocalDate getCellValueAsDate(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+            return cell.getLocalDateTimeCellValue().toLocalDate();
+        } else if (cell.getCellType() == CellType.STRING) {
+            try {
+                String dateStr = cell.getStringCellValue().trim();
+                if (dateStr.contains("/")) {
+                    return LocalDate.parse(dateStr, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                }
+                return LocalDate.parse(dateStr);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     @Override

@@ -63,11 +63,13 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             select a
             from Appointment a
             where (:patientId is null or a.patient.patientId = :patientId)
+              and (:doctorId is null or a.doctorSchedule.doctor.doctorId = :doctorId)
               and (:doctorScheduleId is null or a.doctorSchedule.doctorScheduleId = :doctorScheduleId)
               and (:status is null or a.status = :status)
             """)
     List<Appointment> findAllByFilters(
             @Param("patientId") Long patientId,
+            @Param("doctorId") Long doctorId,
             @Param("doctorScheduleId") Long doctorScheduleId,
             @Param("status") AppointmentStatus status
     );

@@ -5,11 +5,14 @@ import com.healthcare.backend.dto.response.RoomResponse;
 import com.healthcare.backend.entity.Branch;
 import com.healthcare.backend.entity.Room;
 import com.healthcare.backend.entity.RoomType;
+import com.healthcare.backend.entity.Specialty;
 import com.healthcare.backend.repository.BedRepository;
 import com.healthcare.backend.repository.BranchRepository;
 import com.healthcare.backend.repository.RoomRepository;
 import com.healthcare.backend.repository.RoomTypeRepository;
+import com.healthcare.backend.repository.SpecialtyRepository;
 import com.healthcare.backend.service.RoomService;
+import com.healthcare.backend.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,16 +34,22 @@ public class RoomServiceImpl implements RoomService {
     @Autowired
     private BedRepository bedRepository;
 
+    @Autowired
+    private SpecialtyRepository specialtyRepository;
+
     private RoomResponse toDTO(Room room) {
         return new RoomResponse(
                 room.getRoomId(),
                 room.getRoomCode(),
                 room.getPosition(),
                 room.getNote(),
+                room.getFloor(),
                 room.getRoomType().getRoomTypeId(),
                 room.getRoomType().getRoomTypeName(),
                 room.getBranch().getBranchId(),
-                room.getBranch().getBranchName()
+                room.getBranch().getBranchName(),
+                room.getSpecialty() != null ? room.getSpecialty().getSpecialtyId() : null,
+                room.getSpecialty() != null ? room.getSpecialty().getSpecialtyName() : null
         );
     }
 
@@ -78,8 +87,19 @@ public class RoomServiceImpl implements RoomService {
         room.setRoomCode(request.getRoomCode());
         room.setPosition(request.getPosition());
         room.setNote(request.getNote());
+        room.setFloor(request.getFloor());
         room.setRoomType(roomType);
         room.setBranch(branch);
+
+        // Validation: Chỉ có roomType là 'Phòng khám' mới cho chọn chuyên khoa
+        if (request.getSpecialtyId() != null) {
+            if (!"Phòng khám".equalsIgnoreCase(roomType.getRoomTypeName())) {
+                throw new BusinessException("Chỉ loại phòng 'Phòng khám' mới được phép chọn chuyên khoa");
+            }
+            Specialty specialty = specialtyRepository.findById(request.getSpecialtyId())
+                    .orElseThrow(() -> new BusinessException("Không tìm thấy chuyên khoa với id: " + request.getSpecialtyId()));
+            room.setSpecialty(specialty);
+        }
 
         Room saved = roomRepository.save(room);
         return toDTO(saved);
@@ -103,8 +123,21 @@ public class RoomServiceImpl implements RoomService {
         existing.setRoomCode(request.getRoomCode());
         existing.setPosition(request.getPosition());
         existing.setNote(request.getNote());
+        existing.setFloor(request.getFloor());
         existing.setRoomType(roomType);
         existing.setBranch(branch);
+
+        // Validation: Chỉ có roomType là 'Phòng khám' mới cho chọn chuyên khoa
+        if (request.getSpecialtyId() != null) {
+            if (!"Phòng khám".equalsIgnoreCase(roomType.getRoomTypeName())) {
+                throw new BusinessException("Chỉ loại phòng 'Phòng khám' mới được phép chọn chuyên khoa");
+            }
+            Specialty specialty = specialtyRepository.findById(request.getSpecialtyId())
+                    .orElseThrow(() -> new BusinessException("Không tìm thấy chuyên khoa với id: " + request.getSpecialtyId()));
+            existing.setSpecialty(specialty);
+        } else {
+            existing.setSpecialty(null);
+        }
 
         Room updated = roomRepository.save(existing);
         return toDTO(updated);

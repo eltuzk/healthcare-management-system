@@ -50,9 +50,10 @@ public class AppointmentController {
     @GetMapping
     public ResponseEntity<List<AppointmentResponse>> getAll(
             @RequestParam(required = false) Long patientId,
+            @RequestParam(required = false) Long doctorId,
             @RequestParam(required = false) Long doctorScheduleId,
             @RequestParam(required = false) AppointmentStatus status) {
-        return ResponseEntity.ok(appointmentService.getAll(patientId, doctorScheduleId, status));
+        return ResponseEntity.ok(appointmentService.getAll(patientId, doctorId, doctorScheduleId, status));
     }
 
     @PostMapping("/{id}/check-in")

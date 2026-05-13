@@ -19,6 +19,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     Page<Doctor> findAllByIsActive(boolean isActive, Pageable pageable);
 
     Optional<Doctor> findByAccount_AccountId(Long accountId);
+    Optional<Doctor> findByAccount_Email(String email);
 
     boolean existsByAccount_AccountId(Long accountId);
 

@@ -20,13 +20,13 @@ public class BranchController {
     private final BranchService branchService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR')")
     public ResponseEntity<List<BranchResponse>> getAll() {
         return ResponseEntity.ok(branchService.getAll());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR')")
     public ResponseEntity<BranchResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(branchService.getById(id));
     }

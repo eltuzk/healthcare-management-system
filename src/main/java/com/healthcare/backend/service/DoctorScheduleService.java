@@ -15,7 +15,7 @@ public interface DoctorScheduleService {
 
     DoctorScheduleImportResponse importSchedules(MultipartFile file);
 
-    List<DoctorScheduleResponse> getAll(LocalDate date, Long doctorId, Long roomId);
+    List<DoctorScheduleResponse> getAll(LocalDate date, LocalDate startDate, LocalDate endDate, Long doctorId, Long roomId);
 
     DoctorScheduleResponse getById(Long doctorScheduleId);
 
