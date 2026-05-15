@@ -8,6 +8,10 @@ import org.springframework.data.domain.Page;
 
 public interface AccountantService {
 
+    AccountantResponse getMe(String email);
+
+    AccountantResponse updateMe(String email, AccountantRequest request);
+
     Page<AccountantResponse> getAll(Pageable pageable);
 
     AccountantResponse getById(Long id);

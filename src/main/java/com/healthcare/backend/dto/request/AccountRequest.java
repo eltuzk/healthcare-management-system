@@ -25,4 +25,6 @@ public class AccountRequest {
 
     @NotNull(message = "Role ID is required")
     private Long roleId;
+
+    private String fullName;
 }

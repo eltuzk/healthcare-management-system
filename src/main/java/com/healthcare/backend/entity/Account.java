@@ -28,8 +28,11 @@ public class Account {
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String passwordHash;
+
+    @Column(name = "google_id", unique = true)
+    private String googleId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", nullable = false)

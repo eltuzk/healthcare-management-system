@@ -47,6 +47,29 @@ public class AccountantServiceImpl implements AccountantService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public AccountantResponse getMe(String email) {
+        return accountantMapper.toResponse(accountantRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new RuntimeException("Accountant not found with email: " + email)));
+    }
+
+    @Override
+    @Transactional
+    public AccountantResponse updateMe(String email, AccountantRequest request) {
+        Accountant accountant = accountantRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new RuntimeException("Accountant not found with email: " + email));
+
+        if (request.getIdentityNum() != null 
+                && !request.getIdentityNum().isBlank()
+                && accountantRepository.existsByIdentityNumAndAccountantIdNot(request.getIdentityNum(), accountant.getAccountantId())) {
+            throw new RuntimeException("Số CCCD đã tồn tại: " + request.getIdentityNum());
+        }
+
+        accountantMapper.updateEntityFromRequest(request, accountant);
+        return accountantMapper.toResponse(accountantRepository.save(accountant));
+    }
+
+    @Override
     @Transactional
     public void delete(Long id) {
         Accountant accountant = accountantRepository.findById(id)

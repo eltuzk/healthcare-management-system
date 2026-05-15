@@ -90,13 +90,24 @@ public class PatientServiceImpl implements PatientService {
     @Override
     @Transactional(readOnly = true)
     public PatientResponse getMe(String email) {
-        Account account = accountRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + email));
+        return patientMapper.toResponse(patientRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with email: " + email)));
+    }
 
-        Patient patient = patientRepository.findByAccount_AccountId(account.getAccountId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hồ sơ bệnh nhân cho tài khoản: " + email));
+    @Override
+    @Transactional
+    public PatientResponse updateMe(String email, PatientRequest request) {
+        Patient patient = patientRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with email: " + email));
+                
+        if (request.getIdentityNum() != null 
+                && !request.getIdentityNum().isBlank()
+                && patientRepository.existsByIdentityNumAndPatientIdNot(request.getIdentityNum(), patient.getPatientId())) {
+            throw new DuplicateResourceException("Identity number already exists: " + request.getIdentityNum());
+        }
 
-        return patientMapper.toResponse(patient);
+        patientMapper.updateEntityFromRequest(request, patient);
+        return patientMapper.toResponse(patientRepository.save(patient));
     }
 
     private Patient findOrThrow(Long id) {

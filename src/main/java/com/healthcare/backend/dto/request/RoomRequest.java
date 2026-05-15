@@ -25,4 +25,9 @@ public class RoomRequest {
 
     @NotNull(message = "Chi nhánh không được để trống")
     private Long branchId;
+
+    @NotNull(message = "Tầng không được để trống")
+    private Integer floor;
+
+    private Long specialtyId;
 }

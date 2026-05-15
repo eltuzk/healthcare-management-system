@@ -16,5 +16,9 @@ public interface PharmacistService {
 
     PharmacistResponse update(Long id, PharmacistRequest request);
 
+    PharmacistResponse getMe(String email);
+
+    PharmacistResponse updateMe(String email, PharmacistRequest request);
+
     void delete(Long id);
 }

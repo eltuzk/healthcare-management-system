@@ -10,10 +10,15 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -49,19 +54,23 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleValidation(MethodArgumentNotValidException ex) {
-        String message = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(FieldError::getDefaultMessage)
-                .collect(Collectors.joining(", "));
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error -> 
+            errors.put(error.getField(), error.getDefaultMessage())
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<String> handleUnreadableMessage(HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body("Invalid request body. Please check JSON syntax and date format yyyy-MM-dd");
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleGeneral(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("An unexpected error occurred: " + ex.getMessage());
     }
 }

@@ -24,4 +24,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Page<Account> findAllByIsActive(Integer isActive, Pageable pageable);
 
     boolean existsByRole_RoleId(Long roleId);
+
+    Optional<Account> findByGoogleId(String googleId);
 }

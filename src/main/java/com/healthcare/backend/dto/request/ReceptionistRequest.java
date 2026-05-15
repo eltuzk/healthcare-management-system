@@ -1,38 +1,32 @@
 package com.healthcare.backend.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDate;
 
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ReceptionistRequest {
 
-    @NotNull(message = "Account ID is required")
     private Long accountId;
 
-    @NotBlank(message = "Full name is required")
-    @Size(max = 200)
+    @NotBlank(message = "Họ tên không được để trống")
     private String fullName;
 
-    @NotBlank(message = "Identity number is required")
-    @Size(max = 50)
+    @NotBlank(message = "Số CCCD không được để trống")
     private String identityNum;
 
-    @Size(max = 10)
+    @Pattern(regexp = "(?i)MALE|FEMALE|OTHER", message = "Giới tính không hợp lệ")
     private String gender;
 
-    @Size(max = 20)
     private String phone;
-
-    @Size(max = 500)
     private String address;
 
-    @Past(message = "Date of birth must be in the past")
+    @Past(message = "Ngày sinh phải trong quá khứ")
     private LocalDate dateOfBirth;
 
     private LocalDate hireDate;
-
-    @Size(max = 50)
     private String shift;
 }

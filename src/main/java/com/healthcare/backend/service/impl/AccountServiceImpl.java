@@ -11,6 +11,7 @@ import com.healthcare.backend.dto.response.AccountResponse;
 import com.healthcare.backend.entity.Account;
 import com.healthcare.backend.entity.Accountant;
 import com.healthcare.backend.entity.Doctor;
+import com.healthcare.backend.entity.Administrator;
 import com.healthcare.backend.entity.Pharmacist;
 import com.healthcare.backend.entity.Receptionist;
 import com.healthcare.backend.entity.Role;
@@ -20,6 +21,7 @@ import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.AccountMapper;
 import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.AccountantRepository;
+import com.healthcare.backend.repository.AdministratorRepository;
 import com.healthcare.backend.repository.DoctorRepository;
 import com.healthcare.backend.repository.PatientRepository;
 import com.healthcare.backend.repository.PharmacistRepository;
@@ -42,6 +44,7 @@ public class AccountServiceImpl implements AccountService {
     private final PharmacistRepository pharmacistRepository;
     private final TechnicianRepository technicianRepository;
     private final AccountantRepository accountantRepository;
+    private final AdministratorRepository administratorRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccountMapper accountMapper;
 
@@ -80,7 +83,7 @@ public class AccountServiceImpl implements AccountService {
             case "DOCTOR":
                 Doctor doctor = new Doctor();
                 doctor.setAccount(savedAccount);
-                doctor.setFullName("Chưa cập nhật");
+                doctor.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
                 doctor.setLicenseNum("PENDING-" + savedAccount.getAccountId()); // Xử lý cột Unique
                 doctorRepository.save(doctor);
                 break;
@@ -88,14 +91,14 @@ public class AccountServiceImpl implements AccountService {
             case "RECEPTIONIST":
                 Receptionist receptionist = new Receptionist();
                 receptionist.setAccount(savedAccount);
-                receptionist.setFullName("Chưa cập nhật");
+                receptionist.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
                 receptionistRepository.save(receptionist);
                 break;
                 
             case "PHARMACIST":
                 Pharmacist pharmacist = new Pharmacist();
                 pharmacist.setAccount(savedAccount);
-                pharmacist.setFullName("Chưa cập nhật");
+                pharmacist.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
                 pharmacist.setLicenseNum("PENDING-" + savedAccount.getAccountId());
                 pharmacistRepository.save(pharmacist);
                 break;
@@ -103,15 +106,22 @@ public class AccountServiceImpl implements AccountService {
             case "TECHNICIAN":
                 Technician technician = new Technician();
                 technician.setAccount(savedAccount);
-                technician.setFullName("Chưa cập nhật");
+                technician.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
                 technicianRepository.save(technician);
                 break;
                 
             case "ACCOUNTANT":
                 Accountant accountant = new Accountant();
                 accountant.setAccount(savedAccount);
-                accountant.setFullName("Chưa cập nhật");
+                accountant.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
                 accountantRepository.save(accountant);
+                break;
+                
+            case "ADMIN":
+                Administrator admin = new Administrator();
+                admin.setAccount(savedAccount);
+                admin.setFullName(request.getFullName() != null ? request.getFullName() : "Quản trị viên");
+                administratorRepository.save(admin);
                 break;
                 
             default:

@@ -169,8 +169,8 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AppointmentResponse> getAll(Long patientId, Long doctorScheduleId, AppointmentStatus status) {
-        return appointmentRepository.findAllByFilters(patientId, doctorScheduleId, status)
+    public List<AppointmentResponse> getAll(Long patientId, Long doctorId, Long doctorScheduleId, AppointmentStatus status) {
+        return appointmentRepository.findAllByFilters(patientId, doctorId, doctorScheduleId, status)
                 .stream()
                 .sorted(Comparator.comparing(Appointment::getCreatedAt).reversed())
                 .map(appointmentMapper::toResponse)

@@ -65,6 +65,35 @@ public class PharmacistServiceImpl implements PharmacistService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PharmacistResponse getMe(String email) {
+        return pharmacistMapper.toResponse(pharmacistRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new RuntimeException("Pharmacist not found with email: " + email)));
+    }
+
+    @Override
+    @Transactional
+    public PharmacistResponse updateMe(String email, PharmacistRequest request) {
+        Pharmacist pharmacist = pharmacistRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new RuntimeException("Pharmacist not found with email: " + email));
+        
+        if (request.getIdentityNum() != null 
+                && !request.getIdentityNum().isBlank()
+                && pharmacistRepository.existsByIdentityNumAndPharmacistIdNot(request.getIdentityNum(), pharmacist.getPharmacistId())) {
+            throw new RuntimeException("Số CCCD đã tồn tại: " + request.getIdentityNum());
+        }
+
+        if (request.getLicenseNum() != null 
+                && !request.getLicenseNum().isBlank()
+                && pharmacistRepository.existsByLicenseNumAndPharmacistIdNot(request.getLicenseNum(), pharmacist.getPharmacistId())) {
+            throw new RuntimeException("Số chứng chỉ hành nghề đã tồn tại: " + request.getLicenseNum());
+        }
+
+        pharmacistMapper.updateEntityFromRequest(request, pharmacist);
+        return pharmacistMapper.toResponse(pharmacistRepository.save(pharmacist));
+    }
+
+    @Override
     @Transactional
     public void delete(Long id) {
         Pharmacist pharmacist = pharmacistRepository.findById(id)

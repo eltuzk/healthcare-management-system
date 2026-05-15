@@ -13,8 +13,12 @@ public interface ReceptionistService {
     ReceptionistResponse getById(Long id);
 
     ReceptionistResponse create(ReceptionistRequest request);
-
+    
     ReceptionistResponse update(Long id, ReceptionistRequest request);
+
+    ReceptionistResponse getMe(String email);
+
+    ReceptionistResponse updateMe(String email, ReceptionistRequest request);
 
     void delete(Long id);
 }

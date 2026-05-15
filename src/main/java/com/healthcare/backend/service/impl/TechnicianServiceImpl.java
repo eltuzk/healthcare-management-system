@@ -65,6 +65,29 @@ public class TechnicianServiceImpl implements TechnicianService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public TechnicianResponse getMe(String email) {
+        return technicianMapper.toResponse(technicianRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new RuntimeException("Technician not found with email: " + email)));
+    }
+
+    @Override
+    @Transactional
+    public TechnicianResponse updateMe(String email, TechnicianRequest request) {
+        Technician technician = technicianRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new RuntimeException("Technician not found with email: " + email));
+        
+        if (request.getIdentityNum() != null 
+                && !request.getIdentityNum().isBlank()
+                && technicianRepository.existsByIdentityNumAndTechnicianIdNot(request.getIdentityNum(), technician.getTechnicianId())) {
+            throw new RuntimeException("Số CCCD đã tồn tại: " + request.getIdentityNum());
+        }
+
+        technicianMapper.updateEntityFromRequest(request, technician);
+        return technicianMapper.toResponse(technicianRepository.save(technician));
+    }
+
+    @Override
     @Transactional
     public void delete(Long id) {
         Technician technician = technicianRepository.findById(id)

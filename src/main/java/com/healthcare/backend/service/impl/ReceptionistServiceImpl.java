@@ -65,6 +65,29 @@ public class ReceptionistServiceImpl implements ReceptionistService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ReceptionistResponse getMe(String email) {
+        return receptionistMapper.toResponse(receptionistRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new RuntimeException("Receptionist not found with email: " + email)));
+    }
+
+    @Override
+    @Transactional
+    public ReceptionistResponse updateMe(String email, ReceptionistRequest request) {
+        Receptionist receptionist = receptionistRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new RuntimeException("Receptionist not found with email: " + email));
+        
+        if (request.getIdentityNum() != null 
+                && !request.getIdentityNum().isBlank()
+                && receptionistRepository.existsByIdentityNumAndReceptionistIdNot(request.getIdentityNum(), receptionist.getReceptionistId())) {
+            throw new RuntimeException("Số CCCD đã tồn tại: " + request.getIdentityNum());
+        }
+
+        receptionistMapper.updateEntityFromRequest(request, receptionist);
+        return receptionistMapper.toResponse(receptionistRepository.save(receptionist));
+    }
+
+    @Override
     @Transactional
     public void delete(Long id) {
         Receptionist receptionist = receptionistRepository.findById(id)

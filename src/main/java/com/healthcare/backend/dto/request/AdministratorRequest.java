@@ -14,20 +14,14 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DoctorRequest {
+public class AdministratorRequest {
 
     private Long accountId;
 
     @NotBlank(message = "Họ tên không được để trống")
     private String fullName;
 
-    @NotBlank(message = "Số giấy phép hành nghề không được để trống")
-    private String licenseNum;
-
     private String identityNum;
-    private String qualification;
-    private String specialization;
-    private Long specialtyId;
 
     @Pattern(regexp = "(?i)MALE|FEMALE|OTHER", message = "Giới tính chỉ được là MALE, FEMALE hoặc OTHER")
     private String gender;
@@ -40,6 +34,4 @@ public class DoctorRequest {
 
     @PastOrPresent(message = "Ngày vào làm không được lớn hơn hiện tại")
     private LocalDate hireDate;
-
-    private String experience;
 }

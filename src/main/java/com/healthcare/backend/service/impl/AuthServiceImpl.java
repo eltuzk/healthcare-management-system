@@ -1,12 +1,22 @@
 package com.healthcare.backend.service.impl;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.healthcare.backend.dto.request.AuthRequest;
 import com.healthcare.backend.dto.request.ChangePasswordRequest;
 import com.healthcare.backend.dto.request.ForgotPasswordRequest;
+import com.healthcare.backend.dto.request.GoogleLoginRequest;
 import com.healthcare.backend.dto.request.RegisterRequest;
 import com.healthcare.backend.dto.request.ResetPasswordRequest;
 import com.healthcare.backend.dto.response.AuthResponse;
@@ -23,10 +33,8 @@ import com.healthcare.backend.repository.RoleRepository;
 import com.healthcare.backend.security.JwtServiceInterface;
 import com.healthcare.backend.service.AuthService;
 import com.healthcare.backend.service.EmailService;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class AuthServiceImpl implements AuthService {
 
@@ -36,6 +44,27 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final JwtServiceInterface jwtService;
+    private final GoogleIdTokenVerifier googleIdTokenVerifier;
+
+    public AuthServiceImpl(
+            AccountRepository accountRepository,
+            RoleRepository roleRepository,
+            PatientRepository patientRepository,
+            PasswordEncoder passwordEncoder,
+            EmailService emailService,
+            JwtServiceInterface jwtService,
+            @Value("${google.client-id}") String googleClientId) {
+        this.accountRepository = accountRepository;
+        this.roleRepository = roleRepository;
+        this.patientRepository = patientRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+        this.jwtService = jwtService;
+        this.googleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(Collections.singletonList(googleClientId))
+                .build();
+    }
 
     @Override
     @Transactional
@@ -101,6 +130,67 @@ public class AuthServiceImpl implements AuthService {
 
         String accessToken = jwtService.generateToken(
             account.getAccountId(), account.getEmail(), account.getRole().getRoleName()
+        );
+
+        return new AuthResponse(accessToken, account.getRole().getRoleName());
+    }
+
+    @Override
+    public AuthResponse loginWithGoogle(GoogleLoginRequest request) {
+        GoogleIdToken idToken;
+        try {
+            idToken = googleIdTokenVerifier.verify(request.getIdToken());
+        } catch (Exception e) {
+            throw new BusinessException("Không thể xác thực Google token: " + e.getMessage());
+        }
+
+        if (idToken == null) {
+            throw new BusinessException("Google token không hợp lệ hoặc đã hết hạn");
+        }
+
+        GoogleIdToken.Payload payload = idToken.getPayload();
+        String googleId = payload.getSubject();
+        String email = payload.getEmail();
+
+        // 1. Try to find by googleId first
+        Optional<Account> accountOpt = accountRepository.findByGoogleId(googleId);
+
+        Account account;
+        if (accountOpt.isPresent()) {
+            account = accountOpt.get();
+        } else {
+            // 2. Try to find by email (existing account not yet linked to Google)
+            Optional<Account> emailAccountOpt = accountRepository.findByEmail(email);
+            if (emailAccountOpt.isPresent()) {
+                account = emailAccountOpt.get();
+                account.setGoogleId(googleId);
+                accountRepository.save(account);
+            } else {
+                // 3. Create new account
+                Role patientRole = roleRepository.findByRoleName("PATIENT")
+                        .orElseThrow(() -> new ResourceNotFoundException("Role PATIENT not found"));
+
+                account = new Account();
+                account.setEmail(email);
+                account.setGoogleId(googleId);
+                account.setPasswordHash(null);
+                account.setRole(patientRole);
+                account.setIsActive(1);
+                Account savedAccount = accountRepository.save(account);
+
+                Patient patient = new Patient();
+                patient.setAccount(savedAccount);
+                patient.setFullName(payload.get("name") != null ? (String) payload.get("name") : "Chưa cập nhật");
+                patientRepository.save(patient);
+            }
+        }
+
+        if (!Objects.equals(account.getIsActive(), 1)) {
+            throw new BusinessException("Tài khoản chưa được kích hoạt");
+        }
+
+        String accessToken = jwtService.generateToken(
+                account.getAccountId(), account.getEmail(), account.getRole().getRoleName()
         );
 
         return new AuthResponse(accessToken, account.getRole().getRoleName());

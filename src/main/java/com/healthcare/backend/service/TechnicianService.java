@@ -16,5 +16,9 @@ public interface TechnicianService {
 
     TechnicianResponse update(Long id, TechnicianRequest request);
 
+    TechnicianResponse getMe(String email);
+
+    TechnicianResponse updateMe(String email, TechnicianRequest request);
+
     void delete(Long id);
 }

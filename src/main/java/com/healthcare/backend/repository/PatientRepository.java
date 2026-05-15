@@ -18,6 +18,7 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     Page<Patient> findAllByIsActive(Integer isActive, Pageable pageable);
 
     Optional<Patient> findByAccount_AccountId(Long accountId);
+    Optional<Patient> findByAccount_Email(String email);
 
     boolean existsByAccount_AccountId(Long accountId);
 

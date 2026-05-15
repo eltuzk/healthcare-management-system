@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/patients")
 @RequiredArgsConstructor
+@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")
 public class PatientController {
 
     private final PatientService patientService;
@@ -38,6 +39,14 @@ public class PatientController {
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     public ResponseEntity<PatientResponse> getMe(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         return ResponseEntity.ok(patientService.getMe(userPrincipal.email()));
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    public ResponseEntity<PatientResponse> updateMe(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody PatientRequest request) {
+        return ResponseEntity.ok(patientService.updateMe(userPrincipal.email(), request));
     }
 
     @PostMapping

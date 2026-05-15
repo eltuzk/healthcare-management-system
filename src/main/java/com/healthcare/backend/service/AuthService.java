@@ -3,6 +3,7 @@ package com.healthcare.backend.service;
 import com.healthcare.backend.dto.request.AuthRequest;
 import com.healthcare.backend.dto.request.ChangePasswordRequest;
 import com.healthcare.backend.dto.request.ForgotPasswordRequest;
+import com.healthcare.backend.dto.request.GoogleLoginRequest;
 import com.healthcare.backend.dto.request.RegisterRequest;
 import com.healthcare.backend.dto.request.ResetPasswordRequest;
 import com.healthcare.backend.dto.response.AuthResponse;
@@ -14,6 +15,8 @@ public interface AuthService {
     void verifyEmail(String token);
 
     AuthResponse login(AuthRequest request);
+
+    AuthResponse loginWithGoogle(GoogleLoginRequest request);
 
     void processForgotPassword(ForgotPasswordRequest request);
 
