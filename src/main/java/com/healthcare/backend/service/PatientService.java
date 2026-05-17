@@ -20,4 +20,6 @@ public interface PatientService {
     PatientResponse getMe(String email);
     
     PatientResponse updateMe(String email, PatientRequest request);
+
+    PatientResponse search(String query);
 }

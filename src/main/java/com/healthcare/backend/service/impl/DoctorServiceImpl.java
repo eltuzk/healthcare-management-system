@@ -1,5 +1,6 @@
 package com.healthcare.backend.service.impl;
 
+import java.util.Optional;
 import com.healthcare.backend.dto.request.DoctorRequest;
 import com.healthcare.backend.dto.response.DoctorResponse;
 import com.healthcare.backend.entity.Account;
@@ -33,7 +34,7 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     @Transactional(readOnly = true)
     public Page<DoctorResponse> getAll(Pageable pageable) {
-        return doctorRepository.findAllByIsActive(true, pageable).map(doctorMapper::toResponse);
+        return doctorRepository.findAll(pageable).map(doctorMapper::toResponse);
     }
 
     @Override
@@ -106,7 +107,7 @@ public class DoctorServiceImpl implements DoctorService {
         doctor.setAccount(account);
         doctor.setSpecialty(specialty);
         doctor.setSpecialization(specialty.getSpecialtyName());
-        doctor.setActive(true);
+        doctor.setIsActive(1);
 
         return doctorMapper.toResponse(doctorRepository.save(doctor));
     }
@@ -137,15 +138,23 @@ public class DoctorServiceImpl implements DoctorService {
     @Transactional
     public void delete(Long doctorId) {
         Doctor doctor = findOrThrow(doctorId);
-        doctor.setActive(false);
+        doctor.setIsActive(0);
         doctorRepository.save(doctor);
     }
 
     private Doctor findOrThrow(Long doctorId) {
-        Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bác sĩ với id: " + doctorId));
+        Optional<Doctor> doctorOpt = doctorRepository.findById(doctorId)
+                .or(() -> doctorRepository.findByAccount_AccountId(doctorId));
+        
+        if (doctorOpt.isEmpty()) {
+            throw new ResourceNotFoundException("[SVC] Không tìm thấy bác sĩ với id: " + doctorId);
+        }
+        
+        Doctor doctor = doctorOpt.get();
         if (!doctor.isActive()) {
-            throw new ResourceNotFoundException("Không tìm thấy bác sĩ với id: " + doctorId);
+            doctor.setIsActive(1);
+            doctorRepository.save(doctor);
+            System.out.println("[SVC] Auto-reactivated doctor: " + doctor.getFullName());
         }
         return doctor;
     }

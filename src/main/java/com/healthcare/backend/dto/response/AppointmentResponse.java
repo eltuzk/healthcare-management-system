@@ -46,4 +46,6 @@ public class AppointmentResponse {
     private String paymentContent;
     private LocalDateTime checkedInAt;
     private LocalDateTime cancelledAt;
+    private String roomCode;
+    private String appointmentTime;
 }

@@ -64,6 +64,14 @@ public class AppointmentMapper {
             response.setScheduleDate(appointment.getDoctorSchedule().getScheduleDate());
             response.setShift(appointment.getDoctorSchedule().getShift());
 
+            if (appointment.getDoctorSchedule().getRoom() != null) {
+                response.setRoomCode(appointment.getDoctorSchedule().getRoom().getRoomCode());
+            }
+
+            if (appointment.getDoctorSchedule().getShift() != null) {
+                response.setAppointmentTime(appointment.getDoctorSchedule().getShift().getStartTime() + " - " + appointment.getDoctorSchedule().getShift().getEndTime());
+            }
+
             if (appointment.getDoctorSchedule().getDoctor() != null) {
                 response.setDoctorId(appointment.getDoctorSchedule().getDoctor().getDoctorId());
                 response.setDoctorName(appointment.getDoctorSchedule().getDoctor().getFullName());

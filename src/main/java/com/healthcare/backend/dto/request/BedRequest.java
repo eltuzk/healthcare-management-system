@@ -13,6 +13,8 @@ public class BedRequest {
     @NotNull(message = "Giá không được để trống")
     @DecimalMin(value = "0", message = "Giá trị tối thiểu là 0")
     private BigDecimal price;
+
+    private String status;
 }
 
 

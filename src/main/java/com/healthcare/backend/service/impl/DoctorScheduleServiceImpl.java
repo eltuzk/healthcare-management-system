@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ArrayList;
@@ -236,13 +237,30 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
     }
 
     private Doctor findDoctorOrThrow(Long doctorId) {
-        Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bác sĩ với id: " + doctorId));
-
-        if (!doctor.isActive()) {
-            throw new ResourceNotFoundException("Không tìm thấy bác sĩ với id: " + doctorId);
+        Optional<Doctor> doctorOpt = doctorRepository.findById(doctorId)
+                .or(() -> doctorRepository.findByAccount_AccountId(doctorId));
+        
+        if (doctorOpt.isEmpty()) {
+            throw new ResourceNotFoundException("[SCHED] Không tìm thấy bác sĩ với id: " + doctorId);
         }
-
+        
+        Doctor doctor = doctorOpt.get();
+        // Force activation of both doctor and account to be sure
+        boolean changed = false;
+        if (!doctor.isActive()) {
+            doctor.setIsActive(1);
+            changed = true;
+        }
+        if (doctor.getAccount() != null && !Integer.valueOf(1).equals(doctor.getAccount().getIsActive())) {
+            doctor.getAccount().setIsActive(1);
+            changed = true;
+        }
+        
+        if (changed) {
+            doctorRepository.save(doctor);
+            System.out.println("[SCHED] Forced activation for doctor: " + doctor.getFullName());
+        }
+        
         return doctor;
     }
 

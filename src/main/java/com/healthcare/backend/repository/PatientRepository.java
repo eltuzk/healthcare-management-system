@@ -25,6 +25,13 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     boolean existsByIdentityNum(String identityNum);
 
     boolean existsByIdentityNumAndPatientIdNot(String identityNum, Long patientId);
+    
+    @Query("""
+            select p from Patient p 
+            where p.isActive = 1 
+            and (trim(p.identityNum) = trim(:query) or trim(p.phone) = trim(:query))
+            """)
+    Optional<Patient> findByIdentityNumOrPhone(@Param("query") String query);
 
     // Khóa bệnh nhân khi tạo appointment để tránh nhiều request cùng tạo lịch active cho một bệnh nhân.
     @Lock(LockModeType.PESSIMISTIC_WRITE)

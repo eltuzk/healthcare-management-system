@@ -18,6 +18,8 @@ public class DoctorScheduleResponse {
     private Long doctorScheduleId;
     private Long doctorId;
     private String doctorName;
+    private Long specialtyId;
+    private String specialtyName;
     private Long roomId;
     private String roomCode;
     private Long branchId;

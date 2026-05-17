@@ -26,21 +26,21 @@ public class BedController {
     }
 
     @PostMapping("/rooms/{roomId}/beds")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public ResponseEntity<BedResponse> addBed(@PathVariable Long roomId,
                                               @Valid @RequestBody BedRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bedService.addBed(roomId, request));
     }
 
     @PutMapping("/beds/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public ResponseEntity<BedResponse> updateBed(@PathVariable Long id,
                                                  @Valid @RequestBody BedRequest request) {
         return ResponseEntity.ok(bedService.updateBed(id, request));
     }
 
     @DeleteMapping("/beds/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public ResponseEntity<Void> deleteBed(@PathVariable Long id) {
         bedService.deleteBed(id);
         return ResponseEntity.noContent().build();

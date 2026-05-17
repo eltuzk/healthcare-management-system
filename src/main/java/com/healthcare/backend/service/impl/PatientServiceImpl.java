@@ -118,4 +118,19 @@ public class PatientServiceImpl implements PatientService {
         }
         return patient;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PatientResponse search(String query) {
+        System.out.println("Searching patient with query: '" + query + "'");
+        return patientRepository.findByIdentityNumOrPhone(query)
+                .map(patient -> {
+                    System.out.println("Found patient: " + patient.getFullName() + " (ID: " + patient.getPatientId() + ")");
+                    return patientMapper.toResponse(patient);
+                })
+                .orElseThrow(() -> {
+                    System.out.println("Patient not found with query: '" + query + "'");
+                    return new ResourceNotFoundException("Không tìm thấy bệnh nhân với: " + query);
+                });
+    }
 }

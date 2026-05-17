@@ -15,12 +15,10 @@ public class AccountRequest {
     @Email(message = "Invalid email format")
     private String email;
 
-    @NotBlank(message = "Password is required")
     @Pattern(
         regexp = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$",
         message = "Password must be at least 8 characters long, containing at least one uppercase letter and one number."
     )
-    
     private String password;
 
     @NotNull(message = "Role ID is required")
