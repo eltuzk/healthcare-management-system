@@ -43,13 +43,13 @@ public class DoctorScheduleMapper {
         DoctorScheduleResponse response = new DoctorScheduleResponse();
         response.setDoctorScheduleId(doctorSchedule.getDoctorScheduleId());
         response.setScheduleDate(doctorSchedule.getScheduleDate());
-        response.setShift(doctorSchedule.getShift());
         response.setMaxCapacity(doctorSchedule.getMaxCapacity());
         response.setCurrentBookingCount(doctorSchedule.getCurrentBookingCount());
         response.setLastQueueNumber(doctorSchedule.getLastQueueNumber());
         response.setNote(doctorSchedule.getNote());
         response.setCreatedAt(doctorSchedule.getCreatedAt());
         response.setUpdatedAt(doctorSchedule.getUpdatedAt());
+        response.setShift(doctorSchedule.getShift());
 
         if (doctorSchedule.getShift() != null) {
             response.setShiftStartTime(doctorSchedule.getShift().getStartTime());
@@ -59,6 +59,11 @@ public class DoctorScheduleMapper {
         if (doctorSchedule.getDoctor() != null) {
             response.setDoctorId(doctorSchedule.getDoctor().getDoctorId());
             response.setDoctorName(doctorSchedule.getDoctor().getFullName());
+            
+            if (doctorSchedule.getDoctor().getSpecialty() != null) {
+                response.setSpecialtyId(doctorSchedule.getDoctor().getSpecialty().getSpecialtyId());
+                response.setSpecialtyName(doctorSchedule.getDoctor().getSpecialty().getSpecialtyName());
+            }
         }
 
         if (doctorSchedule.getRoom() != null) {

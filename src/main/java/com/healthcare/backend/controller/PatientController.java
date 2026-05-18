@@ -68,4 +68,10 @@ public class PatientController {
         patientService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    public ResponseEntity<PatientResponse> search(@RequestParam String query) {
+        return ResponseEntity.ok(patientService.search(query));
+    }
 }

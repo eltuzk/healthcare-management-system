@@ -58,14 +58,9 @@ public class MedicalRecordWorkflowServiceImpl implements MedicalRecordWorkflowSe
 
     @Override
     public void validateReadyToComplete(MedicalRecord medicalRecord) {
-        if (medicalRecord.getStatus() != MedicalRecordStatus.IN_PROGRESS) {
-            throw new BusinessException("Only in-progress medical records can be completed");
-        }
-
-        if (isBlank(medicalRecord.getInitialDiagnosis())
-                || isBlank(medicalRecord.getClinicalConclusion())
-                || medicalRecord.getConclusionType() == null) {
-            throw new BusinessException("Medical record is missing required completion fields");
+        if (medicalRecord.getStatus() != MedicalRecordStatus.IN_PROGRESS
+                && medicalRecord.getStatus() != MedicalRecordStatus.DRAFT) {
+            throw new BusinessException("Only in-progress or draft medical records can be completed");
         }
 
         if (!allRequestsHaveResults(medicalRecord.getMedicalRecordId())) {
@@ -79,10 +74,7 @@ public class MedicalRecordWorkflowServiceImpl implements MedicalRecordWorkflowSe
         MedicalRecord medicalRecord = medicalRecordRepository.findByIdForUpdate(medicalRecordId)
                 .orElseThrow(() -> new ResourceNotFoundException("Medical record not found with id: " + medicalRecordId));
 
-        if (medicalRecord.getStatus() != MedicalRecordStatus.IN_PROGRESS
-                || isBlank(medicalRecord.getInitialDiagnosis())
-                || isBlank(medicalRecord.getClinicalConclusion())
-                || medicalRecord.getConclusionType() == null
+        if ((medicalRecord.getStatus() != MedicalRecordStatus.IN_PROGRESS && medicalRecord.getStatus() != MedicalRecordStatus.DRAFT)
                 || !allRequestsHaveResults(medicalRecordId)) {
             return;
         }

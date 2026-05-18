@@ -47,31 +47,51 @@ public class AccountMapper {
             
             switch (roleName) {
                 case "DOCTOR":
-                    fullName = doctorRepository.findByAccount_AccountId(entity.getAccountId())
-                            .map(d -> d.getFullName()).orElse(fullName);
+                    doctorRepository.findByAccount_AccountId(entity.getAccountId())
+                            .ifPresent(d -> {
+                                response.setFullName(d.getFullName());
+                                response.setActorId(d.getDoctorId());
+                            });
                     break;
                 case "PATIENT":
-                    fullName = patientRepository.findByAccount_AccountId(entity.getAccountId())
-                            .map(p -> p.getFullName()).orElse(fullName);
+                    patientRepository.findByAccount_AccountId(entity.getAccountId())
+                            .ifPresent(p -> {
+                                response.setFullName(p.getFullName());
+                                response.setActorId(p.getPatientId());
+                            });
                     break;
                 case "RECEPTIONIST":
-                    fullName = receptionistRepository.findByAccount_AccountId(entity.getAccountId())
-                            .map(r -> r.getFullName()).orElse(fullName);
+                    receptionistRepository.findByAccount_AccountId(entity.getAccountId())
+                            .ifPresent(r -> {
+                                response.setFullName(r.getFullName());
+                                response.setActorId(r.getReceptionistId());
+                            });
                     break;
                 case "PHARMACIST":
-                    fullName = pharmacistRepository.findByAccount_AccountId(entity.getAccountId())
-                            .map(p -> p.getFullName()).orElse(fullName);
+                    pharmacistRepository.findByAccount_AccountId(entity.getAccountId())
+                            .ifPresent(p -> {
+                                response.setFullName(p.getFullName());
+                                response.setActorId(p.getPharmacistId());
+                            });
                     break;
                 case "TECHNICIAN":
-                    fullName = technicianRepository.findByAccount_AccountId(entity.getAccountId())
-                            .map(t -> t.getFullName()).orElse(fullName);
+                    technicianRepository.findByAccount_AccountId(entity.getAccountId())
+                            .ifPresent(t -> {
+                                response.setFullName(t.getFullName());
+                                response.setActorId(t.getTechnicianId());
+                            });
                     break;
                 case "ACCOUNTANT":
-                    fullName = accountantRepository.findByAccount_AccountId(entity.getAccountId())
-                            .map(a -> a.getFullName()).orElse(fullName);
+                    accountantRepository.findByAccount_AccountId(entity.getAccountId())
+                            .ifPresent(a -> {
+                                response.setFullName(a.getFullName());
+                                response.setActorId(a.getAccountantId());
+                            });
                     break;
             }
-            response.setFullName(fullName);
+            if (response.getFullName() == null) {
+                response.setFullName(fullName);
+            }
         }
 
         return response;

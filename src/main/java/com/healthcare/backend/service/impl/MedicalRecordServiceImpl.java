@@ -233,7 +233,8 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
 
     private void validateEditableState(MedicalRecord medicalRecord) {
         if (medicalRecord.getStatus() != MedicalRecordStatus.DRAFT
-                && medicalRecord.getStatus() != MedicalRecordStatus.IN_PROGRESS) {
+                && medicalRecord.getStatus() != MedicalRecordStatus.IN_PROGRESS
+                && medicalRecord.getStatus() != MedicalRecordStatus.COMPLETED) {
             throw new BusinessException("Medical record is not editable");
         }
     }

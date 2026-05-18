@@ -14,27 +14,22 @@ import java.util.Optional;
 @Repository
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
-    List<Doctor> findAllByIsActive(boolean isActive);
-
-    Page<Doctor> findAllByIsActive(boolean isActive, Pageable pageable);
+    List<Doctor> findAllByIsActive(Integer isActive);
+    Page<Doctor> findAllByIsActive(Integer isActive, Pageable pageable);
 
     Optional<Doctor> findByAccount_AccountId(Long accountId);
     Optional<Doctor> findByAccount_Email(String email);
 
     boolean existsByAccount_AccountId(Long accountId);
-
     boolean existsByLicenseNum(String licenseNum);
-
     boolean existsByLicenseNumAndDoctorIdNot(String licenseNum, Long doctorId);
-
     boolean existsByIdentityNum(String identityNum);
-
     boolean existsByIdentityNumAndDoctorIdNot(String identityNum, Long doctorId);
 
     @Query("""
             select d
             from Doctor d
-            where d.isActive = true
+            where d.isActive = 1
               and upper(trim(d.fullName)) = upper(trim(:fullName))
             """)
     List<Doctor> findActiveByFullName(@Param("fullName") String fullName);

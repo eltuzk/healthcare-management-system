@@ -70,6 +70,9 @@ public class AccountServiceImpl implements AccountService {
         Role role = roleRepository.findById(request.getRoleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + request.getRoleId()));
 
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Password is required for new accounts");
+        }
         Account account = accountMapper.toEntity(request);
         account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         account.setRole(role);
@@ -84,7 +87,8 @@ public class AccountServiceImpl implements AccountService {
                 Doctor doctor = new Doctor();
                 doctor.setAccount(savedAccount);
                 doctor.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
-                doctor.setLicenseNum("PENDING-" + savedAccount.getAccountId()); // Xử lý cột Unique
+                doctor.setLicenseNum("PENDING-" + savedAccount.getAccountId());
+                doctor.setIsActive(1);
                 doctorRepository.save(doctor);
                 break;
                 
@@ -92,6 +96,7 @@ public class AccountServiceImpl implements AccountService {
                 Receptionist receptionist = new Receptionist();
                 receptionist.setAccount(savedAccount);
                 receptionist.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
+                receptionist.setIsActive(1);
                 receptionistRepository.save(receptionist);
                 break;
                 
@@ -100,6 +105,7 @@ public class AccountServiceImpl implements AccountService {
                 pharmacist.setAccount(savedAccount);
                 pharmacist.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
                 pharmacist.setLicenseNum("PENDING-" + savedAccount.getAccountId());
+                pharmacist.setIsActive(1);
                 pharmacistRepository.save(pharmacist);
                 break;
                 
@@ -107,6 +113,7 @@ public class AccountServiceImpl implements AccountService {
                 Technician technician = new Technician();
                 technician.setAccount(savedAccount);
                 technician.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
+                technician.setIsActive(1);
                 technicianRepository.save(technician);
                 break;
                 
@@ -114,6 +121,7 @@ public class AccountServiceImpl implements AccountService {
                 Accountant accountant = new Accountant();
                 accountant.setAccount(savedAccount);
                 accountant.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
+                accountant.setIsActive(1);
                 accountantRepository.save(accountant);
                 break;
                 
@@ -121,6 +129,7 @@ public class AccountServiceImpl implements AccountService {
                 Administrator admin = new Administrator();
                 admin.setAccount(savedAccount);
                 admin.setFullName(request.getFullName() != null ? request.getFullName() : "Quản trị viên");
+                admin.setIsActive(1);
                 administratorRepository.save(admin);
                 break;
                 
@@ -157,7 +166,7 @@ public class AccountServiceImpl implements AccountService {
         accountRepository.save(account);
 
         doctorRepository.findByAccount_AccountId(id).ifPresent(doctor -> {
-            doctor.setActive(false);
+            doctor.setIsActive(0);
             doctorRepository.save(doctor);
         });
 

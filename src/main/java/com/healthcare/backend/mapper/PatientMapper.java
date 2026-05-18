@@ -56,8 +56,13 @@ public class PatientMapper {
     }
 
     private String normalizeGender(String gender) {
-        return gender == null || gender.isBlank()
-                ? gender
-                : gender.trim().toUpperCase(Locale.ROOT);
+        if (gender == null || gender.isBlank()) return gender;
+        String normalized = gender.trim().toUpperCase(Locale.ROOT);
+        return switch (normalized) {
+            case "NAM" -> "MALE";
+            case "NỮ" -> "FEMALE";
+            case "KHÁC" -> "OTHER";
+            default -> normalized;
+        };
     }
 }
