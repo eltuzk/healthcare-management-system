@@ -62,7 +62,7 @@ public class LabTestRequest {
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         if (this.status == null) {
-            this.status = LabTestRequestStatus.PENDING;
+            this.status = LabTestRequestStatus.NOT_COLLECTED;
         }
         if (this.paymentStatus == null) {
             this.paymentStatus = PaymentStatus.UNPAID;

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/lab-test-requests")
+@RequestMapping("/api/lab-test-requests")
 @RequiredArgsConstructor
 public class LabTestRequestController {
 

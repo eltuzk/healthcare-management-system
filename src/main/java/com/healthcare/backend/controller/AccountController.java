@@ -24,7 +24,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/accounts")
+@RequestMapping("/api/accounts")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 public class AccountController {
@@ -32,7 +32,7 @@ public class AccountController {
     private final AccountService accountService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public ResponseEntity<Page<AccountResponse>> getAll(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(accountService.getAll(pageable));
     }

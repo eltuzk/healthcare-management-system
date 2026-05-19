@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/patient-insurances")
+@RequestMapping("/api/patient-insurances")
 @RequiredArgsConstructor
 public class PatientInsuranceController {
 
@@ -34,7 +34,7 @@ public class PatientInsuranceController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public ResponseEntity<PatientInsuranceResponse> update(@PathVariable Long id,
-                                                           @Valid @RequestBody PatientInsuranceRequest request) {
+            @Valid @RequestBody PatientInsuranceRequest request) {
         return ResponseEntity.ok(patientInsuranceService.update(id, request));
     }
 

@@ -38,11 +38,16 @@ public interface DoctorScheduleRepository extends JpaRepository<DoctorSchedule, 
             select ds
             from DoctorSchedule ds
             where (:scheduleDate is null or ds.scheduleDate = :scheduleDate)
+              and (:startDate is null or ds.scheduleDate >= :startDate)
+              and (:endDate is null or ds.scheduleDate <= :endDate)
               and (:doctorId is null or ds.doctor.doctorId = :doctorId)
               and (:roomId is null or ds.room.roomId = :roomId)
+            order by ds.scheduleDate desc, ds.shift asc
             """)
     List<DoctorSchedule> findAllByFilters(
             @Param("scheduleDate") LocalDate scheduleDate,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
             @Param("doctorId") Long doctorId,
             @Param("roomId") Long roomId
     );

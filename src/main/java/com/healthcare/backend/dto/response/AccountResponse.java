@@ -11,4 +11,6 @@ public class AccountResponse {
     private Long roleId;
     private String roleName;
     private Integer isActive;
+    private String fullName;
+    private Long actorId;
 }

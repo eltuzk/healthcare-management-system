@@ -62,6 +62,9 @@ public class BedServiceImpl implements BedService {
                 .orElseThrow(() -> new RuntimeException("Bed not found with id: " + bedId));
 
         existing.setPrice(request.getPrice());
+        if (request.getStatus() != null && !request.getStatus().trim().isEmpty()) {
+            existing.setStatus(Bed.BedStatus.valueOf(request.getStatus().toUpperCase()));
+        }
 
         Bed updated = bedRepository.save(existing);
         return toDTO(updated);

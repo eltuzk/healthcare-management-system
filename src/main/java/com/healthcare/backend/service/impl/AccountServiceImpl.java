@@ -9,14 +9,25 @@ import org.springframework.transaction.annotation.Transactional;
 import com.healthcare.backend.dto.request.AccountRequest;
 import com.healthcare.backend.dto.response.AccountResponse;
 import com.healthcare.backend.entity.Account;
+import com.healthcare.backend.entity.Accountant;
+import com.healthcare.backend.entity.Doctor;
+import com.healthcare.backend.entity.Administrator;
+import com.healthcare.backend.entity.Pharmacist;
+import com.healthcare.backend.entity.Receptionist;
 import com.healthcare.backend.entity.Role;
+import com.healthcare.backend.entity.Technician;
 import com.healthcare.backend.exception.DuplicateResourceException;
 import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.AccountMapper;
 import com.healthcare.backend.repository.AccountRepository;
+import com.healthcare.backend.repository.AccountantRepository;
+import com.healthcare.backend.repository.AdministratorRepository;
 import com.healthcare.backend.repository.DoctorRepository;
 import com.healthcare.backend.repository.PatientRepository;
+import com.healthcare.backend.repository.PharmacistRepository;
+import com.healthcare.backend.repository.ReceptionistRepository;
 import com.healthcare.backend.repository.RoleRepository;
+import com.healthcare.backend.repository.TechnicianRepository;
 import com.healthcare.backend.service.AccountService;
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +40,11 @@ public class AccountServiceImpl implements AccountService {
     private final RoleRepository roleRepository;
     private final DoctorRepository doctorRepository;
     private final PatientRepository patientRepository;
+    private final ReceptionistRepository receptionistRepository;
+    private final PharmacistRepository pharmacistRepository;
+    private final TechnicianRepository technicianRepository;
+    private final AccountantRepository accountantRepository;
+    private final AdministratorRepository administratorRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccountMapper accountMapper;
 
@@ -46,6 +62,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public AccountResponse create(AccountRequest request) {
         if (accountRepository.existsByEmail(request.getEmail()))
             throw new DuplicateResourceException("Email already exists: " + request.getEmail());
@@ -53,12 +70,74 @@ public class AccountServiceImpl implements AccountService {
         Role role = roleRepository.findById(request.getRoleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + request.getRoleId()));
 
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Password is required for new accounts");
+        }
         Account account = accountMapper.toEntity(request);
         account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         account.setRole(role);
         account.setIsActive(1);
 
-        return accountMapper.toResponse(accountRepository.save(account));
+        Account savedAccount = accountRepository.save(account);
+
+        String roleName = role.getRoleName().toUpperCase();
+
+        switch (roleName) {
+            case "DOCTOR":
+                Doctor doctor = new Doctor();
+                doctor.setAccount(savedAccount);
+                doctor.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
+                doctor.setLicenseNum("PENDING-" + savedAccount.getAccountId());
+                doctor.setIsActive(1);
+                doctorRepository.save(doctor);
+                break;
+                
+            case "RECEPTIONIST":
+                Receptionist receptionist = new Receptionist();
+                receptionist.setAccount(savedAccount);
+                receptionist.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
+                receptionist.setIsActive(1);
+                receptionistRepository.save(receptionist);
+                break;
+                
+            case "PHARMACIST":
+                Pharmacist pharmacist = new Pharmacist();
+                pharmacist.setAccount(savedAccount);
+                pharmacist.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
+                pharmacist.setLicenseNum("PENDING-" + savedAccount.getAccountId());
+                pharmacist.setIsActive(1);
+                pharmacistRepository.save(pharmacist);
+                break;
+                
+            case "TECHNICIAN":
+                Technician technician = new Technician();
+                technician.setAccount(savedAccount);
+                technician.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
+                technician.setIsActive(1);
+                technicianRepository.save(technician);
+                break;
+                
+            case "ACCOUNTANT":
+                Accountant accountant = new Accountant();
+                accountant.setAccount(savedAccount);
+                accountant.setFullName(request.getFullName() != null ? request.getFullName() : "Chưa cập nhật");
+                accountant.setIsActive(1);
+                accountantRepository.save(accountant);
+                break;
+                
+            case "ADMIN":
+                Administrator admin = new Administrator();
+                admin.setAccount(savedAccount);
+                admin.setFullName(request.getFullName() != null ? request.getFullName() : "Quản trị viên");
+                admin.setIsActive(1);
+                administratorRepository.save(admin);
+                break;
+                
+            default:
+                break;
+        }
+
+        return accountMapper.toResponse(savedAccount);
     }
 
     @Override
@@ -87,7 +166,7 @@ public class AccountServiceImpl implements AccountService {
         accountRepository.save(account);
 
         doctorRepository.findByAccount_AccountId(id).ifPresent(doctor -> {
-            doctor.setActive(false);
+            doctor.setIsActive(0);
             doctorRepository.save(doctor);
         });
 

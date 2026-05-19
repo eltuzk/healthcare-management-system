@@ -10,6 +10,10 @@ public interface DoctorService {
     Page<DoctorResponse> getAll(Pageable pageable);
 
     DoctorResponse getById(Long doctorId);
+    
+    DoctorResponse getMe(String email);
+    
+    DoctorResponse updateMe(String email, DoctorRequest request);
 
     DoctorResponse create(DoctorRequest request);
 

@@ -15,7 +15,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "room")
+@Table(name = "ROOM")
 @Getter
 @Setter
 public class Room {
@@ -34,6 +34,9 @@ public class Room {
     @Column(name = "note", length = 500)
     private String note;
 
+    @Column(name = "floor", nullable = false)
+    private Integer floor = 1;
+
     @ManyToOne
     @JoinColumn(name = "room_type_id", nullable = false)
     private RoomType roomType;
@@ -41,6 +44,10 @@ public class Room {
     @ManyToOne
     @JoinColumn(name = "branch_id", nullable = false)
     private Branch branch;
+
+    @ManyToOne
+    @JoinColumn(name = "specialty_id")
+    private Specialty specialty;
 
     @OneToMany(mappedBy = "room")
     private List<Bed> beds;

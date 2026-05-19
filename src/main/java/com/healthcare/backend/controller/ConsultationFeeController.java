@@ -48,8 +48,7 @@ public class ConsultationFeeController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ConsultationFeeResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody ConsultationFeeRequest request
-    ) {
+            @Valid @RequestBody ConsultationFeeRequest request) {
         return ResponseEntity.ok(consultationFeeService.update(id, request));
     }
 

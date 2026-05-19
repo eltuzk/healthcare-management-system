@@ -16,7 +16,7 @@ public interface AppointmentService {
 
     AppointmentResponse getById(Long appointmentId);
 
-    List<AppointmentResponse> getAll(Long patientId, Long doctorScheduleId, AppointmentStatus status);
+    List<AppointmentResponse> getAll(Long patientId, Long doctorId, Long doctorScheduleId, AppointmentStatus status);
 
     AppointmentResponse checkIn(Long appointmentId);
 

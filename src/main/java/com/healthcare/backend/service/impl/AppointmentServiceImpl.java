@@ -58,8 +58,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             AppointmentStatus.PENDING,
             AppointmentStatus.CONFIRMED,
             AppointmentStatus.CHECKED_IN,
-            AppointmentStatus.IN_PROGRESS
-    );
+            AppointmentStatus.IN_PROGRESS);
 
     private final AppointmentRepository appointmentRepository;
     private final AccountRepository accountRepository;
@@ -78,8 +77,10 @@ public class AppointmentServiceImpl implements AppointmentService {
     private String sepayAccountNumber;
 
     @Override
-    // Transaction gom thao tác giữ slot, tạo appointment và tạo payment record thành một đơn vị atomic.
-    // Nếu bất kỳ bước nào lỗi thì toàn bộ booking được rollback, tránh giữ slot trống.
+    // Transaction gom thao tác giữ slot, tạo appointment và tạo payment record
+    // thành một đơn vị atomic.
+    // Nếu bất kỳ bước nào lỗi thì toàn bộ booking được rollback, tránh giữ slot
+    // trống.
     @Transactional
     public AppointmentResponse create(CreateAppointmentRequest request) {
         Patient patient = findPatientForUpdateOrThrow(request.getPatientId());
@@ -107,8 +108,10 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    // Transaction đảm bảo flow walk-in (khám trực tiếp): thu tiền, tạo appointment, payment record và cash transaction cùng commit.
-    // Nếu lưu giao dịch tiền mặt thất bại thì appointment cũng không được tạo lệch trạng thái.
+    // Transaction đảm bảo flow walk-in (khám trực tiếp): thu tiền, tạo appointment,
+    // payment record và cash transaction cùng commit.
+    // Nếu lưu giao dịch tiền mặt thất bại thì appointment cũng không được tạo lệch
+    // trạng thái.
     @Transactional
     public AppointmentResponse createWalkInPaidAppointment(CreateWalkInAppointmentRequest request) {
         Account currentAccount = findCurrentAccountOrThrow();
@@ -151,8 +154,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 request.getNote(),
                 request.getNote(),
                 currentAccount,
-                request.getReceiptNumber()
-        );
+                request.getReceiptNumber());
 
         paymentTransactionRepository.save(paymentTransaction);
         paymentRecordRepository.save(paymentRecord);
@@ -169,8 +171,9 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AppointmentResponse> getAll(Long patientId, Long doctorScheduleId, AppointmentStatus status) {
-        return appointmentRepository.findAllByFilters(patientId, doctorScheduleId, status)
+    public List<AppointmentResponse> getAll(Long patientId, Long doctorId, Long doctorScheduleId,
+            AppointmentStatus status) {
+        return appointmentRepository.findAllByFilters(patientId, doctorId, doctorScheduleId, status)
                 .stream()
                 .sorted(Comparator.comparing(Appointment::getCreatedAt).reversed())
                 .map(appointmentMapper::toResponse)
@@ -178,7 +181,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    // Transaction + khóa appointment để check-in không chạy song song với cancel/start.
+    // Transaction + khóa appointment để check-in không chạy song song với
+    // cancel/start.
     @Transactional
     public AppointmentResponse checkIn(Long appointmentId) {
         Appointment appointment = findAppointmentForUpdateOrThrow(appointmentId);
@@ -194,7 +198,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    // Transaction + khóa appointment để chỉ một request được chuyển lịch sang IN_PROGRESS.
+    // Transaction + khóa appointment để chỉ một request được chuyển lịch sang
+    // IN_PROGRESS.
     @Transactional
     public AppointmentResponse start(Long appointmentId) {
         Appointment appointment = findAppointmentForUpdateOrThrow(appointmentId);
@@ -209,7 +214,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    // Transaction dùng để hủy appointment và release slot trong cùng một lần commit.
+    // Transaction dùng để hủy appointment và release slot trong cùng một lần
+    // commit.
     @Transactional
     public AppointmentResponse cancel(Long appointmentId) {
         Appointment appointment = findAppointmentForUpdateOrThrow(appointmentId);
@@ -237,8 +243,10 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    // Transaction dùng cho webhook SePay: validate, khóa appointment, cập nhật paid và ghi transaction cùng lúc.
-    // Nhờ vậy không có trạng thái đã paid nhưng thiếu payment transaction cho kế toán.
+    // Transaction dùng cho webhook SePay: validate, khóa appointment, cập nhật paid
+    // và ghi transaction cùng lúc.
+    // Nhờ vậy không có trạng thái đã paid nhưng thiếu payment transaction cho kế
+    // toán.
     @Transactional
     public AppointmentResponse confirmPaymentFromSepayWebhook(SepayWebhookRequest request, String secretKeyHeader) {
         validateSepaySecret(secretKeyHeader);
@@ -256,8 +264,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         String appointmentCode = extractAppointmentCode(request);
         Appointment appointment = appointmentRepository.findByAppointmentCodeForUpdate(appointmentCode)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Appointment not found with code: " + appointmentCode
-                ));
+                        "Appointment not found with code: " + appointmentCode));
 
         if (request.getId() != null
                 && appointment.getSepayTransactionId() != null
@@ -276,8 +283,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 request.getTransferType(),
                 request.getContent(),
                 request.getDescription(),
-                toRawJson(request)
-        );
+                toRawJson(request));
     }
 
     private Appointment findAppointmentOrThrow(Long appointmentId) {
@@ -298,8 +304,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         Long specialtyId = doctorSchedule.getDoctor().getSpecialty().getSpecialtyId();
         return consultationFeeRepository.findFirstBySpecialtyRef_SpecialtyIdAndIsActive(specialtyId, 1)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Consultation fee not found for doctor specialty id: " + specialtyId
-                ));
+                        "Consultation fee not found for doctor specialty id: " + specialtyId));
     }
 
     private Patient findPatientForUpdateOrThrow(Long patientId) {
@@ -316,8 +321,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private DoctorSchedule findDoctorScheduleForUpdateOrThrow(Long doctorScheduleId) {
         return doctorScheduleRepository.findByIdForUpdate(doctorScheduleId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Doctor schedule not found with id: " + doctorScheduleId
-                ));
+                        "Doctor schedule not found with id: " + doctorScheduleId));
     }
 
     private Account findCurrentAccountOrThrow() {
@@ -327,7 +331,8 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         return accountRepository.findById(principal.accountId())
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + principal.accountId()));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Account not found with id: " + principal.accountId()));
     }
 
     private void validateNoActiveAppointment(Long patientId) {
@@ -364,7 +369,8 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private int reserveDoctorScheduleSlot(DoctorSchedule doctorSchedule) {
         // Atomic increment trong transaction đang giữ khóa doctor schedule:
-        // tăng booking count và cấp queue number như một thao tác không thể bị chen ngang.
+        // tăng booking count và cấp queue number như một thao tác không thể bị chen
+        // ngang.
         int nextQueueNumber = doctorSchedule.getLastQueueNumber() + 1;
         doctorSchedule.setLastQueueNumber(nextQueueNumber);
         doctorSchedule.setCurrentBookingCount(doctorSchedule.getCurrentBookingCount() + 1);
@@ -377,9 +383,9 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         DoctorSchedule doctorSchedule = findDoctorScheduleForUpdateOrThrow(
-                appointment.getDoctorSchedule().getDoctorScheduleId()
-        );
-        // Chỉ giảm số slot đang giữ, không giảm lastQueueNumber để giữ audit trail và tránh cấp lại số cũ.
+                appointment.getDoctorSchedule().getDoctorScheduleId());
+        // Chỉ giảm số slot đang giữ, không giảm lastQueueNumber để giữ audit trail và
+        // tránh cấp lại số cũ.
         if (doctorSchedule.getCurrentBookingCount() > 0) {
             doctorSchedule.setCurrentBookingCount(doctorSchedule.getCurrentBookingCount() - 1);
         }
@@ -402,8 +408,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             Appointment appointment,
             Patient patient,
             DoctorSchedule doctorSchedule,
-            ConsultationFee consultationFee
-    ) {
+            ConsultationFee consultationFee) {
         appointment.setPatient(patient);
         appointment.setDoctorSchedule(doctorSchedule);
         appointment.setConsultationFee(consultationFee);
@@ -425,8 +430,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private PaymentRecord findPaymentRecordForUpdateOrThrow(Long appointmentId) {
         return paymentRecordRepository.findByAppointmentIdForUpdate(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Appointment payment record not found for appointment id: " + appointmentId
-                ));
+                        "Appointment payment record not found for appointment id: " + appointmentId));
     }
 
     private AppointmentResponse confirmPaymentInternal(
@@ -440,12 +444,13 @@ public class AppointmentServiceImpl implements AppointmentService {
             String transferType,
             String paymentContent,
             String description,
-            String rawData
-    ) {
+            String rawData) {
         validatePendingAppointmentForPayment(appointment);
 
-        // Khóa lại schedule và payment record trong cùng transaction để payment không lệch với slot đã giữ.
-        DoctorSchedule doctorSchedule = findDoctorScheduleForUpdateOrThrow(appointment.getDoctorSchedule().getDoctorScheduleId());
+        // Khóa lại schedule và payment record trong cùng transaction để payment không
+        // lệch với slot đã giữ.
+        DoctorSchedule doctorSchedule = findDoctorScheduleForUpdateOrThrow(
+                appointment.getDoctorSchedule().getDoctorScheduleId());
         PaymentRecord paymentRecord = findPaymentRecordForUpdateOrThrow(appointment.getAppointmentId());
 
         // Refresh để lấy trạng thái mới nhất sau khi đã lấy đủ khóa liên quan.
@@ -486,11 +491,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                 description,
                 rawData,
                 null,
-                null
-        );
+                null);
 
         try {
-            // saveAndFlush giúp phát hiện sớm conflict unique SePay transaction trong transaction hiện tại.
+            // saveAndFlush giúp phát hiện sớm conflict unique SePay transaction trong
+            // transaction hiện tại.
             paymentTransactionRepository.save(paymentTransaction);
             paymentRecordRepository.save(paymentRecord);
             appointmentRepository.saveAndFlush(appointment);
@@ -502,13 +507,13 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    // Transaction cho scheduler: khóa các appointment hết hạn, release slot và đổi trạng thái cùng một lần commit.
+    // Transaction cho scheduler: khóa các appointment hết hạn, release slot và đổi
+    // trạng thái cùng một lần commit.
     @Transactional
     public void expirePendingPaymentReservations() {
         List<Appointment> expiredAppointments = appointmentRepository.findExpiredPaymentReservationsForUpdate(
                 AppointmentStatus.PENDING,
-                LocalDateTime.now()
-        );
+                LocalDateTime.now());
 
         for (Appointment appointment : expiredAppointments) {
             releaseReservedDoctorScheduleSlot(appointment);
@@ -524,8 +529,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         if (expectedAmount.compareTo(transferAmount) != 0) {
             throw new BusinessException(
-                    "Transfer amount does not match expected appointment amount: " + expectedAmount
-            );
+                    "Transfer amount does not match expected appointment amount: " + expectedAmount);
         }
     }
 
@@ -558,8 +562,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             String description,
             String rawData,
             Account confirmedBy,
-            String receiptNumber
-    ) {
+            String receiptNumber) {
         PaymentTransaction paymentTransaction = new PaymentTransaction();
         paymentTransaction.setPaymentRecord(paymentRecord);
         paymentTransaction.setSepayTransactionId(sepayTransactionId != null ? sepayTransactionId.toString() : null);

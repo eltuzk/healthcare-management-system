@@ -17,6 +17,8 @@ public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Lo
 
     Optional<PaymentRecord> findByAppointment_AppointmentId(Long appointmentId);
 
+    Optional<PaymentRecord> findByMedicalRecord_MedicalRecordId(Long medicalRecordId);
+
     // Khóa payment record để việc ghi nhận tiền và transaction luôn nhất quán với nhau.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
@@ -25,6 +27,14 @@ public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Lo
             where pr.appointment.appointmentId = :appointmentId
             """)
     Optional<PaymentRecord> findByAppointmentIdForUpdate(@Param("appointmentId") Long appointmentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select pr
+            from PaymentRecord pr
+            where pr.medicalRecord.medicalRecordId = :medicalRecordId
+            """)
+    Optional<PaymentRecord> findByMedicalRecordIdForUpdate(@Param("medicalRecordId") Long medicalRecordId);
 
     @Query("""
             select pr

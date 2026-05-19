@@ -14,9 +14,12 @@ public class RoomResponse {
     private String roomCode;
     private String position;
     private String note;
+    private Integer floor;
     private Long roomTypeId;
     private String roomTypeName;
     private Long branchId;
     private String branchName;
+    private Long specialtyId;
+    private String specialtyName;
 }
 

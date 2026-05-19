@@ -1,6 +1,6 @@
 # Thiết Kế Database - Healthcare Management System
 
-Tài liệu này mô tả database design hiện tại sau các migration `V1` đến `V15`.
+Tài liệu này mô tả database design hiện tại sau các migration `V1` đến `V18`.
 Khi thay đổi schema hoặc business rule, cần cập nhật file này cùng với [CONSTRAINTS.md](CONSTRAINTS.md).
 
 ## Quy Ước
@@ -74,6 +74,87 @@ Hệ thống được chia thành các nhóm dữ liệu chính:
 | `identity_num` | VARCHAR2(50) | UQ | CCCD/CMND |
 | `medical_history` | CLOB | | Tiền sử bệnh |
 | `allergy` | VARCHAR2(1000) | | Dị ứng |
+| `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
+
+### `PATIENT_INSURANCE`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `patient_insurance_id` | NUMBER | PK | ID bảo hiểm |
+| `patient_id` | NUMBER | FK -> `PATIENT`, NN | Bệnh nhân |
+| `insurance_num` | VARCHAR2(100) | UQ, NN | Số thẻ bảo hiểm |
+| `status` | VARCHAR2(20) | NN, check | `ACTIVE`, `EXPIRED`, `SUSPENDED` |
+| `expiry_date` | DATE | NN | Ngày hết hạn |
+| `coverage_percent` | NUMBER(5,2) | NN, check | % bảo hiểm chi trả (0-100) |
+
+### `ACCOUNTANT`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `accountant_id` | NUMBER | PK | ID kế toán |
+| `account_id` | NUMBER | FK -> `ACCOUNT`, UQ, NN | Tài khoản đăng nhập |
+| `full_name` | VARCHAR2(200) | NN | Họ tên |
+| `qualification` | VARCHAR2(200) | | Bằng cấp |
+| `identity_num` | VARCHAR2(50) | UQ | CCCD/CMND |
+| `gender` | VARCHAR2(10) | check | `MALE`, `FEMALE`, `OTHER` |
+| `phone` | VARCHAR2(20) | | Số điện thoại |
+| `address` | VARCHAR2(500) | | Địa chỉ |
+| `date_of_birth` | DATE | | Ngày sinh |
+| `hire_date` | DATE | | Ngày vào làm |
+| `experience` | NUMBER | | Số năm kinh nghiệm |
+| `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
+
+### `RECEPTIONIST`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `receptionist_id` | NUMBER | PK | ID lễ tân |
+| `account_id` | NUMBER | FK -> `ACCOUNT`, UQ, NN | Tài khoản đăng nhập |
+| `full_name` | VARCHAR2(200) | NN | Họ tên |
+| `identity_num` | VARCHAR2(50) | UQ | CCCD/CMND |
+| `gender` | VARCHAR2(10) | check | `MALE`, `FEMALE`, `OTHER` |
+| `phone` | VARCHAR2(20) | | Số điện thoại |
+| `address` | VARCHAR2(500) | | Địa chỉ |
+| `date_of_birth` | DATE | | Ngày sinh |
+| `hire_date` | DATE | | Ngày vào làm |
+| `shift` | VARCHAR2(50) | | Ca làm việc |
+| `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
+
+### `PHARMACIST`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `pharmacist_id` | NUMBER | PK | ID dược sĩ |
+| `account_id` | NUMBER | FK -> `ACCOUNT`, UQ, NN | Tài khoản đăng nhập |
+| `full_name` | VARCHAR2(200) | NN | Họ tên |
+| `qualification` | VARCHAR2(200) | | Bằng cấp |
+| `license_num` | VARCHAR2(100) | UQ, NN | Chứng chỉ hành nghề |
+| `identity_num` | VARCHAR2(50) | UQ | CCCD/CMND |
+| `gender` | VARCHAR2(10) | check | `MALE`, `FEMALE`, `OTHER` |
+| `phone` | VARCHAR2(20) | | Số điện thoại |
+| `address` | VARCHAR2(500) | | Địa chỉ |
+| `date_of_birth` | DATE | | Ngày sinh |
+| `hire_date` | DATE | | Ngày vào làm |
+| `experience` | NUMBER | | Số năm kinh nghiệm |
+| `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
+
+### `TECHNICIAN`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `technician_id` | NUMBER | PK | ID kỹ thuật viên |
+| `account_id` | NUMBER | FK -> `ACCOUNT`, UQ, NN | Tài khoản đăng nhập |
+| `full_name` | VARCHAR2(200) | NN | Họ tên |
+| `qualification` | VARCHAR2(200) | | Bằng cấp |
+| `specialty_area` | VARCHAR2(200) | | Lĩnh vực chuyên môn (vd: X-Quang, Xét nghiệm...) |
+| `license_num` | VARCHAR2(100) | UQ | Chứng chỉ hành nghề |
+| `identity_num` | VARCHAR2(50) | UQ | CCCD/CMND |
+| `gender` | VARCHAR2(10) | check | `MALE`, `FEMALE`, `OTHER` |
+| `phone` | VARCHAR2(20) | | Số điện thoại |
+| `address` | VARCHAR2(500) | | Địa chỉ |
+| `date_of_birth` | DATE | | Ngày sinh |
+| `hire_date` | DATE | | Ngày vào làm |
+| `experience` | NUMBER | | Số năm kinh nghiệm |
 | `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
 
 ## Cơ Sở Vật Chất
@@ -255,7 +336,13 @@ Quy tắc nghiệp vụ:
 
 - `createFromAppointment` tạo MR ban đầu, không bắt buộc nhập conclusion.
 - MR draft có thể chưa có `clinical_conclusion` và `conclusion_type`.
+- Khi tạo MR, hệ thống tạo/cập nhật `PAYMENT_RECORD` owner medical record với tổng tiền ban đầu bằng `0`.
+- MR `DRAFT` là giai đoạn bác sĩ ghi nhận thông tin khám ban đầu và tạo phiếu xét nghiệm/dịch vụ.
+- Phiếu xét nghiệm/dịch vụ chỉ được tạo khi MR còn `DRAFT`; sau khi thanh toán và MR sang `IN_PROGRESS` thì không tạo thêm request.
+- Thanh toán medical record bằng tiền mặt phải đi qua business flow payment, sync lại tổng tiền trước khi thu và chuyển MR `DRAFT -> IN_PROGRESS`.
+- Request chỉ được cập nhật trạng thái/kết quả khi MR đang `IN_PROGRESS` và payment record của MR đã `PAID`.
 - Khi complete MR mới bắt buộc có `initial_diagnosis`, `clinical_conclusion`, `conclusion_type`.
+- MR chỉ complete khi tất cả lab test request và medical service request liên quan đã có trạng thái `RESULT_AVAILABLE`.
 - Complete MR đồng thời set appointment -> `COMPLETED`.
 - MR đã `LOCKED` thì không cho sửa.
 
@@ -279,6 +366,27 @@ Quy tắc nghiệp vụ:
 | `price` | NUMBER(15,2) | NN, >= 0 | Giá niêm yết |
 | `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
 
+### `MEDICINE`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `medicine_id` | NUMBER | PK | ID thuốc |
+| `medicine_name` | VARCHAR2(200) | UQ, NN | Tên thuốc |
+| `price` | NUMBER(15,2) | NN, >= 0 | Giá niêm yết |
+| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
+
+### `MEDICINE_LOT`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `lot_id` | NUMBER | PK | ID lô thuốc |
+| `medicine_id` | NUMBER | FK -> `MEDICINE`, NN | Thuốc |
+| `lot_number` | VARCHAR2(100) | NN | Số lô |
+| `quantity` | NUMBER(10) | NN, >= 0 | Số lượng tồn |
+| `supplier` | VARCHAR2(200) | | Nhà cung cấp |
+| `manufacturing_date`| DATE | | Ngày sản xuất |
+| `expiry_date` | DATE | NN | Ngày hết hạn |
+
 ## Quy Trình Xét Nghiệm & Dịch Vụ
 
 ### `LAB_TEST_REQUEST`
@@ -288,7 +396,7 @@ Quy tắc nghiệp vụ:
 | `lab_test_request_id` | NUMBER | PK | ID phiếu yêu cầu |
 | `med_record_id` | NUMBER | FK -> `MEDICAL_RECORD`, NN | Hồ sơ bệnh án gốc |
 | `request_code` | VARCHAR2(100) | UQ, NN | Mã phiếu |
-| `status` | VARCHAR2(20) | NN, check | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` |
+| `status` | VARCHAR2(20) | NN, check | `NOT_COLLECTED`, `SAMPLE_COLLECTED`, `RESULT_AVAILABLE` |
 | `payment_status` | VARCHAR2(20) | NN, check | `UNPAID`, `PAID` |
 | `total_price` | NUMBER(15,2) | >= 0 | Tổng tiền các chỉ định |
 | `note` | VARCHAR2(500) | | Ghi chú bác sĩ |
@@ -298,6 +406,20 @@ Quy tắc nghiệp vụ:
 - `LAB_TEST_REQUEST_ITEM`: Lưu chỉ định chi tiết, khóa chính `(lab_test_request_id, lab_test_id)`, snapshot giá tại thời điểm chỉ định.
 - `LAB_TEST_RESULT`: Kết quả xét nghiệm, quan hệ 1-1 với Request, lưu dữ liệu kết quả qua cột `result_data` (CLOB).
 
+Workflow status:
+
+- `NOT_COLLECTED`: vừa tạo phiếu, chưa lấy mẫu/chưa thực hiện dịch vụ.
+- `SAMPLE_COLLECTED`: đã lấy mẫu hoặc đã tiếp nhận thực hiện, đang chờ kết quả.
+- `RESULT_AVAILABLE`: đã có bản ghi kết quả; request được xem là hoàn thành.
+
+Quy tắc request:
+
+- Request mặc định `NOT_COLLECTED`, `payment_status = UNPAID`, và snapshot giá từ danh mục tại thời điểm chỉ định.
+- Tạo request phải lock `MEDICAL_RECORD`, validate MR đang `DRAFT`, lưu request/items, sau đó sync `MEDICAL_RECORD.total_price` và `PAYMENT_RECORD.total_price`.
+- Cập nhật trạng thái thủ công chỉ cho phép chuyển sang `SAMPLE_COLLECTED`.
+- Tạo `LAB_TEST_RESULT` yêu cầu request đang `SAMPLE_COLLECTED`; sau khi tạo result, hệ thống set request `RESULT_AVAILABLE`.
+- Mỗi lab request chỉ có tối đa một result do ràng buộc unique trên `LAB_TEST_RESULT.lab_test_request_id`.
+
 ### `MEDICAL_SERVICE_REQUEST`
 
 | Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
@@ -305,7 +427,7 @@ Quy tắc nghiệp vụ:
 | `med_ser_req_id` | NUMBER | PK | ID phiếu yêu cầu |
 | `med_record_id` | NUMBER | FK -> `MEDICAL_RECORD`, NN | Hồ sơ bệnh án gốc |
 | `request_code` | VARCHAR2(100) | UQ, NN | Mã phiếu |
-| `status` | VARCHAR2(20) | NN, check | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` |
+| `status` | VARCHAR2(20) | NN, check | `NOT_COLLECTED`, `SAMPLE_COLLECTED`, `RESULT_AVAILABLE` |
 | `payment_status` | VARCHAR2(20) | NN, check | `UNPAID`, `PAID` |
 | `total_price` | NUMBER(15,2) | >= 0 | Tổng tiền |
 | `currency` | VARCHAR2(10) | NN, default 'VND' | Loại tiền tệ |
@@ -314,6 +436,15 @@ Quy tắc nghiệp vụ:
 
 - `MEDICAL_SERVICE_REQUEST_ITEM`: Chi tiết chỉ định, khóa chính `(med_ser_req_id, med_service_id)`.
 - `MEDICAL_SERVICE_RESULT`: Kết quả dịch vụ, quan hệ 1-1 với Request.
+
+Quy tắc request:
+
+- Request mặc định `NOT_COLLECTED`, `payment_status = UNPAID`, và snapshot giá từ danh mục tại thời điểm chỉ định.
+- Tạo request phải lock `MEDICAL_RECORD`, validate MR đang `DRAFT`, lưu request/items, sau đó sync `MEDICAL_RECORD.total_price` và `PAYMENT_RECORD.total_price`.
+- Cập nhật trạng thái thủ công chỉ cho phép chuyển sang `SAMPLE_COLLECTED`.
+- Tạo `MEDICAL_SERVICE_RESULT` yêu cầu request đang `SAMPLE_COLLECTED`; sau khi tạo result, hệ thống set request `RESULT_AVAILABLE`.
+- Mỗi service request chỉ có tối đa một result do ràng buộc unique trên `MEDICAL_SERVICE_RESULT.med_ser_req_id`.
+- Sau mỗi lần tạo result, workflow service kiểm tra tất cả request của MR; nếu tất cả đều `RESULT_AVAILABLE` và MR đủ điều kiện clinical thì MR và appointment được auto-complete trong cùng transaction.
 
 ## Nhập Viện (Inpatient)
 
@@ -332,7 +463,28 @@ Quy tắc nghiệp vụ:
 
 - `ADMISSION_RECORD`: Các bản ghi theo dõi (huyết áp, nhịp tim, nhiệt độ) trong quá trình nằm viện.
 
-## Đơn Thuốc
+## Kho Thuốc Và Đơn Thuốc
+
+### `MEDICINE`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `medicine_id` | NUMBER | PK | ID thuốc |
+| `medicine_name` | VARCHAR2(200) | UQ, NN | Tên thuốc |
+| `price` | NUMBER(15,2) | NN, >= 0 | Giá bán |
+| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
+
+### `MEDICINE_LOT`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `lot_id` | NUMBER | PK | ID lô thuốc |
+| `medicine_id` | NUMBER | FK -> `MEDICINE`, NN | Thuộc thuốc nào |
+| `lot_number` | VARCHAR2(100) | NN | Số lô |
+| `quantity` | NUMBER(10) | NN, >= 0 | Số lượng tồn kho |
+| `supplier` | VARCHAR2(200) | | Nhà cung cấp |
+| `manufacturing_date` | DATE | | Ngày sản xuất |
+| `expiry_date` | DATE | NN | Ngày hết hạn |
 
 ### `PRESCRIPTION`
 
@@ -344,14 +496,24 @@ Quy tắc nghiệp vụ:
 | `payment_status` | VARCHAR2(20) | NN, check | `UNPAID`, `PAID` |
 | `total_price` | NUMBER(15,2) | >= 0 | Tổng tiền thuốc |
 | `created_at` | TIMESTAMP | NN | Ngày kê đơn |
+| `paid_at` | TIMESTAMP | | Thời điểm thanh toán |
 
-- `PRESCRIPTION_DETAIL`: Chi tiết thuốc, khóa chính `(prescription_id, medicine_id)`, lưu `quantity`, `unit`, `instruction` và `snapshot_price`.
+### `PRESCRIPTION_DETAIL`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `prescription_id` | NUMBER | PK, FK -> `PRESCRIPTION` | Đơn thuốc |
+| `medicine_id` | NUMBER | PK, FK -> `MEDICINE` | Thuốc |
+| `quantity` | NUMBER(10) | NN, > 0 | Số lượng |
+| `unit` | VARCHAR2(50) | NN | Đơn vị tính |
+| `snapshot_price` | NUMBER(15,2) | NN, >= 0 | Giá thuốc tại thời điểm kê đơn |
+| `instruction` | VARCHAR2(500) | | Hướng dẫn sử dụng |
 
 ## Thanh Toán Và Kế Toán
 
 ### `PAYMENT_RECORD`
 
-Đây là bảng sổ cái thanh toán phục vụ kế toán. Ứng dụng chỉ tạo/cập nhật qua business flow; API hiện tại chỉ nên đọc.
+Đây là bảng sổ cái thanh toán phục vụ kế toán. Ứng dụng chỉ tạo/cập nhật qua business flow; API cho phép đọc sổ thanh toán và ghi nhận thanh toán tiền mặt cho medical record qua flow riêng.
 
 | Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
 | --- | --- | --- | --- |
@@ -371,6 +533,16 @@ Quy tắc owner:
 - Chính xác một trong hai cột `appointment_id` hoặc `med_record_id` phải có giá trị.
 - Appointment payment được ghi nhận khi đặt lịch/khám trực tiếp.
 - Medical record payment sẽ gom các khoản phát sinh sau khám, như xét nghiệm/dịch vụ; prescription để phase sau.
+- Khi ghi nhận thanh toán medical record, service lock MR, sync lại billing, lock payment record, validate số tiền thu khớp `total_price`, tạo `PAYMENT_TRANSACTION` gateway `CASH`, set payment `PAID`, rồi chuyển MR sang `IN_PROGRESS`.
+- Báo cáo doanh thu đọc từ `PAYMENT_TRANSACTION` thành công (`process_status = SUCCESS`) và tính theo `transaction_date`.
+- Revenue owner type được suy ra từ owner của `PAYMENT_RECORD`: có `appointment_id` là `APPOINTMENT`, có `med_record_id` là `MEDICAL_RECORD`.
+
+Báo cáo doanh thu:
+
+- API `GET /reports/revenue` chỉ dành cho `ADMIN` và `ACCOUNTANT`.
+- Filter hỗ trợ `fromDate`, `toDate`, `gateway`, `ownerType`.
+- Mặc định kỳ báo cáo là từ ngày đầu tháng hiện tại đến hôm nay nếu request không truyền date range.
+- Kết quả gồm `totalRevenue`, `transactionCount`, breakdown theo ngày, gateway và owner type.
 
 ### `PAYMENT_TRANSACTION`
 
@@ -401,14 +573,45 @@ Quy tắc gateway:
 
 ## Bảng Xác Thực Và Phân Quyền
 
-### `ROLE`, `PERMISSION`, `ROLE_PERMISSION`, `ACCOUNT`, `ACCOUNT_PERMISSION`
+### `ROLE`
 
-- `ROLE.role_name` unique.
-- `PERMISSION.permission_name` unique.
-- `ROLE_PERMISSION` PK `(role_id, permission_id)`.
-- `ACCOUNT.email` unique; `ACCOUNT.role_id` FK -> `ROLE`.
-- `ACCOUNT_PERMISSION` PK `(account_id, permission_id)`.
-- Quyền thực tế của user = quyền theo role + quyền bổ sung theo account.
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `role_id` | NUMBER | PK | ID role |
+| `role_name` | VARCHAR2(100) | UQ, NN | Tên role (ADMIN, DOCTOR, ...) |
+| `description` | VARCHAR2(500) | | Mô tả |
+
+### `PERMISSION`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `permission_id` | NUMBER | PK | ID quyền |
+| `permission_name` | VARCHAR2(100) | UQ, NN | Tên quyền |
+| `detail` | VARCHAR2(500) | | Chi tiết |
+
+### `ROLE_PERMISSION`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `role_id` | NUMBER | PK, FK | Link tới `ROLE` |
+| `permission_id` | NUMBER | PK, FK | Link tới `PERMISSION` |
+
+### `ACCOUNT`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `account_id` | NUMBER | PK | ID tài khoản |
+| `email` | VARCHAR2(255) | UQ, NN | Email đăng nhập |
+| `password_hash` | VARCHAR2(255) | NN | Password đã hash |
+| `role_id` | NUMBER | FK -> `ROLE`, NN | Role chính |
+| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
+
+### `ACCOUNT_PERMISSION`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `account_id` | NUMBER | PK, FK | Link tới `ACCOUNT` |
+| `permission_id` | NUMBER | PK, FK | Link tới `PERMISSION` |
 
 Ghi chú hiện tại:
 
@@ -443,6 +646,7 @@ Ghi chú hiện tại:
 | `MEDICAL_RECORD` | `LAB_TEST_REQUEST` | `LAB_TEST_REQUEST.med_record_id` |
 | `MEDICAL_RECORD` | `MEDICAL_SERVICE_REQUEST` | `MEDICAL_SERVICE_REQUEST.med_record_id` |
 | `PAYMENT_RECORD` | `PAYMENT_TRANSACTION` | `PAYMENT_TRANSACTION.payment_record_id` |
+| `MEDICINE` | `MEDICINE_LOT` | `MEDICINE_LOT.medicine_id` |
 
 ### Quan Hệ N-N Qua Junction Table
 
@@ -462,3 +666,5 @@ Ghi chú hiện tại:
 - Walk-in là trường hợp đã thu tiền mặt trước, nên appointment tạo ra ở trạng thái `CHECKED_IN`.
 - Payment data phục vụ kế toán nằm ở `PAYMENT_RECORD` và `PAYMENT_TRANSACTION`; không tạo bảng payment riêng cho appointment.
 - MR draft không bắt buộc có kết luận; kết luận chỉ bắt buộc khi complete.
+- MR billing là tổng các lab test request và medical service request của MR; tổng tiền này phải sync sang payment record trước khi thu tiền.
+- Request/result flow được điều khiển bằng service transaction, không dựa vào client tự cập nhật trạng thái tùy ý.

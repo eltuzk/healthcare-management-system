@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,27 +20,32 @@ public class RoomTypeController {
     private RoomTypeService roomTypeService;
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<RoomTypeResponse>> getAllRoomTypes() {
         return ResponseEntity.ok(roomTypeService.getAllRoomTypes());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<RoomTypeResponse> getRoomTypeById(@PathVariable Long id) {
         return ResponseEntity.ok(roomTypeService.getRoomTypeById(id));
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<RoomTypeResponse> createRoomType(@Valid @RequestBody RoomTypeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(roomTypeService.createRoomType(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<RoomTypeResponse> updateRoomType(@PathVariable Long id,
                                                            @Valid @RequestBody RoomTypeRequest request) {
         return ResponseEntity.ok(roomTypeService.updateRoomType(id, request));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteRoomType(@PathVariable Long id) {
         roomTypeService.deleteRoomType(id);
         return ResponseEntity.noContent().build();

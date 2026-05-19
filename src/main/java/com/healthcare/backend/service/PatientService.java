@@ -18,4 +18,8 @@ public interface PatientService {
     void delete(Long id);
 
     PatientResponse getMe(String email);
+    
+    PatientResponse updateMe(String email, PatientRequest request);
+
+    PatientResponse search(String query);
 }

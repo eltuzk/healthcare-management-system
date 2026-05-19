@@ -1,20 +1,24 @@
 package com.healthcare.backend.service.impl;
 
+import java.util.Optional;
 import com.healthcare.backend.dto.request.DoctorRequest;
 import com.healthcare.backend.dto.response.DoctorResponse;
 import com.healthcare.backend.entity.Account;
 import com.healthcare.backend.entity.Doctor;
 import com.healthcare.backend.entity.Specialty;
+import com.healthcare.backend.exception.BusinessException;
 import com.healthcare.backend.exception.DuplicateResourceException;
 import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.DoctorMapper;
 import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.DoctorRepository;
 import com.healthcare.backend.repository.SpecialtyRepository;
+import com.healthcare.backend.security.UserPrincipal;
 import com.healthcare.backend.service.DoctorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,13 +34,50 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     @Transactional(readOnly = true)
     public Page<DoctorResponse> getAll(Pageable pageable) {
-        return doctorRepository.findAllByIsActive(true, pageable).map(doctorMapper::toResponse);
+        return doctorRepository.findAll(pageable).map(doctorMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public DoctorResponse getById(Long doctorId) {
         return doctorMapper.toResponse(findOrThrow(doctorId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DoctorResponse getMe(String email) {
+        return doctorRepository.findByAccount_Email(email)
+                .map(doctorMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Bác sĩ không tồn tại cho tài khoản email: " + email));
+    }
+
+    @Override
+    @Transactional
+    public DoctorResponse updateMe(String email, DoctorRequest request) {
+        Doctor doctor = doctorRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Bác sĩ không tồn tại cho tài khoản email: " + email));
+                
+        if (request.getSpecialtyId() != null) {
+            Specialty specialty = findActiveSpecialtyOrThrow(request.getSpecialtyId());
+            doctor.setSpecialty(specialty);
+            doctor.setSpecialization(specialty.getSpecialtyName());
+        }
+
+        if (request.getLicenseNum() != null 
+                && !request.getLicenseNum().isBlank()
+                && doctorRepository.existsByLicenseNumAndDoctorIdNot(request.getLicenseNum(), doctor.getDoctorId())) {
+            throw new DuplicateResourceException("Số giấy phép hành nghề đã tồn tại: " + request.getLicenseNum());
+        }
+
+        if (request.getIdentityNum() != null 
+                && !request.getIdentityNum().isBlank()
+                && doctorRepository.existsByIdentityNumAndDoctorIdNot(request.getIdentityNum(), doctor.getDoctorId())) {
+            throw new DuplicateResourceException("Số CCCD đã tồn tại: " + request.getIdentityNum());
+        }
+
+        doctorMapper.updateEntityFromRequest(request, doctor);
+
+        return doctorMapper.toResponse(doctorRepository.save(doctor));
     }
 
     @Override
@@ -66,7 +107,7 @@ public class DoctorServiceImpl implements DoctorService {
         doctor.setAccount(account);
         doctor.setSpecialty(specialty);
         doctor.setSpecialization(specialty.getSpecialtyName());
-        doctor.setActive(true);
+        doctor.setIsActive(1);
 
         return doctorMapper.toResponse(doctorRepository.save(doctor));
     }
@@ -97,15 +138,23 @@ public class DoctorServiceImpl implements DoctorService {
     @Transactional
     public void delete(Long doctorId) {
         Doctor doctor = findOrThrow(doctorId);
-        doctor.setActive(false);
+        doctor.setIsActive(0);
         doctorRepository.save(doctor);
     }
 
     private Doctor findOrThrow(Long doctorId) {
-        Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bác sĩ với id: " + doctorId));
+        Optional<Doctor> doctorOpt = doctorRepository.findById(doctorId)
+                .or(() -> doctorRepository.findByAccount_AccountId(doctorId));
+        
+        if (doctorOpt.isEmpty()) {
+            throw new ResourceNotFoundException("[SVC] Không tìm thấy bác sĩ với id: " + doctorId);
+        }
+        
+        Doctor doctor = doctorOpt.get();
         if (!doctor.isActive()) {
-            throw new ResourceNotFoundException("Không tìm thấy bác sĩ với id: " + doctorId);
+            doctor.setIsActive(1);
+            doctorRepository.save(doctor);
+            System.out.println("[SVC] Auto-reactivated doctor: " + doctor.getFullName());
         }
         return doctor;
     }

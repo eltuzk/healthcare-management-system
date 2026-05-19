@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController
-@RequestMapping("/doctors")
+@RequestMapping("/api/doctors")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 public class DoctorController {
@@ -42,6 +42,20 @@ public class DoctorController {
         return ResponseEntity.ok(doctorService.getById(doctorId));
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("hasAuthority('ROLE_DOCTOR')")
+    public ResponseEntity<DoctorResponse> getMe(@org.springframework.security.core.annotation.AuthenticationPrincipal com.healthcare.backend.security.UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(doctorService.getMe(userPrincipal.email()));
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("hasAuthority('ROLE_DOCTOR')")
+    public ResponseEntity<DoctorResponse> updateMe(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.healthcare.backend.security.UserPrincipal userPrincipal,
+            @Valid @RequestBody DoctorRequest request) {
+        return ResponseEntity.ok(doctorService.updateMe(userPrincipal.email(), request));
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<DoctorResponse> create(@Valid @RequestBody DoctorRequest request) {
@@ -52,8 +66,7 @@ public class DoctorController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<DoctorResponse> update(
             @PathVariable Long doctorId,
-            @Valid @RequestBody DoctorRequest request
-    ) {
+            @Valid @RequestBody DoctorRequest request) {
         return ResponseEntity.ok(doctorService.update(doctorId, request));
     }
 

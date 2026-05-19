@@ -34,26 +34,24 @@ public class MedicalRecordController {
     @PreAuthorize("hasAuthority('ROLE_DOCTOR')")
     public ResponseEntity<MedicalRecordResponse> createFromAppointment(
             @PathVariable Long appointmentId,
-            @Valid @RequestBody CreateMedicalRecordRequest request
-    ) {
+            @Valid @RequestBody CreateMedicalRecordRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(medicalRecordService.createFromAppointment(appointmentId, request));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    @PreAuthorize("hasAnyAuthority('ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_PATIENT')")
     public ResponseEntity<MedicalRecordResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(medicalRecordService.getById(id));
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    @PreAuthorize("hasAnyAuthority('ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_PATIENT')")
     public ResponseEntity<List<MedicalRecordResponse>> getAll(
             @RequestParam(required = false) Long patientId,
             @RequestParam(required = false) Long doctorId,
             @RequestParam(required = false) MedicalRecordStatus status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-    ) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(medicalRecordService.getAll(patientId, doctorId, status, date));
     }
 
@@ -61,8 +59,7 @@ public class MedicalRecordController {
     @PreAuthorize("hasAuthority('ROLE_DOCTOR')")
     public ResponseEntity<MedicalRecordResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateMedicalRecordRequest request
-    ) {
+            @Valid @RequestBody UpdateMedicalRecordRequest request) {
         return ResponseEntity.ok(medicalRecordService.update(id, request));
     }
 

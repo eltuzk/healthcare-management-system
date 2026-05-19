@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.healthcare.backend.dto.request.AuthRequest;
 import com.healthcare.backend.dto.request.ChangePasswordRequest;
 import com.healthcare.backend.dto.request.ForgotPasswordRequest;
+import com.healthcare.backend.dto.request.GoogleLoginRequest;
 import com.healthcare.backend.dto.request.RegisterRequest;
 import com.healthcare.backend.dto.request.ResetPasswordRequest;
 import com.healthcare.backend.dto.response.AuthResponse;
@@ -21,7 +22,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -43,6 +44,11 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(authRequest));
     }
 
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
+        return ResponseEntity.ok(authService.loginWithGoogle(googleLoginRequest));
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
         authService.processForgotPassword(forgotPasswordRequest);
@@ -51,9 +57,8 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(
-        @RequestParam String token,
-        @Valid @RequestBody ResetPasswordRequest resetPasswordRequest
-    ) {
+            @RequestParam String token,
+            @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
         authService.executeResetPassword(token, resetPasswordRequest);
         return ResponseEntity.ok("Password reset successfully.");
     }
@@ -61,10 +66,9 @@ public class AuthController {
     @PostMapping("/change-password")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changePassword(
-        @AuthenticationPrincipal UserPrincipal userPrincipal,
-        @Valid @RequestBody ChangePasswordRequest request
-    ) {
-        
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+
         authService.changePassword(userPrincipal.email(), request);
         return ResponseEntity.noContent().build();
     }

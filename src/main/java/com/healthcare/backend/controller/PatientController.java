@@ -16,8 +16,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/patients")
+@RequestMapping("/api/patients")
 @RequiredArgsConstructor
+@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")
 public class PatientController {
 
     private final PatientService patientService;
@@ -40,6 +41,14 @@ public class PatientController {
         return ResponseEntity.ok(patientService.getMe(userPrincipal.email()));
     }
 
+    @PutMapping("/me")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    public ResponseEntity<PatientResponse> updateMe(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody PatientRequest request) {
+        return ResponseEntity.ok(patientService.updateMe(userPrincipal.email(), request));
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public ResponseEntity<PatientResponse> create(@Valid @RequestBody PatientRequest request) {
@@ -49,7 +58,7 @@ public class PatientController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public ResponseEntity<PatientResponse> update(@PathVariable Long id,
-                                                  @Valid @RequestBody PatientRequest request) {
+            @Valid @RequestBody PatientRequest request) {
         return ResponseEntity.ok(patientService.update(id, request));
     }
 
@@ -58,5 +67,11 @@ public class PatientController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         patientService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    public ResponseEntity<PatientResponse> search(@RequestParam String query) {
+        return ResponseEntity.ok(patientService.search(query));
     }
 }

@@ -41,8 +41,7 @@ public class LabTestController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LabTestResponse> updateLabTest(
             @PathVariable Long id,
-            @Valid @RequestBody LabTestRequest request
-    ) {
+            @Valid @RequestBody LabTestRequest request) {
         return ResponseEntity.ok(labTestService.updateLabTest(id, request));
     }
 

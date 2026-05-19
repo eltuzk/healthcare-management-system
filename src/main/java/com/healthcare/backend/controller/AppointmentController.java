@@ -38,8 +38,7 @@ public class AppointmentController {
     @PostMapping("/walk-in")
     @PreAuthorize("hasRole('RECEPTIONIST')")
     public ResponseEntity<AppointmentResponse> createWalkInPaidAppointment(
-            @Valid @RequestBody CreateWalkInAppointmentRequest request
-    ) {
+            @Valid @RequestBody CreateWalkInAppointmentRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(appointmentService.createWalkInPaidAppointment(request));
     }
 
@@ -51,10 +50,10 @@ public class AppointmentController {
     @GetMapping
     public ResponseEntity<List<AppointmentResponse>> getAll(
             @RequestParam(required = false) Long patientId,
+            @RequestParam(required = false) Long doctorId,
             @RequestParam(required = false) Long doctorScheduleId,
-            @RequestParam(required = false) AppointmentStatus status
-    ) {
-        return ResponseEntity.ok(appointmentService.getAll(patientId, doctorScheduleId, status));
+            @RequestParam(required = false) AppointmentStatus status) {
+        return ResponseEntity.ok(appointmentService.getAll(patientId, doctorId, doctorScheduleId, status));
     }
 
     @PostMapping("/{id}/check-in")
@@ -75,13 +74,11 @@ public class AppointmentController {
     @PostMapping("/sepay/webhook")
     public ResponseEntity<Map<String, Object>> handleSepayWebhook(
             @RequestHeader(name = "X-Secret-Key", required = false) String secretKeyHeader,
-            @RequestBody SepayWebhookRequest request
-    ) {
+            @RequestBody SepayWebhookRequest request) {
         AppointmentResponse response = appointmentService.confirmPaymentFromSepayWebhook(request, secretKeyHeader);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of(
                 "success", true,
                 "appointmentId", response.getAppointmentId(),
-                "appointmentCode", response.getAppointmentCode()
-        ));
+                "appointmentCode", response.getAppointmentCode()));
     }
 }
