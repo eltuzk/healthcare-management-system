@@ -26,7 +26,7 @@ public class PaymentRecordController {
     private final PaymentRecordService paymentRecordService;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_ACCOUNTANT', 'ROLE_RECEPTIONIST')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_ACCOUNTANT', 'ROLE_RECEPTIONIST', 'ROLE_PATIENT')")
     public ResponseEntity<List<PaymentRecordResponse>> getAll(
             @RequestParam(required = false) PaymentStatus paymentStatus,
             @RequestParam(required = false) Long appointmentId,
@@ -35,7 +35,7 @@ public class PaymentRecordController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_ACCOUNTANT', 'ROLE_RECEPTIONIST')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_ACCOUNTANT', 'ROLE_RECEPTIONIST', 'ROLE_PATIENT')")
     public ResponseEntity<PaymentRecordResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(paymentRecordService.getById(id));
     }
