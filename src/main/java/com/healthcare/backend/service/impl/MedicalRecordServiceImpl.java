@@ -18,6 +18,7 @@ import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.AppointmentRepository;
 import com.healthcare.backend.repository.DoctorRepository;
 import com.healthcare.backend.repository.MedicalRecordRepository;
+import com.healthcare.backend.repository.PatientRepository;
 import com.healthcare.backend.service.MedicalRecordBillingService;
 import com.healthcare.backend.service.MedicalRecordService;
 import com.healthcare.backend.service.MedicalRecordWorkflowService;
@@ -43,6 +44,7 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
     private final AppointmentRepository appointmentRepository;
     private final DoctorRepository doctorRepository;
     private final AccountRepository accountRepository;
+    private final PatientRepository patientRepository;
     private final MedicalRecordMapper medicalRecordMapper;
     private final MedicalRecordBillingService medicalRecordBillingService;
     private final MedicalRecordWorkflowService medicalRecordWorkflowService;
@@ -88,6 +90,14 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
     @Override
     @Transactional(readOnly = true)
     public List<MedicalRecordResponse> getAll(Long patientId, Long doctorId, MedicalRecordStatus status, LocalDate date) {
+        if (isCurrentUserPatient()) {
+            Long currentPatientId = findCurrentPatientOrThrow().getPatientId();
+            if (patientId != null && !patientId.equals(currentPatientId)) {
+                throw new BusinessException("Patient is not allowed to access other patients' medical records");
+            }
+            patientId = currentPatientId;
+        }
+
         LocalDateTime fromDate = date != null ? date.atStartOfDay() : null;
         LocalDateTime toDate = date != null ? date.plusDays(1).atStartOfDay() : null;
 
@@ -204,7 +214,15 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
     }
 
     private void validateMedicalRecordAccess(MedicalRecord medicalRecord) {
-        if (isCurrentUserAdmin()) {
+        if (isCurrentUserAdmin() || isCurrentUserReceptionist()) {
+            return;
+        }
+
+        if (isCurrentUserPatient()) {
+            com.healthcare.backend.entity.Patient currentPatient = findCurrentPatientOrThrow();
+            if (!currentPatient.getPatientId().equals(medicalRecord.getPatient().getPatientId())) {
+                throw new BusinessException("Patient is not allowed to access this medical record");
+            }
             return;
         }
 
@@ -216,6 +234,26 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
         return authentication != null
                 && authentication.getAuthorities().stream()
                         .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+    }
+
+    private boolean isCurrentUserReceptionist() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.getAuthorities().stream()
+                        .anyMatch(authority -> "ROLE_RECEPTIONIST".equals(authority.getAuthority()));
+    }
+
+    private boolean isCurrentUserPatient() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.getAuthorities().stream()
+                        .anyMatch(authority -> "ROLE_PATIENT".equals(authority.getAuthority()));
+    }
+
+    private com.healthcare.backend.entity.Patient findCurrentPatientOrThrow() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return patientRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient profile not found for account: " + email));
     }
 
     private void validateDoctorOwnership(Doctor doctor, Appointment appointment) {

@@ -12,10 +12,11 @@ import com.healthcare.backend.entity.enums.PaymentTransactionStatus;
 import com.healthcare.backend.exception.BusinessException;
 import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.PaymentRecordMapper;
-import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.repository.MedicalRecordRepository;
 import com.healthcare.backend.repository.PaymentRecordRepository;
 import com.healthcare.backend.repository.PaymentTransactionRepository;
+import com.healthcare.backend.repository.PatientRepository;
+import com.healthcare.backend.repository.AccountRepository;
 import com.healthcare.backend.security.UserPrincipal;
 import com.healthcare.backend.service.MedicalRecordBillingService;
 import com.healthcare.backend.service.PaymentRecordService;
@@ -38,6 +39,7 @@ public class PaymentRecordServiceImpl implements PaymentRecordService {
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final MedicalRecordRepository medicalRecordRepository;
     private final AccountRepository accountRepository;
+    private final PatientRepository patientRepository;
     private final MedicalRecordBillingService medicalRecordBillingService;
     private final PaymentRecordMapper paymentRecordMapper;
 
@@ -47,6 +49,19 @@ public class PaymentRecordServiceImpl implements PaymentRecordService {
     public List<PaymentRecordResponse> getAll(PaymentStatus paymentStatus, Long appointmentId, Long medicalRecordId) {
         return paymentRecordRepository.findAllByFilters(paymentStatus, appointmentId, medicalRecordId)
                 .stream()
+                .filter(pr -> {
+                    if (isCurrentUserPatient()) {
+                        Long currentPatientId = findCurrentPatientOrThrow().getPatientId();
+                        if (pr.getMedicalRecord() != null && pr.getMedicalRecord().getPatient() != null) {
+                            return pr.getMedicalRecord().getPatient().getPatientId().equals(currentPatientId);
+                        }
+                        if (pr.getAppointment() != null && pr.getAppointment().getPatient() != null) {
+                            return pr.getAppointment().getPatient().getPatientId().equals(currentPatientId);
+                        }
+                        return false;
+                    }
+                    return true;
+                })
                 .sorted(Comparator.comparing(PaymentRecord::getCreatedAt).reversed())
                 .map(this::toResponseWithTransactions)
                 .toList();
@@ -60,6 +75,20 @@ public class PaymentRecordServiceImpl implements PaymentRecordService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Payment record not found with id: " + paymentRecordId
                 ));
+
+        if (isCurrentUserPatient()) {
+            Long currentPatientId = findCurrentPatientOrThrow().getPatientId();
+            boolean isOwner = false;
+            if (paymentRecord.getMedicalRecord() != null && paymentRecord.getMedicalRecord().getPatient() != null) {
+                isOwner = paymentRecord.getMedicalRecord().getPatient().getPatientId().equals(currentPatientId);
+            } else if (paymentRecord.getAppointment() != null && paymentRecord.getAppointment().getPatient() != null) {
+                isOwner = paymentRecord.getAppointment().getPatient().getPatientId().equals(currentPatientId);
+            }
+            if (!isOwner) {
+                throw new BusinessException("Patient is not allowed to access this payment record");
+            }
+        }
+
         return toResponseWithTransactions(paymentRecord);
     }
 
@@ -137,5 +166,18 @@ public class PaymentRecordServiceImpl implements PaymentRecordService {
         if (receivedAmount.compareTo(expectedAmount) != 0) {
             throw new BusinessException("Received amount must match medical record total price");
         }
+    }
+
+    private boolean isCurrentUserPatient() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.getAuthorities().stream()
+                        .anyMatch(authority -> "ROLE_PATIENT".equals(authority.getAuthority()));
+    }
+
+    private com.healthcare.backend.entity.Patient findCurrentPatientOrThrow() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return patientRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient profile not found for account: " + email));
     }
 }
