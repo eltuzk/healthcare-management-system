@@ -270,7 +270,7 @@ Các dữ liệu như email account, identity number, license number, role name,
 
 Project đặt unique constraint ở database cho các field quan trọng. Service có thể check trước bằng `existsBy...`, nhưng tầng bảo vệ cuối cùng vẫn là database constraint. Một số service bắt `DataIntegrityViolationException` để đổi lỗi DB thành lỗi nghiệp vụ dễ hiểu hơn.
 
-## 21. Cấp Phát Đơn Thuốc Và Trừ Kho FIFO
+## 21. Cấp Phát Đơn Thuốc Và Trừ Kho 
 
 ### Vấn đề
 
