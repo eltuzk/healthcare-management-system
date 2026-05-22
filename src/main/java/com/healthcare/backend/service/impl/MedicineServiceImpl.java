@@ -3,9 +3,12 @@ package com.healthcare.backend.service.impl;
 import com.healthcare.backend.dto.request.MedicineRequest;
 import com.healthcare.backend.dto.response.MedicineResponse;
 import com.healthcare.backend.entity.Medicine;
+import com.healthcare.backend.entity.MedicineLot;
+import com.healthcare.backend.exception.BusinessException;
 import com.healthcare.backend.exception.DuplicateResourceException;
 import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.MedicineMapper;
+import com.healthcare.backend.repository.MedicineLotRepository;
 import com.healthcare.backend.repository.MedicineRepository;
 import com.healthcare.backend.service.MedicineService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,7 @@ public class MedicineServiceImpl implements MedicineService {
 
     private final MedicineRepository medicineRepository;
     private final MedicineMapper medicineMapper;
+    private final MedicineLotRepository medicineLotRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -65,6 +69,14 @@ public class MedicineServiceImpl implements MedicineService {
     @Transactional
     public MedicineResponse deactivateMedicine(Long id) {
         Medicine medicine = findActiveMedicineById(id);
+
+        // Check if there are active lots with inventory > 10 in total (using PESSIMISTIC_WRITE lock)
+        List<MedicineLot> activeLots = medicineLotRepository.findAllByMedicineIdAndIsActiveForUpdate(id, 1);
+        int totalStock = activeLots.stream().mapToInt(MedicineLot::getQuantity).sum();
+        
+        if (totalStock > 10) {
+            throw new BusinessException("Không thể ngừng kinh doanh thuốc này vì số lượng tồn kho (" + totalStock + " đơn vị) lớn hơn mức cho phép (<= 10 đơn vị)");
+        }
 
         medicine.setIsActive(0);
         Medicine deactivatedMedicine = medicineRepository.save(medicine);
