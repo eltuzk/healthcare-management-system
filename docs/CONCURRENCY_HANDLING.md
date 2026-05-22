@@ -48,17 +48,6 @@ Project chỉ release slot trong transaction. Khi release, service gọi `findDo
 
 Các flow liên quan nằm trong `AppointmentServiceImpl.cancel(...)` và `AppointmentServiceImpl.expirePendingPaymentReservations(...)`.
 
-## 4. Hủy Appointment
-
-### Vấn đề
-
-Loại vấn đề: `non-repeatable read`, `lost update`, `race condition`.
-
-Một appointment có thể bị hủy trong khi luồng khác đang check-in, start hoặc confirm payment. Nếu một transaction đọc appointment là `PENDING`, sau đó transaction khác đổi sang `CONFIRMED` hoặc `CHECKED_IN`, request cũ có thể vẫn tiếp tục hủy dựa trên dữ liệu cũ. Đây là `non-repeatable read` dẫn đến `lost update` trạng thái.
-
-### Cách giải quyết
-
-Project xử lý trong `AppointmentServiceImpl.cancel(...)` bằng `@Transactional`. Appointment được lock bằng `AppointmentRepository.findByIdForUpdate(...)` với `PESSIMISTIC_WRITE`. Sau khi lock, service mới kiểm tra trạng thái hiện tại và chỉ cho hủy appointment đang `PENDING`. Appointment đã thanh toán hoặc đã đi vào quy trình khám không được hủy.
 
 ## 5. Check-in Appointment
 
