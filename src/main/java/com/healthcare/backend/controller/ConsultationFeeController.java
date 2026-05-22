@@ -33,13 +33,13 @@ public class ConsultationFeeController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR', 'ROLE_PATIENT')")
     public ResponseEntity<List<ConsultationFeeResponse>> getAll() {
         return ResponseEntity.ok(consultationFeeService.getAll());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR', 'ROLE_PATIENT')")
     public ResponseEntity<ConsultationFeeResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(consultationFeeService.getById(id));
     }
