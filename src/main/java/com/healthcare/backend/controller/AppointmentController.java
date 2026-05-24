@@ -78,6 +78,15 @@ public class AppointmentController {
             @RequestHeader(name = "Authorization", required = false) String authorizationHeader,
             @RequestBody SepayWebhookRequest request) {
         
+        System.out.println("=== RECEIVED SEPAY WEBHOOK ===");
+        System.out.println("Webhook ID: " + request.getId());
+        System.out.println("Gateway: " + request.getGateway());
+        System.out.println("Code field: '" + request.getCode() + "'");
+        System.out.println("Content field: '" + request.getContent() + "'");
+        System.out.println("Description field: '" + request.getDescription() + "'");
+        System.out.println("Transfer Amount: " + request.getTransferAmount());
+        System.out.println("Transfer Type: " + request.getTransferType());
+
         // Support both X-Secret-Key header and standard SePay Authorization header
         String secretKey = secretKeyHeader;
         if ((secretKey == null || secretKey.isBlank()) && authorizationHeader != null && !authorizationHeader.isBlank()) {
@@ -89,32 +98,74 @@ public class AppointmentController {
         }
 
         String code = null;
-        if (request.getCode() != null && !request.getCode().isBlank()) {
-            code = request.getCode().trim().toUpperCase();
-        } else if (request.getContent() != null && !request.getContent().isBlank()) {
+        
+        // 1. Prioritize scanning the raw content first
+        if (request.getContent() != null && !request.getContent().isBlank()) {
             String contentUpper = request.getContent().toUpperCase();
-            if (contentUpper.contains("MR-")) {
-                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("MR-\\d+").matcher(contentUpper);
-                if (matcher.find()) {
-                    code = matcher.group();
-                }
-            } else if (contentUpper.contains("PR-")) {
-                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("PR-\\d+").matcher(contentUpper);
-                if (matcher.find()) {
-                    code = matcher.group();
-                }
+            java.util.regex.Matcher mr = java.util.regex.Pattern.compile("MR-\\d+").matcher(contentUpper);
+            if (mr.find()) code = mr.group();
+            
+            if (code == null) {
+                java.util.regex.Matcher pr = java.util.regex.Pattern.compile("PR-\\d+").matcher(contentUpper);
+                if (pr.find()) code = pr.group();
+            }
+            if (code == null) {
+                java.util.regex.Matcher apt = java.util.regex.Pattern.compile("APT-[A-Z0-9]+").matcher(contentUpper);
+                if (apt.find()) code = apt.group();
+            }
+            if (code == null) {
+                java.util.regex.Matcher dk = java.util.regex.Pattern.compile("DK\\d+").matcher(contentUpper);
+                if (dk.find()) code = dk.group();
+            }
+        }
+        
+        // 2. Search in raw description (very common for banks to put it here)
+        if (code == null && request.getDescription() != null && !request.getDescription().isBlank()) {
+            String descUpper = request.getDescription().toUpperCase();
+            java.util.regex.Matcher mr = java.util.regex.Pattern.compile("MR-\\d+").matcher(descUpper);
+            if (mr.find()) code = mr.group();
+            
+            if (code == null) {
+                java.util.regex.Matcher pr = java.util.regex.Pattern.compile("PR-\\d+").matcher(descUpper);
+                if (pr.find()) code = pr.group();
+            }
+            if (code == null) {
+                java.util.regex.Matcher apt = java.util.regex.Pattern.compile("APT-[A-Z0-9]+").matcher(descUpper);
+                if (apt.find()) code = apt.group();
+            }
+            if (code == null) {
+                java.util.regex.Matcher dk = java.util.regex.Pattern.compile("DK\\d+").matcher(descUpper);
+                if (dk.find()) code = dk.group();
+            }
+        }
+        
+        // 3. Search in code field or fall back
+        if (code == null && request.getCode() != null && !request.getCode().isBlank()) {
+            String codeUpper = request.getCode().trim().toUpperCase();
+            java.util.regex.Matcher mr = java.util.regex.Pattern.compile("MR-\\d+").matcher(codeUpper);
+            if (mr.find()) {
+                code = mr.group();
             } else {
-                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("APT-[A-Z0-9]+").matcher(contentUpper);
-                if (matcher.find()) {
-                    code = matcher.group();
+                java.util.regex.Matcher pr = java.util.regex.Pattern.compile("PR-\\d+").matcher(codeUpper);
+                if (pr.find()) {
+                    code = pr.group();
                 } else {
-                    java.util.regex.Matcher matcherDk = java.util.regex.Pattern.compile("DK\\d+").matcher(contentUpper);
-                    if (matcherDk.find()) {
-                        code = matcherDk.group();
+                    java.util.regex.Matcher apt = java.util.regex.Pattern.compile("APT-[A-Z0-9]+").matcher(codeUpper);
+                    if (apt.find()) {
+                        code = apt.group();
+                    } else {
+                        java.util.regex.Matcher dk = java.util.regex.Pattern.compile("DK\\d+").matcher(codeUpper);
+                        if (dk.find()) {
+                            code = dk.group();
+                        } else {
+                            code = codeUpper;
+                        }
                     }
                 }
             }
         }
+
+        System.out.println("Resolved code for webhook: '" + code + "'");
 
         if (code != null && code.startsWith("MR-")) {
             com.healthcare.backend.dto.response.PaymentRecordResponse response =

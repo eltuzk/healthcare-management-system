@@ -68,6 +68,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/revenue-report-mock.html",
                                 "/api/appointments/sepay/webhook",
+                                "/api/payment-records/medical-records/sepay/webhook",
+                                "/api/payment-records/prescriptions/sepay/webhook",
                                 "/error")
                         .permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
