@@ -16,6 +16,7 @@ public class PaymentRecordResponse {
     private Long appointmentId;
     private String appointmentCode;
     private Long medicalRecordId;
+    private Long prescriptionId;
     private String requestCode;
     private BigDecimal totalPrice;
     private BigDecimal receivedAmount;

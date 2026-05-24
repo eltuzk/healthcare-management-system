@@ -47,4 +47,11 @@ public class PaymentRecordController {
             @Valid @RequestBody RecordMedicalRecordPaymentRequest request) {
         return ResponseEntity.ok(paymentRecordService.recordMedicalRecordCashPayment(medicalRecordId, request));
     }
+
+    @PostMapping("/prescriptions/{prescriptionId}/cash")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_ACCOUNTANT', 'ROLE_PHARMACIST')")
+    public ResponseEntity<PaymentRecordResponse> recordPrescriptionCashPayment(
+            @PathVariable Long prescriptionId) {
+        return ResponseEntity.ok(paymentRecordService.recordPrescriptionCashPayment(prescriptionId));
+    }
 }

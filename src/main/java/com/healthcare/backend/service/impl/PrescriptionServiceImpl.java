@@ -17,6 +17,9 @@ import com.healthcare.backend.repository.MedicalRecordRepository;
 import com.healthcare.backend.repository.MedicineLotRepository;
 import com.healthcare.backend.repository.MedicineRepository;
 import com.healthcare.backend.repository.PrescriptionRepository;
+import com.healthcare.backend.entity.PaymentRecord;
+import com.healthcare.backend.entity.enums.PaymentStatus;
+import com.healthcare.backend.repository.PaymentRecordRepository;
 import com.healthcare.backend.service.PrescriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     private final MedicalRecordRepository medicalRecordRepository;
     private final MedicineRepository medicineRepository;
     private final MedicineLotRepository medicineLotRepository;
+    private final PaymentRecordRepository paymentRecordRepository;
     private final PrescriptionMapper prescriptionMapper;
     private final PrescriptionDetailMapper prescriptionDetailMapper;
 
@@ -77,6 +81,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         addPrescriptionDetails(prescription, request.getDetails());
 
         Prescription savedPrescription = prescriptionRepository.save(prescription);
+        createOrUpdatePrescriptionPayment(savedPrescription);
         return prescriptionMapper.toResponse(savedPrescription);
     }
 
@@ -101,6 +106,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         addPrescriptionDetails(prescription, request.getDetails());
 
         Prescription updatedPrescription = prescriptionRepository.save(prescription);
+        createOrUpdatePrescriptionPayment(updatedPrescription);
         return prescriptionMapper.toResponse(updatedPrescription);
     }
 
@@ -119,6 +125,12 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     @Transactional
     public PrescriptionResponse dispensePrescription(Long id) {
         Prescription prescription = findActivePrescriptionById(id);
+
+        PaymentRecord paymentRecord = paymentRecordRepository.findByPrescription_PrescriptionId(id)
+                .orElseThrow(() -> new BusinessException("Hóa đơn thanh toán cho đơn thuốc này không tồn tại."));
+        if (paymentRecord.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new BusinessException("Đơn thuốc chưa được thanh toán. Vui lòng thanh toán trước khi cấp phát.");
+        }
 
         for (PrescriptionDetail detail : prescription.getPrescriptionDetails()) {
             Medicine medicine = detail.getMedicine();
@@ -239,5 +251,33 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             PrescriptionDetail detail = prescriptionDetailMapper.toEntity(detailRequest, prescription, medicine);
             prescription.getPrescriptionDetails().add(detail);
         }
+    }
+
+    private void createOrUpdatePrescriptionPayment(Prescription prescription) {
+        java.math.BigDecimal totalPrice = java.math.BigDecimal.ZERO;
+        for (PrescriptionDetail detail : prescription.getPrescriptionDetails()) {
+            java.math.BigDecimal sellingPrice = detail.getMedicine().getSellingPrice();
+            if (sellingPrice != null) {
+                totalPrice = totalPrice.add(sellingPrice.multiply(java.math.BigDecimal.valueOf(detail.getQuantity())));
+            }
+        }
+
+        PaymentRecord paymentRecord = paymentRecordRepository.findByPrescription_PrescriptionId(prescription.getPrescriptionId())
+                .orElse(null);
+
+        if (paymentRecord == null) {
+            paymentRecord = new PaymentRecord();
+            paymentRecord.setPrescription(prescription);
+            paymentRecord.setRequestCode("PR-" + prescription.getPrescriptionId());
+            paymentRecord.setTotalPrice(totalPrice);
+            paymentRecord.setReceivedAmount(java.math.BigDecimal.ZERO);
+            paymentRecord.setPaymentStatus(PaymentStatus.UNPAID);
+        } else {
+            if (paymentRecord.getPaymentStatus() != PaymentStatus.PAID) {
+                paymentRecord.setTotalPrice(totalPrice);
+            }
+        }
+
+        paymentRecordRepository.save(paymentRecord);
     }
 }

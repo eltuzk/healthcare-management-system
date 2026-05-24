@@ -27,4 +27,6 @@ public class MedicineLotResponse {
     private BigDecimal importPrice;
 
     private boolean active;
+
+    private LocalDate importDate;
 }

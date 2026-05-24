@@ -39,4 +39,15 @@ public interface MedicineLotRepository extends JpaRepository<MedicineLot, Long> 
             @Param("medicineId") Long medicineId,
             @Param("isActive") Integer isActive
     );
+
+    @Query("""
+            select ml
+            from MedicineLot ml
+            where ml.importDate >= :startDate
+              and ml.importDate <= :endDate
+            """)
+    List<MedicineLot> findAllByImportDateBetween(
+            @Param("startDate") java.time.LocalDate startDate,
+            @Param("endDate") java.time.LocalDate endDate
+    );
 }

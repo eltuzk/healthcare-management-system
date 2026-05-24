@@ -33,4 +33,6 @@ public class MedicineLotRequest {
 
     @DecimalMin(value = "0.00", message = "Import price must be greater than or equal to 0")
     private BigDecimal importPrice;
+
+    private LocalDate importDate;
 }

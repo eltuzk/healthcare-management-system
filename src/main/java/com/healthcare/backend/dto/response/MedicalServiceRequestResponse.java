@@ -23,5 +23,6 @@ public class MedicalServiceRequestResponse {
     private LocalDateTime confirmedAt;
     private LocalDateTime cancelledAt;
     private LocalDateTime paidAt;
+    private String patientName;
     private List<MedicalServiceRequestItemResponse> items;
 }

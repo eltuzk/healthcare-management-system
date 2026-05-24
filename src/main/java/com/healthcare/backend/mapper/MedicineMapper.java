@@ -19,6 +19,7 @@ public class MedicineMapper {
         medicine.setUnit(normalize(request.getUnit()));
         medicine.setDescription(normalize(request.getDescription()));
         medicine.setIsActive(1);
+        medicine.setSellingPrice(request.getSellingPrice() != null ? request.getSellingPrice() : java.math.BigDecimal.ZERO);
 
         return medicine;
     }
@@ -32,6 +33,9 @@ public class MedicineMapper {
         medicine.setActiveIngredient(normalize(request.getActiveIngredient()));
         medicine.setUnit(normalize(request.getUnit()));
         medicine.setDescription(normalize(request.getDescription()));
+        if (request.getSellingPrice() != null) {
+            medicine.setSellingPrice(request.getSellingPrice());
+        }
     }
 
     public MedicineResponse toResponse(Medicine medicine) {
@@ -46,6 +50,7 @@ public class MedicineMapper {
         response.setUnit(medicine.getUnit());
         response.setDescription(medicine.getDescription());
         response.setActive(Integer.valueOf(1).equals(medicine.getIsActive()));
+        response.setSellingPrice(medicine.getSellingPrice());
 
         return response;
     }

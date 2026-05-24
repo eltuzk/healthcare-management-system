@@ -29,6 +29,10 @@ public interface LabTestRequestRepository extends JpaRepository<LabTestRequest, 
 
     Page<LabTestRequest> findByStatus(LabTestRequestStatus status, Pageable pageable);
 
+    Page<LabTestRequest> findByPaymentStatus(com.healthcare.backend.entity.enums.PaymentStatus paymentStatus, Pageable pageable);
+
+    Page<LabTestRequest> findByStatusAndPaymentStatus(LabTestRequestStatus status, com.healthcare.backend.entity.enums.PaymentStatus paymentStatus, Pageable pageable);
+
     Page<LabTestRequest> findByMedRecord_MedicalRecordIdAndStatus(Long medRecordId, LabTestRequestStatus status, Pageable pageable);
     
     Page<LabTestRequest> findByMedRecord_MedicalRecordId(Long medRecordId, Pageable pageable);

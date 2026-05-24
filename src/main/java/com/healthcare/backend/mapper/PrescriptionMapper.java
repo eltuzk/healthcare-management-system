@@ -3,6 +3,7 @@ package com.healthcare.backend.mapper;
 import com.healthcare.backend.dto.request.PrescriptionRequest;
 import com.healthcare.backend.dto.response.PrescriptionResponse;
 import com.healthcare.backend.entity.MedicalRecord;
+import com.healthcare.backend.entity.PaymentRecord;
 import com.healthcare.backend.entity.Prescription;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -57,6 +58,11 @@ public class PrescriptionMapper {
                         .map(prescriptionDetailMapper::toResponse)
                         .toList()
         );
+
+        if (prescription.getPaymentRecord() != null) {
+            response.setPaymentStatus(prescription.getPaymentRecord().getPaymentStatus().name());
+            response.setTotalPrice(prescription.getPaymentRecord().getTotalPrice());
+        }
 
         return response;
     }

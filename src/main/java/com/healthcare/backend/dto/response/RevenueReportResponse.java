@@ -14,6 +14,8 @@ public class RevenueReportResponse {
     private LocalDate fromDate;
     private LocalDate toDate;
     private BigDecimal totalRevenue;
+    private BigDecimal totalExpense;
+    private BigDecimal netProfit;
     private long transactionCount;
     private List<RevenueBreakdownResponse> revenueByDate;
     private List<RevenueBreakdownResponse> revenueByGateway;

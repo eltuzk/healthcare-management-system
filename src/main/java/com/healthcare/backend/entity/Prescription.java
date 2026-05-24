@@ -54,6 +54,9 @@ public class Prescription {
     @OneToMany(mappedBy = "prescription", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PrescriptionDetail> prescriptionDetails = new ArrayList<>();
 
+    @OneToOne(mappedBy = "prescription", fetch = FetchType.LAZY)
+    private PaymentRecord paymentRecord;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {

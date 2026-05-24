@@ -53,6 +53,7 @@ import java.util.regex.Pattern;
 public class AppointmentServiceImpl implements AppointmentService {
 
     private static final Pattern APPOINTMENT_CODE_PATTERN = Pattern.compile("APT-[A-Z0-9]{8}");
+    private static final Pattern APPOINTMENT_ID_PATTERN = Pattern.compile("DK\\d+");
     private static final long ONLINE_PAYMENT_RESERVATION_MINUTES = 10;
     private static final Set<AppointmentStatus> ACTIVE_STATUSES = EnumSet.of(
             AppointmentStatus.PENDING,
@@ -85,7 +86,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     public AppointmentResponse create(CreateAppointmentRequest request) {
         Patient patient = findPatientForUpdateOrThrow(request.getPatientId());
         DoctorSchedule doctorSchedule = findDoctorScheduleForUpdateOrThrow(request.getDoctorScheduleId());
-        ConsultationFee consultationFee = findConsultationFeeByScheduleOrThrow(doctorSchedule);
+        ConsultationFee consultationFee = findConsultationFeeOrThrow(doctorSchedule, request.getFeeId());
 
         validateScheduleNotExpired(doctorSchedule);
         validateNoActiveAppointment(patient.getPatientId());
@@ -117,7 +118,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         Account currentAccount = findCurrentAccountOrThrow();
         Patient patient = findPatientForUpdateOrThrow(request.getPatientId());
         DoctorSchedule doctorSchedule = findDoctorScheduleForUpdateOrThrow(request.getDoctorScheduleId());
-        ConsultationFee consultationFee = findConsultationFeeByScheduleOrThrow(doctorSchedule);
+        ConsultationFee consultationFee = findConsultationFeeOrThrow(doctorSchedule, request.getFeeId());
 
         validateScheduleNotExpired(doctorSchedule);
         validateNoActiveAppointment(patient.getPatientId());
@@ -262,9 +263,17 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         String appointmentCode = extractAppointmentCode(request);
-        Appointment appointment = appointmentRepository.findByAppointmentCodeForUpdate(appointmentCode)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Appointment not found with code: " + appointmentCode));
+        Appointment appointment;
+        if (appointmentCode.startsWith("DK")) {
+            Long appointmentId = Long.parseLong(appointmentCode.substring(2));
+            appointment = appointmentRepository.findByIdForUpdate(appointmentId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Appointment not found with ID: " + appointmentId));
+        } else {
+            appointment = appointmentRepository.findByAppointmentCodeForUpdate(appointmentCode)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Appointment not found with code: " + appointmentCode));
+        }
 
         if (request.getId() != null
                 && appointment.getSepayTransactionId() != null
@@ -296,7 +305,12 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + appointmentId));
     }
 
-    private ConsultationFee findConsultationFeeByScheduleOrThrow(DoctorSchedule doctorSchedule) {
+    private ConsultationFee findConsultationFeeOrThrow(DoctorSchedule doctorSchedule, Long feeId) {
+        if (feeId != null) {
+            return consultationFeeRepository.findById(feeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Consultation fee not found with id: " + feeId));
+        }
+
         if (doctorSchedule.getDoctor() == null || doctorSchedule.getDoctor().getSpecialty() == null) {
             throw new BusinessException("Doctor specialty is required to resolve consultation fee");
         }
@@ -621,11 +635,16 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         Matcher matcher = APPOINTMENT_CODE_PATTERN.matcher(request.getContent().toUpperCase());
-        if (!matcher.find()) {
-            throw new BusinessException("Appointment code was not found in transfer content");
+        if (matcher.find()) {
+            return matcher.group();
         }
 
-        return matcher.group();
+        Matcher matcherDk = APPOINTMENT_ID_PATTERN.matcher(request.getContent().toUpperCase());
+        if (matcherDk.find()) {
+            return matcherDk.group();
+        }
+
+        throw new BusinessException("Appointment code was not found in transfer content");
     }
 
     private String generateUniqueAppointmentCode() {

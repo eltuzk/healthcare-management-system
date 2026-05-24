@@ -32,6 +32,10 @@ public interface MedicalServiceRequestRepository extends JpaRepository<MedicalSe
 
     Page<MedicalServiceRequest> findByStatus(MedicalServiceRequestStatus status, Pageable pageable);
 
+    Page<MedicalServiceRequest> findByPaymentStatus(com.healthcare.backend.entity.enums.PaymentStatus paymentStatus, Pageable pageable);
+
+    Page<MedicalServiceRequest> findByStatusAndPaymentStatus(MedicalServiceRequestStatus status, com.healthcare.backend.entity.enums.PaymentStatus paymentStatus, Pageable pageable);
+
     Page<MedicalServiceRequest> findByMedRecord_MedicalRecordIdAndStatus(Long medicalRecordId, MedicalServiceRequestStatus status, Pageable pageable);
 
     long countByMedRecord_MedicalRecordId(Long medicalRecordId);
