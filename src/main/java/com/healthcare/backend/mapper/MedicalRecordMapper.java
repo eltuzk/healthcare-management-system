@@ -80,6 +80,9 @@ public class MedicalRecordMapper {
         if (medicalRecord.getDoctor() != null) {
             response.setDoctorId(medicalRecord.getDoctor().getDoctorId());
             response.setDoctorName(medicalRecord.getDoctor().getFullName());
+            if (medicalRecord.getDoctor().getSpecialty() != null) {
+                response.setSpecialtyName(medicalRecord.getDoctor().getSpecialty().getSpecialtyName());
+            }
         }
 
         return response;

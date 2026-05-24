@@ -218,13 +218,29 @@ public class PaymentRecordServiceImpl implements PaymentRecordService {
         }
 
         String code = null;
-        if (request.getCode() != null && !request.getCode().isBlank()) {
-            code = request.getCode().trim().toUpperCase();
-        } else if (request.getContent() != null && !request.getContent().isBlank()) {
+        if (request.getContent() != null && !request.getContent().isBlank()) {
             String contentUpper = request.getContent().toUpperCase();
             java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("MR-\\d+").matcher(contentUpper);
             if (matcher.find()) {
                 code = matcher.group();
+            }
+        }
+        if (code == null && request.getDescription() != null && !request.getDescription().isBlank()) {
+            String descUpper = request.getDescription().toUpperCase();
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("MR-\\d+").matcher(descUpper);
+            if (matcher.find()) {
+                code = matcher.group();
+            }
+        }
+        if (code == null && request.getCode() != null && !request.getCode().isBlank()) {
+            String codeUpper = request.getCode().trim().toUpperCase();
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("MR-\\d+").matcher(codeUpper);
+            if (matcher.find()) {
+                code = matcher.group();
+            } else if (codeUpper.startsWith("MR-")) {
+                code = codeUpper;
+            } else if (codeUpper.matches("\\d+")) {
+                code = "MR-" + codeUpper;
             }
         }
 
@@ -372,13 +388,29 @@ public class PaymentRecordServiceImpl implements PaymentRecordService {
         }
 
         String code = null;
-        if (request.getCode() != null && !request.getCode().isBlank()) {
-            code = request.getCode().trim().toUpperCase();
-        } else if (request.getContent() != null && !request.getContent().isBlank()) {
+        if (request.getContent() != null && !request.getContent().isBlank()) {
             String contentUpper = request.getContent().toUpperCase();
             java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("PR-\\d+").matcher(contentUpper);
             if (matcher.find()) {
                 code = matcher.group();
+            }
+        }
+        if (code == null && request.getDescription() != null && !request.getDescription().isBlank()) {
+            String descUpper = request.getDescription().toUpperCase();
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("PR-\\d+").matcher(descUpper);
+            if (matcher.find()) {
+                code = matcher.group();
+            }
+        }
+        if (code == null && request.getCode() != null && !request.getCode().isBlank()) {
+            String codeUpper = request.getCode().trim().toUpperCase();
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("PR-\\d+").matcher(codeUpper);
+            if (matcher.find()) {
+                code = matcher.group();
+            } else if (codeUpper.startsWith("PR-")) {
+                code = codeUpper;
+            } else if (codeUpper.matches("\\d+")) {
+                code = "PR-" + codeUpper;
             }
         }
 
