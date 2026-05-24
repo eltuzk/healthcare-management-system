@@ -49,4 +49,14 @@ public class MedicineLot {
 
     @Column(name = "is_active", nullable = false)
     private Integer isActive = 1;
+
+    @Column(name = "import_date", nullable = false)
+    private LocalDate importDate;
+
+    @jakarta.persistence.PrePersist
+    public void prePersist() {
+        if (this.importDate == null) {
+            this.importDate = LocalDate.now();
+        }
+    }
 }

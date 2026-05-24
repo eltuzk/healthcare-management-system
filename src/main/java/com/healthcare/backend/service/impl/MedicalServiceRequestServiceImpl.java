@@ -13,6 +13,7 @@ import com.healthcare.backend.entity.MedicalServiceRequestItem;
 import com.healthcare.backend.entity.MedicalServiceRequestItemId;
 import com.healthcare.backend.entity.MedicalServiceResult;
 import com.healthcare.backend.entity.enums.MedicalServiceRequestStatus;
+import com.healthcare.backend.entity.enums.PaymentStatus;
 import com.healthcare.backend.exception.BusinessException;
 import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.repository.MedicalRecordRepository;
@@ -99,10 +100,11 @@ public class MedicalServiceRequestServiceImpl implements MedicalServiceRequestSe
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MedicalServiceRequestResponse getRequestById(Long id) {
-        MedicalServiceRequest request = requestRepository.findByIdForUpdate(id)
+        MedicalServiceRequest request = requestRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Medical Service Request not found with id: " + id));
-        medicalRecordRepository.findByIdForUpdate(request.getMedRecord().getMedicalRecordId())
+        medicalRecordRepository.findById(request.getMedRecord().getMedicalRecordId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Medical Record not found with id: " + request.getMedRecord().getMedicalRecordId()
                 ));
@@ -117,9 +119,9 @@ public class MedicalServiceRequestServiceImpl implements MedicalServiceRequestSe
         } else if (medRecordId != null) {
             requests = requestRepository.findByMedRecord_MedicalRecordId(medRecordId, pageable);
         } else if (status != null) {
-            requests = requestRepository.findByStatus(status, pageable);
+            requests = requestRepository.findByStatusAndPaymentStatus(status, PaymentStatus.PAID, pageable);
         } else {
-            requests = requestRepository.findAll(pageable);
+            requests = requestRepository.findByPaymentStatus(PaymentStatus.PAID, pageable);
         }
         return requests.map(this::mapToResponse);
     }
@@ -216,6 +218,7 @@ public class MedicalServiceRequestServiceImpl implements MedicalServiceRequestSe
         response.setConfirmedAt(request.getConfirmedAt());
         response.setCancelledAt(request.getCancelledAt());
         response.setPaidAt(request.getPaidAt());
+        response.setPatientName(request.getMedRecord() != null && request.getMedRecord().getPatient() != null ? request.getMedRecord().getPatient().getFullName() : null);
 
         if (request.getItems() != null) {
             List<MedicalServiceRequestItemResponse> itemResponses = request.getItems().stream().map(item -> {

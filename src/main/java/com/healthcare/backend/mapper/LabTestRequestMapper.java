@@ -35,6 +35,7 @@ public class LabTestRequestMapper {
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .paidAt(entity.getPaidAt())
+                .patientName(entity.getMedRecord() != null && entity.getMedRecord().getPatient() != null ? entity.getMedRecord().getPatient().getFullName() : null)
                 .items(itemResponses)
                 .build();
     }

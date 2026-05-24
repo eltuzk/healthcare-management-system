@@ -40,13 +40,13 @@ public class MedicalRecordController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_PATIENT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_PATIENT', 'ROLE_PHARMACIST', 'ROLE_TECHNICIAN')")
     public ResponseEntity<MedicalRecordResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(medicalRecordService.getById(id));
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_PATIENT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_PATIENT', 'ROLE_PHARMACIST', 'ROLE_TECHNICIAN')")
     public ResponseEntity<List<MedicalRecordResponse>> getAll(
             @RequestParam(required = false) Long patientId,
             @RequestParam(required = false) Long doctorId,

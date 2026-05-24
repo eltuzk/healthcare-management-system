@@ -36,4 +36,7 @@ public class Medicine {
 
     @Column(name = "is_active", nullable = false)
     private Integer isActive = 1;
+
+    @Column(name = "selling_price", nullable = false, precision = 15, scale = 2)
+    private java.math.BigDecimal sellingPrice = java.math.BigDecimal.ZERO;
 }

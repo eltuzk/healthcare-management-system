@@ -50,4 +50,14 @@ public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Lo
             @Param("appointmentId") Long appointmentId,
             @Param("medicalRecordId") Long medicalRecordId
     );
+
+    Optional<PaymentRecord> findByPrescription_PrescriptionId(Long prescriptionId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select pr
+            from PaymentRecord pr
+            where pr.prescription.prescriptionId = :prescriptionId
+            """)
+    Optional<PaymentRecord> findByPrescriptionIdForUpdate(@Param("prescriptionId") Long prescriptionId);
 }

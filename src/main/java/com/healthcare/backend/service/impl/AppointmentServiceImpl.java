@@ -85,7 +85,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     public AppointmentResponse create(CreateAppointmentRequest request) {
         Patient patient = findPatientForUpdateOrThrow(request.getPatientId());
         DoctorSchedule doctorSchedule = findDoctorScheduleForUpdateOrThrow(request.getDoctorScheduleId());
-        ConsultationFee consultationFee = findConsultationFeeByScheduleOrThrow(doctorSchedule);
+        ConsultationFee consultationFee = findConsultationFeeOrThrow(doctorSchedule, request.getFeeId());
 
         validateScheduleNotExpired(doctorSchedule);
         validateNoActiveAppointment(patient.getPatientId());
@@ -117,7 +117,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         Account currentAccount = findCurrentAccountOrThrow();
         Patient patient = findPatientForUpdateOrThrow(request.getPatientId());
         DoctorSchedule doctorSchedule = findDoctorScheduleForUpdateOrThrow(request.getDoctorScheduleId());
-        ConsultationFee consultationFee = findConsultationFeeByScheduleOrThrow(doctorSchedule);
+        ConsultationFee consultationFee = findConsultationFeeOrThrow(doctorSchedule, request.getFeeId());
 
         validateScheduleNotExpired(doctorSchedule);
         validateNoActiveAppointment(patient.getPatientId());
@@ -296,7 +296,12 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + appointmentId));
     }
 
-    private ConsultationFee findConsultationFeeByScheduleOrThrow(DoctorSchedule doctorSchedule) {
+    private ConsultationFee findConsultationFeeOrThrow(DoctorSchedule doctorSchedule, Long feeId) {
+        if (feeId != null) {
+            return consultationFeeRepository.findById(feeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Consultation fee not found with id: " + feeId));
+        }
+
         if (doctorSchedule.getDoctor() == null || doctorSchedule.getDoctor().getSpecialty() == null) {
             throw new BusinessException("Doctor specialty is required to resolve consultation fee");
         }

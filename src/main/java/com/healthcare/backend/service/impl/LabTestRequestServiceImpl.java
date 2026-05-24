@@ -103,9 +103,9 @@ public class LabTestRequestServiceImpl implements LabTestRequestService {
         } else if (medRecordId != null) {
             requests = labTestRequestRepository.findByMedRecord_MedicalRecordId(medRecordId, pageable);
         } else if (status != null) {
-            requests = labTestRequestRepository.findByStatus(status, pageable);
+            requests = labTestRequestRepository.findByStatusAndPaymentStatus(status, PaymentStatus.PAID, pageable);
         } else {
-            requests = labTestRequestRepository.findAll(pageable);
+            requests = labTestRequestRepository.findByPaymentStatus(PaymentStatus.PAID, pageable);
         }
         return requests.map(labTestRequestMapper::toResponse);
     }

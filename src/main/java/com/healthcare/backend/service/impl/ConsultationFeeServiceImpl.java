@@ -86,13 +86,6 @@ public class ConsultationFeeServiceImpl implements ConsultationFeeService {
         if (duplicatedFeeCode) {
             throw new DuplicateResourceException("Consultation fee code already exists");
         }
-
-        boolean duplicatedSpecialty = feeId == null
-                ? consultationFeeRepository.existsBySpecialtyRef_SpecialtyId(request.getSpecialtyId())
-                : consultationFeeRepository.existsBySpecialtyRef_SpecialtyIdAndFeeIdNot(request.getSpecialtyId(), feeId);
-        if (duplicatedSpecialty) {
-            throw new DuplicateResourceException("Consultation fee specialty already exists");
-        }
     }
 
     private Specialty findActiveSpecialtyOrThrow(Long specialtyId) {

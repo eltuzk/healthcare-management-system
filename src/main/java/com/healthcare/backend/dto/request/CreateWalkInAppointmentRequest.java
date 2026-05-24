@@ -36,4 +36,6 @@ public class CreateWalkInAppointmentRequest {
 
     @Size(max = 1000, message = "Note must not exceed 1000 characters")
     private String note;
+
+    private Long feeId;
 }

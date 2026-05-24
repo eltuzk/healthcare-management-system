@@ -18,4 +18,6 @@ public class MedicineResponse {
     private String description;
 
     private boolean active;
+
+    private java.math.BigDecimal sellingPrice;
 }
