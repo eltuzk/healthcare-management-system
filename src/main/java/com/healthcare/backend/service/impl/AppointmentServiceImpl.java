@@ -53,6 +53,7 @@ import java.util.regex.Pattern;
 public class AppointmentServiceImpl implements AppointmentService {
 
     private static final Pattern APPOINTMENT_CODE_PATTERN = Pattern.compile("APT-[A-Z0-9]{8}");
+    private static final Pattern APPOINTMENT_ID_PATTERN = Pattern.compile("DK\\d+");
     private static final long ONLINE_PAYMENT_RESERVATION_MINUTES = 10;
     private static final Set<AppointmentStatus> ACTIVE_STATUSES = EnumSet.of(
             AppointmentStatus.PENDING,
@@ -262,9 +263,17 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         String appointmentCode = extractAppointmentCode(request);
-        Appointment appointment = appointmentRepository.findByAppointmentCodeForUpdate(appointmentCode)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Appointment not found with code: " + appointmentCode));
+        Appointment appointment;
+        if (appointmentCode.startsWith("DK")) {
+            Long appointmentId = Long.parseLong(appointmentCode.substring(2));
+            appointment = appointmentRepository.findByIdForUpdate(appointmentId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Appointment not found with ID: " + appointmentId));
+        } else {
+            appointment = appointmentRepository.findByAppointmentCodeForUpdate(appointmentCode)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Appointment not found with code: " + appointmentCode));
+        }
 
         if (request.getId() != null
                 && appointment.getSepayTransactionId() != null
@@ -626,11 +635,16 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         Matcher matcher = APPOINTMENT_CODE_PATTERN.matcher(request.getContent().toUpperCase());
-        if (!matcher.find()) {
-            throw new BusinessException("Appointment code was not found in transfer content");
+        if (matcher.find()) {
+            return matcher.group();
         }
 
-        return matcher.group();
+        Matcher matcherDk = APPOINTMENT_ID_PATTERN.matcher(request.getContent().toUpperCase());
+        if (matcherDk.find()) {
+            return matcherDk.group();
+        }
+
+        throw new BusinessException("Appointment code was not found in transfer content");
     }
 
     private String generateUniqueAppointmentCode() {
