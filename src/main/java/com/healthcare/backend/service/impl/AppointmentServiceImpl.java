@@ -626,25 +626,52 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     private String extractAppointmentCode(SepayWebhookRequest request) {
+        // 1. Prioritize scanning the raw content first for explicitly prefixed patterns
+        if (request.getContent() != null && !request.getContent().isBlank()) {
+            String contentUpper = request.getContent().toUpperCase();
+            Matcher matcher = APPOINTMENT_CODE_PATTERN.matcher(contentUpper);
+            if (matcher.find()) {
+                return matcher.group();
+            }
+
+            Matcher matcherDk = APPOINTMENT_ID_PATTERN.matcher(contentUpper);
+            if (matcherDk.find()) {
+                return matcherDk.group();
+            }
+        }
+
+        // 2. Scan raw description
+        if (request.getDescription() != null && !request.getDescription().isBlank()) {
+            String descUpper = request.getDescription().toUpperCase();
+            Matcher matcher = APPOINTMENT_CODE_PATTERN.matcher(descUpper);
+            if (matcher.find()) {
+                return matcher.group();
+            }
+
+            Matcher matcherDk = APPOINTMENT_ID_PATTERN.matcher(descUpper);
+            if (matcherDk.find()) {
+                return matcherDk.group();
+            }
+        }
+
+        // 3. Fall back to parsed code field
         if (request.getCode() != null && !request.getCode().isBlank()) {
-            return request.getCode().trim().toUpperCase();
+            String codeUpper = request.getCode().trim().toUpperCase();
+            Matcher matcher = APPOINTMENT_CODE_PATTERN.matcher(codeUpper);
+            if (matcher.find()) {
+                return matcher.group();
+            }
+            Matcher matcherDk = APPOINTMENT_ID_PATTERN.matcher(codeUpper);
+            if (matcherDk.find()) {
+                return matcherDk.group();
+            }
+            if (codeUpper.startsWith("APT-") || codeUpper.startsWith("DK") || codeUpper.matches("\\d+")) {
+                return codeUpper;
+            }
+            return codeUpper;
         }
 
-        if (request.getContent() == null || request.getContent().isBlank()) {
-            throw new BusinessException("Appointment code was not found in SePay webhook payload");
-        }
-
-        Matcher matcher = APPOINTMENT_CODE_PATTERN.matcher(request.getContent().toUpperCase());
-        if (matcher.find()) {
-            return matcher.group();
-        }
-
-        Matcher matcherDk = APPOINTMENT_ID_PATTERN.matcher(request.getContent().toUpperCase());
-        if (matcherDk.find()) {
-            return matcherDk.group();
-        }
-
-        throw new BusinessException("Appointment code was not found in transfer content");
+        throw new BusinessException("Appointment code was not found in SePay webhook payload");
     }
 
     private String generateUniqueAppointmentCode() {

@@ -23,6 +23,7 @@ public class MedicalRecordResponse {
     private String patientName;
     private Long doctorId;
     private String doctorName;
+    private String specialtyName;
     private Long doctorScheduleId;
     private LocalDate appointmentDate;
     private String initialDiagnosis;
