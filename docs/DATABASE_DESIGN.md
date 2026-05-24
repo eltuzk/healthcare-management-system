@@ -1,6 +1,6 @@
 # Thiết Kế Database - Healthcare Management System
 
-Tài liệu này mô tả database design hiện tại sau các migration `V1` đến `V18`.
+Tài liệu này mô tả database design hiện tại sau các migration `V1` đến `V26`.
 Khi thay đổi schema hoặc business rule, cần cập nhật file này cùng với [CONSTRAINTS.md](CONSTRAINTS.md).
 
 ## Quy Ước
@@ -86,6 +86,21 @@ Hệ thống được chia thành các nhóm dữ liệu chính:
 | `status` | VARCHAR2(20) | NN, check | `ACTIVE`, `EXPIRED`, `SUSPENDED` |
 | `expiry_date` | DATE | NN | Ngày hết hạn |
 | `coverage_percent` | NUMBER(5,2) | NN, check | % bảo hiểm chi trả (0-100) |
+
+### `ADMINISTRATOR`
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `administrator_id` | NUMBER | PK | ID quản trị viên |
+| `account_id` | NUMBER | FK -> `ACCOUNT`, UQ, NN | Tài khoản đăng nhập |
+| `full_name` | VARCHAR2(200) | NN | Họ tên |
+| `identity_num` | VARCHAR2(50) | UQ | CCCD/CMND |
+| `gender` | VARCHAR2(10) | check | `MALE`, `FEMALE`, `OTHER` |
+| `phone` | VARCHAR2(20) | | Số điện thoại |
+| `address` | VARCHAR2(500) | | Địa chỉ |
+| `date_of_birth` | DATE | | Ngày sinh |
+| `hire_date` | DATE | | Ngày vào làm |
+| `is_active` | NUMBER(1) | NN, default 1 | Soft delete |
 
 ### `ACCOUNTANT`
 
@@ -184,6 +199,8 @@ Hệ thống được chia thành các nhóm dữ liệu chính:
 | `branch_id` | NUMBER | FK -> `BRANCH`, NN | Chi nhánh |
 | `room_code` | VARCHAR2(50) | UQ, NN | Mã phòng (số phòng) |
 | `position` | VARCHAR2(200) | | Vị trí (tầng/khu) |
+| `specialty_id` | NUMBER | FK -> `SPECIALTY` | Chuyên khoa trực thuộc |
+| `floor` | NUMBER | NN, default 1 | Tầng (phục vụ hiển thị sơ đồ) |
 | `note` | VARCHAR2(500) | | Ghi chú |
 
 ### `BED`
@@ -366,26 +383,8 @@ Quy tắc nghiệp vụ:
 | `price` | NUMBER(15,2) | NN, >= 0 | Giá niêm yết |
 | `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
 
-### `MEDICINE`
-
-| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
-| --- | --- | --- | --- |
-| `medicine_id` | NUMBER | PK | ID thuốc |
-| `medicine_name` | VARCHAR2(200) | UQ, NN | Tên thuốc |
-| `price` | NUMBER(15,2) | NN, >= 0 | Giá niêm yết |
-| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
-
-### `MEDICINE_LOT`
-
-| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
-| --- | --- | --- | --- |
-| `lot_id` | NUMBER | PK | ID lô thuốc |
-| `medicine_id` | NUMBER | FK -> `MEDICINE`, NN | Thuốc |
-| `lot_number` | VARCHAR2(100) | NN | Số lô |
-| `quantity` | NUMBER(10) | NN, >= 0 | Số lượng tồn |
-| `supplier` | VARCHAR2(200) | | Nhà cung cấp |
-| `manufacturing_date`| DATE | | Ngày sản xuất |
-| `expiry_date` | DATE | NN | Ngày hết hạn |
+> [!NOTE]
+> Thông tin chi tiết về danh mục thuốc (`MEDICINE`) và các lô thuốc nhập (`MEDICINE_LOT`) được trình bày chi tiết tại phần [Kho Thuốc Và Đơn Thuốc](#kho-thuốc-và-đơn-thuốc) để tránh trùng lặp dữ liệu đặc tả.
 
 ## Quy Trình Xét Nghiệm & Dịch Vụ
 
@@ -403,8 +402,26 @@ Quy tắc nghiệp vụ:
 | `created_at` | TIMESTAMP | NN | Thời điểm chỉ định |
 | `paid_at` | TIMESTAMP | | Thời điểm thanh toán |
 
-- `LAB_TEST_REQUEST_ITEM`: Lưu chỉ định chi tiết, khóa chính `(lab_test_request_id, lab_test_id)`, snapshot giá tại thời điểm chỉ định.
-- `LAB_TEST_RESULT`: Kết quả xét nghiệm, quan hệ 1-1 với Request, lưu dữ liệu kết quả qua cột `result_data` (CLOB).
+### `LAB_TEST_REQUEST_ITEM`
+
+`LAB_TEST_REQUEST_ITEM` lưu các chỉ định xét nghiệm chi tiết trong phiếu yêu cầu, đồng thời snapshot giá của dịch vụ tại thời điểm chỉ định.
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `lab_test_request_id` | NUMBER | PK, FK -> `LAB_TEST_REQUEST`, NN | Thuộc phiếu yêu cầu nào |
+| `lab_test_id` | NUMBER | PK, FK -> `LAB_TEST`, NN | Dịch vụ xét nghiệm chỉ định |
+| `snapshot_price` | NUMBER(15,2) | NN, >= 0 | Giá xét nghiệm snapshot lúc tạo |
+
+### `LAB_TEST_RESULT`
+
+`LAB_TEST_RESULT` lưu kết quả cận lâm sàng của phiếu yêu cầu xét nghiệm (mối quan hệ 1-1 với `LAB_TEST_REQUEST`).
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `lab_test_result_id` | NUMBER | PK | ID bản ghi kết quả |
+| `lab_test_request_id` | NUMBER | FK -> `LAB_TEST_REQUEST`, UQ, NN | Thuộc phiếu yêu cầu nào |
+| `result_data` | CLOB | | Dữ liệu/Nội dung kết quả chi tiết |
+| `result_date` | DATE | NN | Ngày có kết quả |
 
 Workflow status:
 
@@ -434,8 +451,26 @@ Quy tắc request:
 | `created_at` | TIMESTAMP | NN | Thời điểm chỉ định |
 | `paid_at` | TIMESTAMP | | Thời điểm thanh toán |
 
-- `MEDICAL_SERVICE_REQUEST_ITEM`: Chi tiết chỉ định, khóa chính `(med_ser_req_id, med_service_id)`.
-- `MEDICAL_SERVICE_RESULT`: Kết quả dịch vụ, quan hệ 1-1 với Request.
+### `MEDICAL_SERVICE_REQUEST_ITEM`
+
+`MEDICAL_SERVICE_REQUEST_ITEM` lưu chi tiết các chỉ định dịch vụ kỹ thuật (siêu âm, X-quang...) trong phiếu yêu cầu, đồng thời snapshot giá của dịch vụ kỹ thuật đó.
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `med_ser_req_id` | NUMBER | PK, FK -> `MEDICAL_SERVICE_REQUEST`, NN | Thuộc phiếu yêu cầu nào |
+| `med_service_id` | NUMBER | PK, FK -> `MEDICAL_SERVICE`, NN | Dịch vụ kỹ thuật chỉ định |
+| `snapshot_price` | NUMBER(15,2) | NN, >= 0 | Giá dịch vụ kỹ thuật snapshot lúc tạo |
+
+### `MEDICAL_SERVICE_RESULT`
+
+`MEDICAL_SERVICE_RESULT` lưu kết quả chẩn đoán của phiếu dịch vụ kỹ thuật (quan hệ 1-1 với `MEDICAL_SERVICE_REQUEST`).
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `med_service_result_id` | NUMBER | PK | ID bản ghi kết quả |
+| `med_ser_req_id` | NUMBER | FK -> `MEDICAL_SERVICE_REQUEST`, UQ, NN | Thuộc phiếu dịch vụ nào |
+| `result_data` | CLOB | | Nội dung chẩn đoán cận lâm sàng |
+| `created_at` | TIMESTAMP | NN, default systimestamp | Ngày tạo kết quả |
 
 Quy tắc request:
 
@@ -461,7 +496,18 @@ Quy tắc request:
 | `status` | VARCHAR2(20) | NN, check | `PENDING`, `ADMITTED`, `DISCHARGED`, `CANCELLED` |
 | `total_price` | NUMBER(15,2) | >= 0 | Tiền phòng/giường |
 
-- `ADMISSION_RECORD`: Các bản ghi theo dõi (huyết áp, nhịp tim, nhiệt độ) trong quá trình nằm viện.
+### `ADMISSION_RECORD`
+
+`ADMISSION_RECORD` lưu các bản ghi theo dõi lâm sàng và sinh hiệu (huyết áp, nhịp tim, nhiệt độ) của bệnh nhân điều trị nội trú.
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| --- | --- | --- | --- |
+| `admission_record_id` | NUMBER | PK | ID bản ghi theo dõi |
+| `admission_id` | NUMBER | FK -> `ADMISSION_REQUEST`, NN | Thuộc đợt điều trị nội trú nào |
+| `blood_pressure` | VARCHAR2(20) | | Chỉ số huyết áp (ví dụ: "120/80") |
+| `heart_rate` | NUMBER(5) | | Nhịp tim (lần/phút) |
+| `temperature` | NUMBER(5,2) | | Nhiệt độ cơ thể (độ C) |
+| `record_date` | DATE | NN | Ngày ghi nhận thông tin sinh hiệu |
 
 ## Kho Thuốc Và Đơn Thuốc
 
@@ -471,20 +517,23 @@ Quy tắc request:
 | --- | --- | --- | --- |
 | `medicine_id` | NUMBER | PK | ID thuốc |
 | `medicine_name` | VARCHAR2(200) | UQ, NN | Tên thuốc |
-| `price` | NUMBER(15,2) | NN, >= 0 | Giá bán |
-| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
+| `active_ingredient` | VARCHAR2(200) | | Hoạt chất chính |
+| `unit` | VARCHAR2(50) | NN | Đơn vị tính |
+| `description` | VARCHAR2(500) | | Mô tả chi tiết |
+| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái hoạt động |
 
 ### `MEDICINE_LOT`
 
 | Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
 | --- | --- | --- | --- |
-| `lot_id` | NUMBER | PK | ID lô thuốc |
+| `medicine_lot_id` | NUMBER | PK | ID lô thuốc |
 | `medicine_id` | NUMBER | FK -> `MEDICINE`, NN | Thuộc thuốc nào |
 | `lot_number` | VARCHAR2(100) | NN | Số lô |
 | `quantity` | NUMBER(10) | NN, >= 0 | Số lượng tồn kho |
-| `supplier` | VARCHAR2(200) | | Nhà cung cấp |
+| `import_price` | NUMBER(15,2) | check >= 0 | Giá nhập lô thuốc |
 | `manufacturing_date` | DATE | | Ngày sản xuất |
 | `expiry_date` | DATE | NN | Ngày hết hạn |
+| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái hoạt động |
 
 ### `PRESCRIPTION`
 
@@ -492,21 +541,22 @@ Quy tắc request:
 | --- | --- | --- | --- |
 | `prescription_id` | NUMBER | PK | ID đơn thuốc |
 | `med_record_id` | NUMBER | FK -> `MEDICAL_RECORD`, UQ, NN | Từ bệnh án nào |
-| `status` | VARCHAR2(20) | NN, check | `PENDING`, `DISPENSED`, `CANCELLED` |
-| `payment_status` | VARCHAR2(20) | NN, check | `UNPAID`, `PAID` |
-| `total_price` | NUMBER(15,2) | >= 0 | Tổng tiền thuốc |
-| `created_at` | TIMESTAMP | NN | Ngày kê đơn |
-| `paid_at` | TIMESTAMP | | Thời điểm thanh toán |
+| `note` | CLOB | | Ghi chú đơn thuốc |
+| `is_active` | NUMBER(1) | NN, default 1 | Trạng thái hoạt động |
+| `created_at` | TIMESTAMP | NN, default CURRENT_TIMESTAMP | Ngày kê đơn |
+| `updated_at` | TIMESTAMP | | Thời điểm cập nhật |
 
 ### `PRESCRIPTION_DETAIL`
 
 | Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
 | --- | --- | --- | --- |
-| `prescription_id` | NUMBER | PK, FK -> `PRESCRIPTION` | Đơn thuốc |
-| `medicine_id` | NUMBER | PK, FK -> `MEDICINE` | Thuốc |
-| `quantity` | NUMBER(10) | NN, > 0 | Số lượng |
-| `unit` | VARCHAR2(50) | NN | Đơn vị tính |
-| `snapshot_price` | NUMBER(15,2) | NN, >= 0 | Giá thuốc tại thời điểm kê đơn |
+| `prescription_detail_id` | NUMBER | PK | ID chi tiết đơn thuốc |
+| `prescription_id` | NUMBER | FK -> `PRESCRIPTION`, NN | Thuộc đơn thuốc nào |
+| `medicine_id` | NUMBER | FK -> `MEDICINE`, NN | Thuộc thuốc nào |
+| `dosage` | VARCHAR2(100) | NN | Liều lượng |
+| `frequency` | VARCHAR2(100) | NN | Tần suất sử dụng |
+| `duration` | VARCHAR2(100) | NN | Thời gian dùng thuốc |
+| `quantity` | NUMBER(10) | NN, >= 1 | Số lượng |
 | `instruction` | VARCHAR2(500) | | Hướng dẫn sử dụng |
 
 ## Thanh Toán Và Kế Toán
@@ -602,7 +652,8 @@ Quy tắc gateway:
 | --- | --- | --- | --- |
 | `account_id` | NUMBER | PK | ID tài khoản |
 | `email` | VARCHAR2(255) | UQ, NN | Email đăng nhập |
-| `password_hash` | VARCHAR2(255) | NN | Password đã hash |
+| `password_hash` | VARCHAR2(255) | nullable | Password đã hash (null đối với tài khoản Google) |
+| `google_id` | VARCHAR2(255) | UQ | ID tài khoản Google |
 | `role_id` | NUMBER | FK -> `ROLE`, NN | Role chính |
 | `is_active` | NUMBER(1) | NN, default 1 | Trạng thái |
 
@@ -624,7 +675,12 @@ Ghi chú hiện tại:
 | A | B | Ghi chú |
 | --- | --- | --- |
 | `ACCOUNT` | `DOCTOR` | Một account bác sĩ có một hồ sơ doctor |
-| `ACCOUNT` | `PATIENT` | Một account patient có một hồ sơ patient |
+| `ACCOUNT` | `PATIENT` | Một account bệnh nhân có một hồ sơ patient |
+| `ACCOUNT` | `ADMINISTRATOR` | Một account admin có một hồ sơ administrator |
+| `ACCOUNT` | `ACCOUNTANT` | Một account kế toán có một hồ sơ accountant |
+| `ACCOUNT` | `RECEPTIONIST` | Một account lễ tân có một hồ sơ receptionist |
+| `ACCOUNT` | `PHARMACIST` | Một account dược sĩ có một hồ sơ pharmacist |
+| `ACCOUNT` | `TECHNICIAN` | Một account kỹ thuật viên có một hồ sơ technician |
 | `APPOINTMENT` | `MEDICAL_RECORD` | Một appointment tối đa một MR |
 | `MEDICAL_RECORD` | `ADMISSION_REQUEST` | Một MR tối đa một admission request |
 | `MEDICAL_RECORD` | `PRESCRIPTION` | Một MR tối đa một prescription |
@@ -639,6 +695,7 @@ Ghi chú hiện tại:
 | --- | --- | --- |
 | `SPECIALTY` | `DOCTOR` | `DOCTOR.specialty_id` |
 | `SPECIALTY` | `CONSULTATION_FEE` | `CONSULTATION_FEE.specialty_id` |
+| `SPECIALTY` | `ROOM` | `ROOM.specialty_id` |
 | `DOCTOR` | `DOCTOR_SCHEDULE` | `DOCTOR_SCHEDULE.doctor_id` |
 | `ROOM` | `DOCTOR_SCHEDULE` | `DOCTOR_SCHEDULE.room_id` |
 | `DOCTOR_SCHEDULE` | `APPOINTMENT` | `APPOINTMENT.doctor_schedule_id` |
@@ -647,6 +704,8 @@ Ghi chú hiện tại:
 | `MEDICAL_RECORD` | `MEDICAL_SERVICE_REQUEST` | `MEDICAL_SERVICE_REQUEST.med_record_id` |
 | `PAYMENT_RECORD` | `PAYMENT_TRANSACTION` | `PAYMENT_TRANSACTION.payment_record_id` |
 | `MEDICINE` | `MEDICINE_LOT` | `MEDICINE_LOT.medicine_id` |
+| `PRESCRIPTION` | `PRESCRIPTION_DETAIL` | `PRESCRIPTION_DETAIL.prescription_id` |
+| `MEDICINE` | `PRESCRIPTION_DETAIL` | `PRESCRIPTION_DETAIL.medicine_id` |
 
 ### Quan Hệ N-N Qua Junction Table
 

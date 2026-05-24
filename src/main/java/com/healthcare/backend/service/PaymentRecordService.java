@@ -13,4 +13,16 @@ public interface PaymentRecordService {
     PaymentRecordResponse getById(Long paymentRecordId);
 
     PaymentRecordResponse recordMedicalRecordCashPayment(Long medicalRecordId, RecordMedicalRecordPaymentRequest request);
+
+    PaymentRecordResponse confirmMedicalRecordPaymentFromSepayWebhook(
+            com.healthcare.backend.dto.request.SepayWebhookRequest request,
+            String secretKeyHeader
+    );
+
+    PaymentRecordResponse recordPrescriptionCashPayment(Long prescriptionId);
+
+    PaymentRecordResponse confirmPrescriptionPaymentFromSepayWebhook(
+            com.healthcare.backend.dto.request.SepayWebhookRequest request,
+            String secretKeyHeader
+    );
 }

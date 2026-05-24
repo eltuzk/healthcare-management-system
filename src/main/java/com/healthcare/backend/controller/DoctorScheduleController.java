@@ -29,7 +29,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/doctor-schedules")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR')")
+@PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR', 'ROLE_PATIENT')")
 public class DoctorScheduleController {
 
     private final DoctorScheduleService doctorScheduleService;

@@ -58,6 +58,11 @@ public class PrescriptionController {
         return ResponseEntity.ok(prescriptionService.updatePrescription(id, request));
     }
 
+    @PostMapping("/{id}/dispense")
+    public ResponseEntity<PrescriptionResponse> dispensePrescription(@PathVariable Long id) {
+        return ResponseEntity.ok(prescriptionService.dispensePrescription(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<PrescriptionResponse> deactivatePrescription(@PathVariable Long id) {
         return ResponseEntity.ok(prescriptionService.deactivatePrescription(id));

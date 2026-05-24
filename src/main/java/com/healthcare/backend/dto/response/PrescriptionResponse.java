@@ -23,4 +23,8 @@ public class PrescriptionResponse {
     private LocalDateTime updatedAt;
 
     private List<PrescriptionDetailResponse> details;
+
+    private String paymentStatus;
+
+    private java.math.BigDecimal totalPrice;
 }

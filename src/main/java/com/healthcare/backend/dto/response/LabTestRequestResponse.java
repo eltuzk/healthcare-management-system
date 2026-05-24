@@ -26,5 +26,6 @@ public class LabTestRequestResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime paidAt;
+    private String patientName;
     private List<LabTestRequestItemResponse> items;
 }

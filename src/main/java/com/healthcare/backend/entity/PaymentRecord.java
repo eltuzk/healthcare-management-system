@@ -41,6 +41,10 @@ public class PaymentRecord {
     @JoinColumn(name = "med_record_id", unique = true)
     private MedicalRecord medicalRecord;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prescription_id", unique = true)
+    private Prescription prescription;
+
     @Column(name = "request_code", nullable = false, unique = true, length = 100)
     private String requestCode;
 

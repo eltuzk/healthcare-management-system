@@ -23,4 +23,6 @@ public class CreateAppointmentRequest {
     @NotBlank(message = "Visit reason must not be blank")
     @Size(max = 500, message = "Visit reason must not exceed 500 characters")
     private String visitReason;
+
+    private Long feeId;
 }

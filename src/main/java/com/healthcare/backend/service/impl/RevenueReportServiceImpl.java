@@ -7,6 +7,8 @@ import com.healthcare.backend.entity.enums.PaymentTransactionStatus;
 import com.healthcare.backend.entity.enums.RevenueOwnerType;
 import com.healthcare.backend.exception.BusinessException;
 import com.healthcare.backend.repository.PaymentTransactionRepository;
+import com.healthcare.backend.repository.MedicineLotRepository;
+import com.healthcare.backend.entity.MedicineLot;
 import com.healthcare.backend.service.RevenueReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.util.Map;
 public class RevenueReportServiceImpl implements RevenueReportService {
 
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final MedicineLotRepository medicineLotRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -54,11 +57,23 @@ public class RevenueReportServiceImpl implements RevenueReportService {
                 .filter(transaction -> ownerType == null || resolveOwnerType(transaction) == ownerType)
                 .toList();
 
+        BigDecimal totalRevenue = sumTransactions(transactions);
+
+        List<MedicineLot> lots = medicineLotRepository.findAllByImportDateBetween(resolvedFromDate, resolvedToDate);
+        BigDecimal totalExpense = lots.stream()
+                .filter(lot -> lot.getQuantity() != null && lot.getImportPrice() != null)
+                .map(lot -> BigDecimal.valueOf(lot.getQuantity()).multiply(lot.getImportPrice()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal netProfit = totalRevenue.subtract(totalExpense);
+
         RevenueReportResponse response = new RevenueReportResponse();
         response.setFromDate(resolvedFromDate);
         response.setToDate(resolvedToDate);
         response.setTransactionCount(transactions.size());
-        response.setTotalRevenue(sumTransactions(transactions));
+        response.setTotalRevenue(totalRevenue);
+        response.setTotalExpense(totalExpense);
+        response.setNetProfit(netProfit);
         response.setRevenueByDate(groupByDate(transactions));
         response.setRevenueByGateway(groupByGateway(transactions));
         response.setRevenueByOwnerType(groupByOwnerType(transactions));
@@ -127,6 +142,9 @@ public class RevenueReportServiceImpl implements RevenueReportService {
     private RevenueOwnerType resolveOwnerType(PaymentTransaction transaction) {
         if (transaction.getPaymentRecord().getAppointment() != null) {
             return RevenueOwnerType.APPOINTMENT;
+        }
+        if (transaction.getPaymentRecord().getPrescription() != null) {
+            return RevenueOwnerType.PRESCRIPTION;
         }
         return RevenueOwnerType.MEDICAL_RECORD;
     }

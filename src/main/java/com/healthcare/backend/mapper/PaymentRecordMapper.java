@@ -35,6 +35,10 @@ public class PaymentRecordMapper {
             response.setMedicalRecordId(paymentRecord.getMedicalRecord().getMedicalRecordId());
         }
 
+        if (paymentRecord.getPrescription() != null) {
+            response.setPrescriptionId(paymentRecord.getPrescription().getPrescriptionId());
+        }
+
         response.setTransactions(transactions == null
                 ? List.of()
                 : transactions.stream().map(this::toTransactionResponse).toList());

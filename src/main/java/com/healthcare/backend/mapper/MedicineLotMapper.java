@@ -22,6 +22,9 @@ public class MedicineLotMapper {
         medicineLot.setQuantity(request.getQuantity());
         medicineLot.setImportPrice(request.getImportPrice());
         medicineLot.setIsActive(1);
+        if (request.getImportDate() != null) {
+            medicineLot.setImportDate(request.getImportDate());
+        }
 
         return medicineLot;
     }
@@ -37,6 +40,9 @@ public class MedicineLotMapper {
         medicineLot.setExpiryDate(request.getExpiryDate());
         medicineLot.setQuantity(request.getQuantity());
         medicineLot.setImportPrice(request.getImportPrice());
+        if (request.getImportDate() != null) {
+            medicineLot.setImportDate(request.getImportDate());
+        }
     }
 
     public MedicineLotResponse toResponse(MedicineLot medicineLot) {
@@ -58,6 +64,7 @@ public class MedicineLotMapper {
         response.setQuantity(medicineLot.getQuantity());
         response.setImportPrice(medicineLot.getImportPrice());
         response.setActive(Integer.valueOf(1).equals(medicineLot.getIsActive()));
+        response.setImportDate(medicineLot.getImportDate());
 
         return response;
     }

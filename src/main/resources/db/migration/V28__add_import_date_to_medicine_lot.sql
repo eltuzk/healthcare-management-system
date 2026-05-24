@@ -1,0 +1,1 @@
+ALTER TABLE medicine_lot ADD import_date DATE DEFAULT SYSDATE NOT NULL;

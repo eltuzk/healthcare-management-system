@@ -27,25 +27,25 @@ public class ConsultationFeeController {
     private final ConsultationFeeService consultationFeeService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TECHNICIAN')")
     public ResponseEntity<ConsultationFeeResponse> create(@Valid @RequestBody ConsultationFeeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(consultationFeeService.create(request));
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR', 'ROLE_PATIENT')")
     public ResponseEntity<List<ConsultationFeeResponse>> getAll() {
         return ResponseEntity.ok(consultationFeeService.getAll());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_DOCTOR', 'ROLE_PATIENT')")
     public ResponseEntity<ConsultationFeeResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(consultationFeeService.getById(id));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TECHNICIAN')")
     public ResponseEntity<ConsultationFeeResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody ConsultationFeeRequest request) {
@@ -53,7 +53,7 @@ public class ConsultationFeeController {
     }
 
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TECHNICIAN')")
     public ResponseEntity<ConsultationFeeResponse> deactivate(@PathVariable Long id) {
         return ResponseEntity.ok(consultationFeeService.deactivate(id));
     }

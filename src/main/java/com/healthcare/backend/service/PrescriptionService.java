@@ -18,4 +18,6 @@ public interface PrescriptionService {
     PrescriptionResponse updatePrescription(Long id, PrescriptionRequest request);
 
     PrescriptionResponse deactivatePrescription(Long id);
+
+    PrescriptionResponse dispensePrescription(Long id);
 }
