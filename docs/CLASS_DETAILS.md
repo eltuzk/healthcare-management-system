@@ -889,3 +889,71 @@ Tài liệu này liệt kê chi tiết 100% các Lớp (Classes), Thuộc tính 
 ### `<<enumeration>> ShiftType`
 - (Các giá trị trạng thái đã được định nghĩa trong hệ thống)
 
+---
+
+## 🔗 Mối quan hệ giữa các Thực thể (Entity Relationships)
+
+Dưới đây là thống kê chi tiết các mối quan hệ (Associations, Dependencies, Compositions) giữa các bảng thực thể trong hệ thống:
+
+### 1. Phân hệ Tài khoản & Phân quyền (Account & Authorization)
+- **Account** và **Role**: Nhiều Tài khoản (`Account`) thuộc về 1 Vai trò (`Role`) `(ManyToOne: Account [0..*] --> [1] Role)`.
+- **AccountPermission** và **Account**: Nhiều bản ghi phân quyền tài khoản liên kết với 1 Tài khoản `(ManyToOne: AccountPermission [0..*] --> [1] Account)`.
+- **AccountPermission** và **Permission**: Nhiều bản ghi phân quyền liên kết với 1 Quyền `(ManyToOne: AccountPermission [0..*] --> [1] Permission)`.
+- **RolePermission** và **Role**: Nhiều bản ghi phân quyền vai trò liên kết với 1 Vai trò `(ManyToOne: RolePermission [0..*] --> [1] Role)`.
+- **RolePermission** và **Permission**: Nhiều bản ghi liên kết với 1 Quyền `(ManyToOne: RolePermission [0..*] --> [1] Permission)`.
+
+### 2. Phân hệ Nhân viên & Người dùng (Staff & Users)
+- **Patient** và **Account**: Mỗi Bệnh nhân liên kết với 1 Tài khoản cá nhân `(OneToOne: Patient [0..*] --> [1] Account)`.
+- **Doctor** và **Account**: Mỗi Bác sĩ liên kết với 1 Tài khoản cá nhân `(OneToOne: Doctor [0..*] --> [1] Account)`.
+- **Accountant** và **Account**: Mỗi Kế toán liên kết với 1 Tài khoản cá nhân `(OneToOne: Accountant [0..*] --> [1] Account)`.
+- **Administrator** và **Account**: Mỗi Quản trị viên liên kết với 1 Tài khoản cá nhân `(OneToOne: Administrator [0..*] --> [1] Account)`.
+- **Pharmacist** và **Account**: Mỗi Dược sĩ liên kết với 1 Tài khoản cá nhân `(OneToOne: Pharmacist [0..*] --> [1] Account)`.
+- **Receptionist** và **Account**: Mỗi Lễ tân liên kết với 1 Tài khoản cá nhân `(OneToOne: Receptionist [0..*] --> [1] Account)`.
+- **Technician** và **Account**: Mỗi Kỹ thuật viên liên kết với 1 Tài khoản cá nhân `(OneToOne: Technician [0..*] --> [1] Account)`.
+
+### 3. Phân hệ Phòng khám & Giường bệnh (Clinic, Room & Bed)
+- **Room** và **RoomType**: Nhiều Phòng thuộc về 1 Loại phòng `(ManyToOne: Room [0..*] --> [1] RoomType)`.
+- **Room** và **Branch**: Nhiều Phòng thuộc về 1 Chi nhánh `(ManyToOne: Room [0..*] --> [1] Branch)`.
+- **Room** và **Specialty**: Nhiều Phòng thuộc về 1 Chuyên khoa `(ManyToOne: Room [0..*] --> [1] Specialty)`.
+- **Bed** và **Room**: Nhiều Giường bệnh thuộc về 1 Phòng `(ManyToOne: Bed [0..*] --> [1] Room)`.
+- **Room** và **Bed** *(Composition)*: Một phòng chứa nhiều giường bệnh, vòng đời của giường gắn liền với phòng `(Composition: Room [1] *-- [0..*] Bed)`.
+
+### 4. Phân hệ Đặt lịch & Khám bệnh (Appointment & Medical Record)
+- **DoctorSchedule** và **Doctor**: Nhiều lịch trình làm việc thuộc về 1 Bác sĩ `(ManyToOne: DoctorSchedule [0..*] --> [1] Doctor)`.
+- **DoctorSchedule** và **Room**: Nhiều lịch trình làm việc diễn ra tại 1 Phòng `(ManyToOne: DoctorSchedule [0..*] --> [1] Room)`.
+- **ConsultationFee** và **Specialty**: Nhiều mức phí khám thuộc về 1 Chuyên khoa `(ManyToOne: ConsultationFee [0..*] --> [1] Specialty)`.
+- **Doctor** và **Specialty**: Nhiều Bác sĩ thuộc về 1 Chuyên khoa `(ManyToOne: Doctor [0..*] --> [1] Specialty)`.
+- **Appointment** và **Patient**: Nhiều Lịch hẹn thuộc về 1 Bệnh nhân `(ManyToOne: Appointment [0..*] --> [1] Patient)`.
+- **Appointment** và **DoctorSchedule**: Nhiều Lịch hẹn thuộc về 1 Lịch trình làm việc của bác sĩ `(ManyToOne: Appointment [0..*] --> [1] DoctorSchedule)`.
+- **Appointment** và **ConsultationFee**: Nhiều Lịch hẹn áp dụng 1 Mức phí khám `(ManyToOne: Appointment [0..*] --> [1] ConsultationFee)`.
+- **Appointment** và **PaymentRecord**: Mỗi Lịch hẹn liên kết với 1 Bản ghi thanh toán `(OneToOne: Appointment [0..*] --> [1] PaymentRecord)`.
+- **MedicalRecord** và **Appointment**: Mỗi Hồ sơ bệnh án liên kết với 1 Lịch hẹn `(OneToOne: MedicalRecord [0..*] --> [1] Appointment)`.
+- **MedicalRecord** và **Doctor**: Nhiều Hồ sơ bệnh án do 1 Bác sĩ lập `(ManyToOne: MedicalRecord [0..*] --> [1] Doctor)`.
+- **MedicalRecord** và **Patient**: Nhiều Hồ sơ bệnh án thuộc về 1 Bệnh nhân `(ManyToOne: MedicalRecord [0..*] --> [1] Patient)`.
+
+### 5. Phân hệ Y tế phụ trợ (Lab Test, Medical Service & Prescription)
+- **LabTestRequest** và **MedicalRecord**: Nhiều yêu cầu xét nghiệm thuộc về 1 Hồ sơ bệnh án `(ManyToOne: LabTestRequest [0..*] --> [1] MedicalRecord)`.
+- **LabTestRequest** và **LabTestRequestItem** *(Composition)*: Yêu cầu xét nghiệm sở hữu nhiều danh mục xét nghiệm cụ thể `(Composition: LabTestRequest [1] *-- [0..*] LabTestRequestItem)`.
+- **LabTestRequestItem** và **LabTest**: Nhiều danh mục xét nghiệm liên kết với 1 Xét nghiệm gốc `(ManyToOne: LabTestRequestItem [0..*] --> [1] LabTest)`.
+- **LabTestResult** và **LabTestRequest**: Mỗi kết quả xét nghiệm liên kết với 1 Yêu cầu xét nghiệm `(OneToOne: LabTestResult [0..*] --> [1] LabTestRequest)`.
+- **MedicalServiceRequest** và **MedicalRecord**: Nhiều yêu cầu dịch vụ y tế thuộc về 1 Hồ sơ bệnh án `(ManyToOne: MedicalServiceRequest [0..*] --> [1] MedicalRecord)`.
+- **MedicalServiceRequest** và **MedicalServiceRequestItem** *(Composition)*: Yêu cầu dịch vụ sở hữu nhiều danh mục dịch vụ cụ thể `(Composition: MedicalServiceRequest [1] *-- [0..*] MedicalServiceRequestItem)`.
+- **MedicalServiceRequestItem** và **MedicalService**: Nhiều danh mục dịch vụ liên kết với 1 Dịch vụ y tế gốc `(ManyToOne: MedicalServiceRequestItem [0..*] --> [1] MedicalService)`.
+- **MedicalServiceResult** và **MedicalServiceRequest**: Mỗi kết quả dịch vụ liên kết với 1 Yêu cầu dịch vụ y tế `(OneToOne: MedicalServiceResult [0..*] --> [1] MedicalServiceRequest)`.
+- **Prescription** và **MedicalRecord**: Mỗi Đơn thuốc liên kết với 1 Hồ sơ bệnh án `(OneToOne: Prescription [0..*] --> [1] MedicalRecord)`.
+- **Prescription** và **PrescriptionDetail** *(Composition)*: Mỗi Đơn thuốc sở hữu nhiều Chi tiết đơn thuốc `(Composition: Prescription [1] *-- [0..*] PrescriptionDetail)`.
+- **PrescriptionDetail** và **Medicine**: Nhiều chi tiết đơn thuốc liên kết với 1 Thuốc gốc `(ManyToOne: PrescriptionDetail [0..*] --> [1] Medicine)`.
+- **MedicineLot** và **Medicine**: Nhiều Lô thuốc thuộc về 1 loại Thuốc gốc `(ManyToOne: MedicineLot [0..*] --> [1] Medicine)`.
+- **PatientInsurance** và **Patient**: Nhiều Bảo hiểm y tế thuộc về 1 Bệnh nhân `(ManyToOne: PatientInsurance [0..*] --> [1] Patient)`.
+
+### 6. Phân hệ Hóa đơn & Giao dịch (Billing & Transaction)
+- **PaymentRecord** và **Appointment**: Mỗi Bản ghi thanh toán liên kết với 1 Lịch hẹn `(OneToOne: PaymentRecord [0..*] --> [1] Appointment)`.
+- **PaymentRecord** và **MedicalRecord**: Mỗi Bản ghi thanh toán liên kết với 1 Hồ sơ bệnh án `(OneToOne: PaymentRecord [0..*] --> [1] MedicalRecord)`.
+- **PaymentTransaction** và **PaymentRecord**: Nhiều Giao dịch thanh toán thuộc về 1 Bản ghi thanh toán `(ManyToOne: PaymentTransaction [0..*] --> [1] PaymentRecord)`.
+- **PaymentTransaction** và **Account**: Nhiều Giao dịch thanh toán được xác nhận bởi 1 Tài khoản `(ManyToOne: PaymentTransaction [0..*] --> [1] Account)`.
+- **AdmissionRequest** và **Patient**: Nhiều Yêu cầu nhập viện thuộc về 1 Bệnh nhân `(ManyToOne: AdmissionRequest [0..*] --> [1] Patient)`.
+- **AdmissionRequest** và **MedicalRecord**: Nhiều Yêu cầu nhập viện thuộc về 1 Bệnh án `(ManyToOne: AdmissionRequest [0..*] --> [1] MedicalRecord)`.
+- **AdmissionRequest** và **Bed**: Nhiều Yêu cầu nhập viện liên kết với 1 Giường bệnh `(ManyToOne: AdmissionRequest [0..*] --> [1] Bed)`.
+- **AdmissionRecord** và **AdmissionRequest**: Nhiều bản ghi điều trị nhập viện thuộc về 1 Yêu cầu nhập viện `(ManyToOne: AdmissionRecord [0..*] --> [1] AdmissionRequest)`.
+
+
