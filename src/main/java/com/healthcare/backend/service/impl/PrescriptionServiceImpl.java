@@ -77,8 +77,22 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         validatePrescriptionNotExists(request.getMedicalRecordId());
         validatePrescriptionDetails(request.getDetails());
 
-        Prescription prescription = prescriptionMapper.toEntity(request, medicalRecord);
-        addPrescriptionDetails(prescription, request.getDetails());
+        // Check if a deactivated prescription exists for this medical record (unique constraint on med_record_id)
+        java.util.Optional<Prescription> deactivatedOpt = prescriptionRepository
+                .findByMedicalRecord_MedicalRecordIdAndIsActive(request.getMedicalRecordId(), 0);
+
+        Prescription prescription;
+        if (deactivatedOpt.isPresent()) {
+            // Reactivate the existing deactivated prescription instead of creating a new one
+            prescription = deactivatedOpt.get();
+            prescription.setIsActive(1);
+            prescription.setNote(request.getNote() != null ? request.getNote().trim() : null);
+            prescription.getPrescriptionDetails().clear();
+            addPrescriptionDetails(prescription, request.getDetails());
+        } else {
+            prescription = prescriptionMapper.toEntity(request, medicalRecord);
+            addPrescriptionDetails(prescription, request.getDetails());
+        }
 
         Prescription savedPrescription = prescriptionRepository.save(prescription);
         createOrUpdatePrescriptionPayment(savedPrescription);

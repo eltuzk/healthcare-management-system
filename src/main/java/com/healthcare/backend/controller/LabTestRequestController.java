@@ -57,7 +57,7 @@ public class LabTestRequestController {
     }
 
     @GetMapping("/medical-record/{medRecordId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'TECHNICIAN', 'PATIENT')")
     public ResponseEntity<ApiResponse<List<LabTestRequestResponse>>> getRequestsByMedRecord(
             @PathVariable Long medRecordId) {
         return ResponseEntity.ok(ApiResponse.success(labTestRequestService.getRequestsByMedRecord(medRecordId)));
