@@ -14,7 +14,7 @@ BEGIN
     FROM APPOINTMENT
     WHERE appointment_code LIKE 'APT-' || v_date_str || '-%';
     
-    -- Format to 4 digits
+    -- Format lại 4 kí tự
     v_code := 'APT-' || v_date_str || '-' || LPAD(v_seq_num, 4, '0');
     
     RETURN v_code;
