@@ -48,17 +48,6 @@ Project chỉ release slot trong transaction. Khi release, service gọi `findDo
 
 Các flow liên quan nằm trong `AppointmentServiceImpl.cancel(...)` và `AppointmentServiceImpl.expirePendingPaymentReservations(...)`.
 
-## 4. Hủy Appointment
-
-### Vấn đề
-
-Loại vấn đề: `non-repeatable read`, `lost update`, `race condition`.
-
-Một appointment có thể bị hủy trong khi luồng khác đang check-in, start hoặc confirm payment. Nếu một transaction đọc appointment là `PENDING`, sau đó transaction khác đổi sang `CONFIRMED` hoặc `CHECKED_IN`, request cũ có thể vẫn tiếp tục hủy dựa trên dữ liệu cũ. Đây là `non-repeatable read` dẫn đến `lost update` trạng thái.
-
-### Cách giải quyết
-
-Project xử lý trong `AppointmentServiceImpl.cancel(...)` bằng `@Transactional`. Appointment được lock bằng `AppointmentRepository.findByIdForUpdate(...)` với `PESSIMISTIC_WRITE`. Sau khi lock, service mới kiểm tra trạng thái hiện tại và chỉ cho hủy appointment đang `PENDING`. Appointment đã thanh toán hoặc đã đi vào quy trình khám không được hủy.
 
 ## 5. Check-in Appointment
 
@@ -269,3 +258,50 @@ Các dữ liệu như email account, identity number, license number, role name,
 ### Cách giải quyết
 
 Project đặt unique constraint ở database cho các field quan trọng. Service có thể check trước bằng `existsBy...`, nhưng tầng bảo vệ cuối cùng vẫn là database constraint. Một số service bắt `DataIntegrityViolationException` để đổi lỗi DB thành lỗi nghiệp vụ dễ hiểu hơn.
+
+## 21. Cấp Phát Đơn Thuốc Và Trừ Kho 
+
+### Vấn đề
+
+Loại vấn đề: `lost update`, `write skew`, `race condition`, `inconsistent write`.
+
+Khi nhiều Dược sĩ cùng thực hiện cấp phát đơn thuốc gần như đồng thời cho các đơn chứa chung loại thuốc, hoặc một Bác sĩ đang gửi đơn thuốc (kê đơn) chứa loại thuốc đó trong khi Dược sĩ khác đang cấp phát.
+
+Nếu không khóa dữ liệu:
+1. Hai giao dịch cấp phát song song có thể cùng đọc số lượng tồn kho của các lô thuốc và cùng ghi đè giá trị trừ kho của nhau (`lost update`), khiến số lượng tồn thực tế trong database cao hơn/thấp hơn thực tế hoặc gây tồn kho âm.
+2. Bác sĩ kê đơn kiểm tra tồn kho vẫn đủ, nhưng cùng lúc Dược sĩ vừa hoàn thành trừ kho cấp phát, dẫn đến số lượng thực tế trong kho không còn đủ cho đơn vừa kê (`write skew`).
+3. Dữ liệu trừ kho không nhất quán (`inconsistent write`): một số thuốc được trừ thành công nhưng thuốc sau bị thiếu và giao dịch không được rollback toàn bộ.
+
+### Cách giải quyết
+
+Project xử lý trong `PrescriptionServiceImpl.dispensePrescription(...)` bằng `@Transactional`.
+
+Khi bắt đầu cấp phát, với mỗi loại thuốc có trong đơn, service sẽ:
+1. Gọi `MedicineLotRepository.findAllByMedicineIdAndIsActiveForUpdate(medicineId, 1)` sử dụng `@Lock(LockModeType.PESSIMISTIC_WRITE)` để khóa ghi tất cả các lô thuốc đang hoạt động của thuốc đó tại tầng database. Việc này ngăn chặn các transaction kê đơn (trong `validatePrescriptionDetails`) hoặc cấp phát khác truy cập đồng thời vào các lô thuốc của dược phẩm này.
+2. Kiểm tra tổng tồn kho khả dụng real-time (bằng cách loại bỏ các lô đã hết hạn). Nếu không đủ số lượng, lập tức throw `BusinessException` để rollback toàn bộ giao dịch.
+3. Áp dụng thuật toán FIFO: sắp xếp các lô khả dụng theo ngày hết hạn `expiryDate` tăng dần và tiến hành trừ kho an toàn.
+4. Cập nhật trạng thái đơn thuốc sang đã cấp phát (`isActive = 0`).
+
+Tương tự, tại luồng kê đơn (`PrescriptionServiceImpl.createPrescription`), service cũng gọi `validatePrescriptionDetails` có sử dụng Pessimistic Lock tương tự để kiểm tra tồn kho khả dụng trước khi cho phép bác sĩ kê đơn thành công, loại bỏ hoàn toàn khả năng kê đơn vượt quá tồn kho thực tế.
+
+## 22. Ngừng Kinh Doanh Thuốc (Medicine SKU Deactivation)
+
+### Vấn đề
+
+Loại vấn đề: `lost update`, `write skew`, `race condition`, `inconsistent write`.
+
+Theo quy định nghiệp vụ, Dược sĩ hoặc Admin chỉ được phép ngừng kinh doanh (deactive) một loại thuốc (Medicine SKU) khi tổng số lượng tồn kho khả dụng của tất cả các lô thuốc đang hoạt động của thuốc đó nhỏ hơn hoặc bằng 10 (`totalStock <= 10`).
+
+Nếu không khóa dữ liệu trước khi kiểm tra:
+1. Tranh chấp đồng thời (race condition) xảy ra giữa một Admin thực hiện ngừng kinh doanh thuốc này, và một Dược sĩ đang đồng thời thực hiện nhập thêm lô thuốc mới (tăng số lượng) hoặc cập nhật số lượng tồn kho của một lô thuốc hiện tại qua giao diện kho.
+2. Admin đọc thấy tổng tồn kho cũ là 8 (thỏa mãn điều kiện <= 10), trong khi cùng lúc Dược sĩ ghi nhận nhập lô mới 100 viên và commit thành công. Admin tiếp tục ghi đè trạng thái thuốc thành ngừng kinh doanh (`isActive = 0`) và commit, dẫn đến việc ngừng kinh doanh một loại thuốc vẫn còn 108 viên tồn kho thực tế, vi phạm nghiêm trọng ràng buộc nghiệp vụ (`write skew` / `lost update` trạng thái ràng buộc).
+
+### Cách giải quyết
+
+Project giải quyết triệt để trong `MedicineServiceImpl.deactivateMedicine(...)` bằng `@Transactional` kết hợp Khóa Bi quan (Pessimistic Lock).
+
+Khi bắt đầu deactive thuốc:
+1. Service thực hiện lock ghi toàn bộ các lô thuốc đang hoạt động của thuốc đó tại tầng database bằng cách gọi `MedicineLotRepository.findAllByMedicineIdAndIsActiveForUpdate(id, 1)`. Phương thức này sử dụng `@Lock(LockModeType.PESSIMISTIC_WRITE)` khóa tất cả các dòng dữ liệu liên quan trong bảng `MedicineLot`.
+2. Bất kỳ giao dịch nhập lô mới hoặc chỉnh sửa số lượng lô của thuốc này sẽ bị chặn và phải chờ cho đến khi transaction của Admin hoàn thành.
+3. Tính toán tổng tồn kho thực tế của các lô thuốc đã khóa an toàn. Nếu tổng tồn kho vượt quá 10, lập tức ném ra lỗi `BusinessException` để rollback toàn bộ giao dịch, đảm bảo không có trạng thái không nhất quán.
+4. Nếu tổng tồn kho hợp lệ (<= 10), cập nhật `isActive = 0` trên entity `Medicine` và lưu lại thông qua `MedicineRepository.save(...)`.

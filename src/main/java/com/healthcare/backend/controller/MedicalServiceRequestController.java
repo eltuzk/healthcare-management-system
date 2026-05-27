@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.multipart.MultipartFile;
+
 @RestController
 @RequestMapping("/api/medical-service-requests")
 @RequiredArgsConstructor
@@ -65,5 +67,33 @@ public class MedicalServiceRequestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
     public ResponseEntity<ApiResponse<MedicalServiceResultResponse>> getResults(@PathVariable Long requestId) {
         return ResponseEntity.ok(ApiResponse.success(service.getResultByRequestId(requestId)));
+    }
+
+    @PostMapping("/{requestId}/upload-pdf")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<ApiResponse<String>> uploadPdf(
+            @PathVariable Long requestId,
+            @RequestParam("file") MultipartFile file) throws java.io.IOException {
+        java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads", "service");
+        if (!java.nio.file.Files.exists(uploadDir)) {
+            java.nio.file.Files.createDirectories(uploadDir);
+        }
+        java.nio.file.Path filePath = uploadDir.resolve("service_" + requestId + ".pdf");
+        java.nio.file.Files.write(filePath, file.getBytes());
+        return ResponseEntity.ok(ApiResponse.success("Upload PDF thành công"));
+    }
+
+    @GetMapping("/{requestId}/download-pdf")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'TECHNICIAN', 'PATIENT')")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadPdf(@PathVariable Long requestId) throws java.io.IOException {
+        java.nio.file.Path filePath = java.nio.file.Paths.get("uploads", "service", "service_" + requestId + ".pdf");
+        if (!java.nio.file.Files.exists(filePath)) {
+            return ResponseEntity.notFound().build();
+        }
+        org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"service_" + requestId + ".pdf\"")
+                .body(resource);
     }
 }

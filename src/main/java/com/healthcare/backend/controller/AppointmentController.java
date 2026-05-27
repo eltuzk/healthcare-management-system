@@ -29,6 +29,7 @@ import java.util.Map;
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
+    private final com.healthcare.backend.service.PaymentRecordService paymentRecordService;
 
     @PostMapping
     public ResponseEntity<AppointmentResponse> create(@Valid @RequestBody CreateAppointmentRequest request) {
@@ -74,11 +75,118 @@ public class AppointmentController {
     @PostMapping("/sepay/webhook")
     public ResponseEntity<Map<String, Object>> handleSepayWebhook(
             @RequestHeader(name = "X-Secret-Key", required = false) String secretKeyHeader,
+            @RequestHeader(name = "Authorization", required = false) String authorizationHeader,
             @RequestBody SepayWebhookRequest request) {
-        AppointmentResponse response = appointmentService.confirmPaymentFromSepayWebhook(request, secretKeyHeader);
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of(
-                "success", true,
-                "appointmentId", response.getAppointmentId(),
-                "appointmentCode", response.getAppointmentCode()));
+        
+        System.out.println("=== RECEIVED SEPAY WEBHOOK ===");
+        System.out.println("Webhook ID: " + request.getId());
+        System.out.println("Gateway: " + request.getGateway());
+        System.out.println("Code field: '" + request.getCode() + "'");
+        System.out.println("Content field: '" + request.getContent() + "'");
+        System.out.println("Description field: '" + request.getDescription() + "'");
+        System.out.println("Transfer Amount: " + request.getTransferAmount());
+        System.out.println("Transfer Type: " + request.getTransferType());
+
+        // Support both X-Secret-Key header and standard SePay Authorization header
+        String secretKey = secretKeyHeader;
+        if ((secretKey == null || secretKey.isBlank()) && authorizationHeader != null && !authorizationHeader.isBlank()) {
+            if (authorizationHeader.startsWith("Apikey ")) {
+                secretKey = authorizationHeader.substring(7).trim();
+            } else {
+                secretKey = authorizationHeader.trim();
+            }
+        }
+
+        String code = null;
+        
+        // 1. Prioritize scanning the raw content first
+        if (request.getContent() != null && !request.getContent().isBlank()) {
+            String contentUpper = request.getContent().toUpperCase();
+            java.util.regex.Matcher mr = java.util.regex.Pattern.compile("MR-\\d+").matcher(contentUpper);
+            if (mr.find()) code = mr.group();
+            
+            if (code == null) {
+                java.util.regex.Matcher pr = java.util.regex.Pattern.compile("PR-\\d+").matcher(contentUpper);
+                if (pr.find()) code = pr.group();
+            }
+            if (code == null) {
+                java.util.regex.Matcher apt = java.util.regex.Pattern.compile("APT-[A-Z0-9]+").matcher(contentUpper);
+                if (apt.find()) code = apt.group();
+            }
+            if (code == null) {
+                java.util.regex.Matcher dk = java.util.regex.Pattern.compile("DK\\d+").matcher(contentUpper);
+                if (dk.find()) code = dk.group();
+            }
+        }
+        
+        // 2. Search in raw description (very common for banks to put it here)
+        if (code == null && request.getDescription() != null && !request.getDescription().isBlank()) {
+            String descUpper = request.getDescription().toUpperCase();
+            java.util.regex.Matcher mr = java.util.regex.Pattern.compile("MR-\\d+").matcher(descUpper);
+            if (mr.find()) code = mr.group();
+            
+            if (code == null) {
+                java.util.regex.Matcher pr = java.util.regex.Pattern.compile("PR-\\d+").matcher(descUpper);
+                if (pr.find()) code = pr.group();
+            }
+            if (code == null) {
+                java.util.regex.Matcher apt = java.util.regex.Pattern.compile("APT-[A-Z0-9]+").matcher(descUpper);
+                if (apt.find()) code = apt.group();
+            }
+            if (code == null) {
+                java.util.regex.Matcher dk = java.util.regex.Pattern.compile("DK\\d+").matcher(descUpper);
+                if (dk.find()) code = dk.group();
+            }
+        }
+        
+        // 3. Search in code field or fall back
+        if (code == null && request.getCode() != null && !request.getCode().isBlank()) {
+            String codeUpper = request.getCode().trim().toUpperCase();
+            java.util.regex.Matcher mr = java.util.regex.Pattern.compile("MR-\\d+").matcher(codeUpper);
+            if (mr.find()) {
+                code = mr.group();
+            } else {
+                java.util.regex.Matcher pr = java.util.regex.Pattern.compile("PR-\\d+").matcher(codeUpper);
+                if (pr.find()) {
+                    code = pr.group();
+                } else {
+                    java.util.regex.Matcher apt = java.util.regex.Pattern.compile("APT-[A-Z0-9]+").matcher(codeUpper);
+                    if (apt.find()) {
+                        code = apt.group();
+                    } else {
+                        java.util.regex.Matcher dk = java.util.regex.Pattern.compile("DK\\d+").matcher(codeUpper);
+                        if (dk.find()) {
+                            code = dk.group();
+                        } else {
+                            code = codeUpper;
+                        }
+                    }
+                }
+            }
+        }
+
+        System.out.println("Resolved code for webhook: '" + code + "'");
+
+        if (code != null && code.startsWith("MR-")) {
+            com.healthcare.backend.dto.response.PaymentRecordResponse response =
+                    paymentRecordService.confirmMedicalRecordPaymentFromSepayWebhook(request, secretKey);
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                    "success", true,
+                    "medicalRecordId", response.getMedicalRecordId() != null ? response.getMedicalRecordId() : 0L,
+                    "requestCode", response.getRequestCode()));
+        } else if (code != null && code.startsWith("PR-")) {
+            com.healthcare.backend.dto.response.PaymentRecordResponse response =
+                    paymentRecordService.confirmPrescriptionPaymentFromSepayWebhook(request, secretKey);
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                    "success", true,
+                    "prescriptionId", response.getPrescriptionId() != null ? response.getPrescriptionId() : 0L,
+                    "requestCode", response.getRequestCode()));
+        } else {
+            AppointmentResponse response = appointmentService.confirmPaymentFromSepayWebhook(request, secretKey);
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                    "success", true,
+                    "appointmentId", response.getAppointmentId(),
+                    "appointmentCode", response.getAppointmentCode()));
+        }
     }
 }

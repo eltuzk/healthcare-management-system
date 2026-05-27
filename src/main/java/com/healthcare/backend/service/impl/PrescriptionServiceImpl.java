@@ -7,19 +7,25 @@ import com.healthcare.backend.entity.MedicalRecord;
 import com.healthcare.backend.entity.Medicine;
 import com.healthcare.backend.entity.Prescription;
 import com.healthcare.backend.entity.PrescriptionDetail;
+import com.healthcare.backend.entity.MedicineLot;
 import com.healthcare.backend.entity.enums.MedicalRecordStatus;
 import com.healthcare.backend.exception.BusinessException;
 import com.healthcare.backend.exception.ResourceNotFoundException;
 import com.healthcare.backend.mapper.PrescriptionDetailMapper;
 import com.healthcare.backend.mapper.PrescriptionMapper;
 import com.healthcare.backend.repository.MedicalRecordRepository;
+import com.healthcare.backend.repository.MedicineLotRepository;
 import com.healthcare.backend.repository.MedicineRepository;
 import com.healthcare.backend.repository.PrescriptionRepository;
+import com.healthcare.backend.entity.PaymentRecord;
+import com.healthcare.backend.entity.enums.PaymentStatus;
+import com.healthcare.backend.repository.PaymentRecordRepository;
 import com.healthcare.backend.service.PrescriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -29,6 +35,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     private final PrescriptionRepository prescriptionRepository;
     private final MedicalRecordRepository medicalRecordRepository;
     private final MedicineRepository medicineRepository;
+    private final MedicineLotRepository medicineLotRepository;
+    private final PaymentRecordRepository paymentRecordRepository;
     private final PrescriptionMapper prescriptionMapper;
     private final PrescriptionDetailMapper prescriptionDetailMapper;
 
@@ -73,6 +81,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         addPrescriptionDetails(prescription, request.getDetails());
 
         Prescription savedPrescription = prescriptionRepository.save(prescription);
+        createOrUpdatePrescriptionPayment(savedPrescription);
         return prescriptionMapper.toResponse(savedPrescription);
     }
 
@@ -97,6 +106,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         addPrescriptionDetails(prescription, request.getDetails());
 
         Prescription updatedPrescription = prescriptionRepository.save(prescription);
+        createOrUpdatePrescriptionPayment(updatedPrescription);
         return prescriptionMapper.toResponse(updatedPrescription);
     }
 
@@ -109,6 +119,68 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         Prescription deactivatedPrescription = prescriptionRepository.save(prescription);
 
         return prescriptionMapper.toResponse(deactivatedPrescription);
+    }
+
+    @Override
+    @Transactional
+    public PrescriptionResponse dispensePrescription(Long id) {
+        Prescription prescription = findActivePrescriptionById(id);
+
+        PaymentRecord paymentRecord = paymentRecordRepository.findByPrescription_PrescriptionId(id)
+                .orElseThrow(() -> new BusinessException("Hóa đơn thanh toán cho đơn thuốc này không tồn tại."));
+        if (paymentRecord.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new BusinessException("Đơn thuốc chưa được thanh toán. Vui lòng thanh toán trước khi cấp phát.");
+        }
+
+        for (PrescriptionDetail detail : prescription.getPrescriptionDetails()) {
+            Medicine medicine = detail.getMedicine();
+            int requiredQty = detail.getQuantity();
+
+            // Concurrency Control: Acquire Pessimistic Write Lock on all active lots of this medicine
+            List<MedicineLot> lots = medicineLotRepository.findAllByMedicineIdAndIsActiveForUpdate(medicine.getMedicineId(), 1);
+
+            // Sort lots by expiryDate ASC (FIFO - First Expired, First Out) and exclude expired/empty lots
+            LocalDate today = LocalDate.now();
+            List<MedicineLot> eligibleLots = lots.stream()
+                    .filter(lot -> lot.getQuantity() > 0)
+                    .filter(lot -> lot.getExpiryDate() == null || !lot.getExpiryDate().isBefore(today))
+                    .sorted((l1, l2) -> {
+                        if (l1.getExpiryDate() == null && l2.getExpiryDate() == null) return 0;
+                        if (l1.getExpiryDate() == null) return 1;
+                        if (l2.getExpiryDate() == null) return -1;
+                        return l1.getExpiryDate().compareTo(l2.getExpiryDate());
+                    })
+                    .toList();
+
+            int totalStock = eligibleLots.stream().mapToInt(MedicineLot::getQuantity).sum();
+            if (requiredQty > totalStock) {
+                throw new BusinessException("Dược phẩm '" + medicine.getMedicineName()
+                        + "' không đủ tồn kho khả dụng để cấp phát. Yêu cầu: "
+                        + requiredQty + ", Có sẵn: " + totalStock);
+            }
+
+            // FIFO stock subtraction
+            int remainingToDeduct = requiredQty;
+            for (MedicineLot lot : eligibleLots) {
+                if (remainingToDeduct <= 0) break;
+
+                int currentLotQty = lot.getQuantity();
+                if (currentLotQty >= remainingToDeduct) {
+                    lot.setQuantity(currentLotQty - remainingToDeduct);
+                    remainingToDeduct = 0;
+                } else {
+                    lot.setQuantity(0);
+                    remainingToDeduct -= currentLotQty;
+                }
+                medicineLotRepository.save(lot);
+            }
+        }
+
+        // Mark prescription as dispensed (set isActive to 0)
+        prescription.setIsActive(0);
+        Prescription savedPrescription = prescriptionRepository.save(prescription);
+
+        return prescriptionMapper.toResponse(savedPrescription);
     }
 
     private Prescription findActivePrescriptionById(Long id) {
@@ -149,6 +221,27 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             if (detail.getQuantity() == null || detail.getQuantity() < 1) {
                 throw new BusinessException("Prescription detail quantity must be greater than or equal to 1");
             }
+
+            Long medicineId = detail.getMedicineId();
+            Medicine medicine = findActiveMedicineById(medicineId);
+
+            // Concurrency Control: Acquire Pessimistic Write Lock on all lots of this medicine
+            List<MedicineLot> lots = medicineLotRepository.findAllByMedicineIdAndIsActiveForUpdate(medicineId, 1);
+            
+            // Sum available non-expired stock
+            int totalStock = 0;
+            LocalDate today = LocalDate.now();
+            if (lots != null) {
+                for (MedicineLot lot : lots) {
+                    if (lot.getExpiryDate() != null && !lot.getExpiryDate().isBefore(today)) {
+                        totalStock += lot.getQuantity();
+                    }
+                }
+            }
+
+            if (detail.getQuantity() > totalStock) {
+                throw new BusinessException("Dược phẩm '" + medicine.getMedicineName() + "' không đủ tồn kho khả dụng. Tồn kho thực tế: " + totalStock + ", Yêu cầu kê đơn: " + detail.getQuantity());
+            }
         }
     }
 
@@ -158,5 +251,33 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             PrescriptionDetail detail = prescriptionDetailMapper.toEntity(detailRequest, prescription, medicine);
             prescription.getPrescriptionDetails().add(detail);
         }
+    }
+
+    private void createOrUpdatePrescriptionPayment(Prescription prescription) {
+        java.math.BigDecimal totalPrice = java.math.BigDecimal.ZERO;
+        for (PrescriptionDetail detail : prescription.getPrescriptionDetails()) {
+            java.math.BigDecimal sellingPrice = detail.getMedicine().getSellingPrice();
+            if (sellingPrice != null) {
+                totalPrice = totalPrice.add(sellingPrice.multiply(java.math.BigDecimal.valueOf(detail.getQuantity())));
+            }
+        }
+
+        PaymentRecord paymentRecord = paymentRecordRepository.findByPrescription_PrescriptionId(prescription.getPrescriptionId())
+                .orElse(null);
+
+        if (paymentRecord == null) {
+            paymentRecord = new PaymentRecord();
+            paymentRecord.setPrescription(prescription);
+            paymentRecord.setRequestCode("PR-" + prescription.getPrescriptionId());
+            paymentRecord.setTotalPrice(totalPrice);
+            paymentRecord.setReceivedAmount(java.math.BigDecimal.ZERO);
+            paymentRecord.setPaymentStatus(PaymentStatus.UNPAID);
+        } else {
+            if (paymentRecord.getPaymentStatus() != PaymentStatus.PAID) {
+                paymentRecord.setTotalPrice(totalPrice);
+            }
+        }
+
+        paymentRecordRepository.save(paymentRecord);
     }
 }

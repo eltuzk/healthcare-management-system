@@ -16,13 +16,13 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.from}")
     private String fromEmail;
 
     @Override
     public void sendVerificationEmail(String email, String verificationToken) {
         String subject = "Email verification";
-        String path = "/auth/register/verification-email";
+        String path = "/api/auth/register/verification-email";
         String message = "Please click the button below to verify your email: ";
 
         sendEmail(email, verificationToken, subject, path, message);
@@ -31,7 +31,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendForgotPasswordEmail(String email, String forgotPasswordToken) {
         String subject = "Forgot your password";
-        String path = "/auth/forgot-password";
+        String path = "/reset-password";
         String message = "Please click the button below to reset your password: ";
 
         sendEmail(email, forgotPasswordToken, subject, path, message);
@@ -44,6 +44,21 @@ public class EmailServiceImpl implements EmailService {
                     .path(path)
                     .queryParam("token", token)
                     .toUriString();
+
+            // Normalize localhost URLs to point to the public VPS IP
+            if (url.contains("localhost:") || url.contains("127.0.0.1")) {
+                url = url.replaceAll("http://localhost:\\d+", "http://161.35.109.58")
+                         .replaceAll("https://localhost:\\d+", "http://161.35.109.58")
+                         .replaceAll("http://127.0.0.1:\\d+", "http://161.35.109.58");
+            }
+
+            // Always log the generated verification or reset link in full to the system console/logs!
+            System.out.println("==================================================");
+            System.out.println("EMAILING SYSTEM FALLBACK LOG:");
+            System.out.println("Subject: " + subject);
+            System.out.println("To: " + email);
+            System.out.println("Link: " + url);
+            System.out.println("==================================================");
 
             String content = """
                     <div style="font-family: Time New Roman, san-serif; max-width: 600px; margin: auto; padding: 20px; border-radius: 10px; background-color: #f9f9f9;">

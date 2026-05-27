@@ -32,7 +32,7 @@ public class MedicalServiceController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
     public ResponseEntity<MedicalServiceResponse> createMedicalService(
             @Valid @RequestBody MedicalServiceRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -40,7 +40,7 @@ public class MedicalServiceController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
     public ResponseEntity<MedicalServiceResponse> updateMedicalService(
             @PathVariable Long id,
             @Valid @RequestBody MedicalServiceRequest request) {
@@ -48,7 +48,7 @@ public class MedicalServiceController {
     }
 
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
     public ResponseEntity<MedicalServiceResponse> deactivateMedicalService(@PathVariable Long id) {
         return ResponseEntity.ok(medicalServiceService.deactivateMedicalService(id));
     }

@@ -32,13 +32,13 @@ public class LabTestController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
     public ResponseEntity<LabTestResponse> createLabTest(@Valid @RequestBody LabTestRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(labTestService.createLabTest(request));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
     public ResponseEntity<LabTestResponse> updateLabTest(
             @PathVariable Long id,
             @Valid @RequestBody LabTestRequest request) {
@@ -46,7 +46,7 @@ public class LabTestController {
     }
 
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
     public ResponseEntity<LabTestResponse> deactivateLabTest(@PathVariable Long id) {
         return ResponseEntity.ok(labTestService.deactivateLabTest(id));
     }
