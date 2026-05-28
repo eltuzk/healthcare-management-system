@@ -74,6 +74,11 @@ public class PaymentRecordServiceImpl implements PaymentRecordService {
                         if (pr.getAppointment() != null && pr.getAppointment().getPatient() != null) {
                             return pr.getAppointment().getPatient().getPatientId().equals(currentPatientId);
                         }
+                        if (pr.getPrescription() != null && 
+                            pr.getPrescription().getMedicalRecord() != null && 
+                            pr.getPrescription().getMedicalRecord().getPatient() != null) {
+                            return pr.getPrescription().getMedicalRecord().getPatient().getPatientId().equals(currentPatientId);
+                        }
                         return false;
                     }
                     return true;
@@ -99,6 +104,10 @@ public class PaymentRecordServiceImpl implements PaymentRecordService {
                 isOwner = paymentRecord.getMedicalRecord().getPatient().getPatientId().equals(currentPatientId);
             } else if (paymentRecord.getAppointment() != null && paymentRecord.getAppointment().getPatient() != null) {
                 isOwner = paymentRecord.getAppointment().getPatient().getPatientId().equals(currentPatientId);
+            } else if (paymentRecord.getPrescription() != null && 
+                       paymentRecord.getPrescription().getMedicalRecord() != null && 
+                       paymentRecord.getPrescription().getMedicalRecord().getPatient() != null) {
+                isOwner = paymentRecord.getPrescription().getMedicalRecord().getPatient().getPatientId().equals(currentPatientId);
             }
             if (!isOwner) {
                 throw new BusinessException("Patient is not allowed to access this payment record");
