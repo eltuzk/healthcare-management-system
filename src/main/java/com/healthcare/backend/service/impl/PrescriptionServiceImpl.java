@@ -17,11 +17,14 @@ import com.healthcare.backend.repository.MedicalRecordRepository;
 import com.healthcare.backend.repository.MedicineLotRepository;
 import com.healthcare.backend.repository.MedicineRepository;
 import com.healthcare.backend.repository.PrescriptionRepository;
+import com.healthcare.backend.repository.PaymentRecordRepository;
+import com.healthcare.backend.repository.PatientRepository;
 import com.healthcare.backend.entity.PaymentRecord;
 import com.healthcare.backend.entity.enums.PaymentStatus;
-import com.healthcare.backend.repository.PaymentRecordRepository;
 import com.healthcare.backend.service.PrescriptionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,12 +40,24 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     private final MedicineRepository medicineRepository;
     private final MedicineLotRepository medicineLotRepository;
     private final PaymentRecordRepository paymentRecordRepository;
+    private final PatientRepository patientRepository;
     private final PrescriptionMapper prescriptionMapper;
     private final PrescriptionDetailMapper prescriptionDetailMapper;
 
     @Override
     @Transactional(readOnly = true)
     public List<PrescriptionResponse> getAllPrescriptions() {
+        if (isCurrentUserPatient()) {
+            com.healthcare.backend.entity.Patient currentPatient = findCurrentPatientOrThrow();
+            return prescriptionRepository.findAllByIsActiveOrderByCreatedAtDesc(1)
+                    .stream()
+                    .filter(p -> p.getMedicalRecord() != null && 
+                                 p.getMedicalRecord().getPatient() != null && 
+                                 p.getMedicalRecord().getPatient().getPatientId().equals(currentPatient.getPatientId()))
+                    .map(prescriptionMapper::toResponse)
+                    .toList();
+        }
+
         return prescriptionRepository.findAllByIsActiveOrderByCreatedAtDesc(1)
                 .stream()
                 .map(prescriptionMapper::toResponse)
@@ -53,6 +68,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     @Transactional(readOnly = true)
     public PrescriptionResponse getPrescriptionById(Long id) {
         Prescription prescription = findActivePrescriptionById(id);
+        validatePrescriptionAccess(prescription);
         return prescriptionMapper.toResponse(prescription);
     }
 
@@ -64,7 +80,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Prescription not found with medical record id: " + medicalRecordId
                 ));
-
+        validatePrescriptionAccess(prescription);
         return prescriptionMapper.toResponse(prescription);
     }
 
@@ -293,5 +309,29 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         }
 
         paymentRecordRepository.save(paymentRecord);
+    }
+
+    private boolean isCurrentUserPatient() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.getAuthorities().stream()
+                        .anyMatch(authority -> "ROLE_PATIENT".equals(authority.getAuthority()));
+    }
+
+    private com.healthcare.backend.entity.Patient findCurrentPatientOrThrow() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return patientRepository.findByAccount_Email(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient profile not found for account: " + email));
+    }
+
+    private void validatePrescriptionAccess(Prescription prescription) {
+        if (isCurrentUserPatient()) {
+            com.healthcare.backend.entity.Patient currentPatient = findCurrentPatientOrThrow();
+            if (prescription.getMedicalRecord() == null || 
+                prescription.getMedicalRecord().getPatient() == null || 
+                !prescription.getMedicalRecord().getPatient().getPatientId().equals(currentPatient.getPatientId())) {
+                throw new BusinessException("Patient is not allowed to access this prescription");
+            }
+        }
     }
 }

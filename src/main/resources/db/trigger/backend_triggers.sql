@@ -406,47 +406,58 @@ CREATE OR REPLACE TRIGGER trg_prescription_fifo_stock_deduction
 AFTER UPDATE ON PRESCRIPTION
 FOR EACH ROW
 DECLARE
+    -- Khai báo biến lưu số lượng thuốc còn thiếu cần khấu trừ ở các lô tiếp theo
     v_remaining_deduct NUMBER(10);
+    
+    -- Định nghĩa con trỏ c_lots để tìm các lô thuốc khả dụng của dược phẩm đang được kê đơn
     CURSOR c_lots(cp_medicine_id NUMBER) IS
         SELECT medicine_lot_id, quantity
         FROM MEDICINE_LOT
         WHERE medicine_id = cp_medicine_id 
-          AND is_active = 1 
-          AND quantity > 0 
-          AND (expiry_date IS NULL OR expiry_date >= TRUNC(SYSDATE))
-        ORDER BY expiry_date ASC NULLS LAST; -- FIFO: Lô hết hạn trước xuất trước
+          AND is_active = 1 -- Lô thuốc phải đang ở trạng thái hoạt động
+          AND quantity > 0  -- Lô thuốc phải còn số lượng tồn kho lớn hơn 0
+          AND (expiry_date IS NULL OR expiry_date >= TRUNC(SYSDATE)) -- Lô thuốc chưa bị hết hạn sử dụng
+        ORDER BY expiry_date ASC NULLS LAST; -- Áp dụng nguyên tắc FIFO: lô nào hết hạn trước thì ưu tiên xuất trước
 BEGIN
-    -- Chỉ kích hoạt khi đơn thuốc đổi trạng thái sang đã được phát (is_active chuyển từ 1 về 0)
+    -- Chỉ kích hoạt logic nghiệp vụ trừ kho khi đơn thuốc được chuyển đổi trạng thái
+    -- từ ĐANG HOẠT ĐỘNG (is_active = 1) sang ĐÃ ĐƯỢC PHÁT (is_active = 0)
     IF :OLD.is_active = 1 AND :NEW.is_active = 0 THEN
-        -- Duyệt qua tất cả các chi tiết dược phẩm trong đơn thuốc
+        -- Duyệt qua từng dòng chi tiết thuốc của đơn thuốc đang được xử lý cấp phát
         FOR rec_detail IN (
             SELECT medicine_id, quantity 
             FROM PRESCRIPTION_DETAIL 
             WHERE prescription_id = :NEW.prescription_id
         ) LOOP
+            -- Gán số lượng thuốc cần xuất kho ban đầu bằng số lượng bác sĩ đã kê đơn
             v_remaining_deduct := rec_detail.quantity;
             
-            -- Khấu trừ số lượng theo phương pháp FIFO
+            -- Thực hiện trừ dần số lượng tồn kho theo phương pháp FIFO trên từng lô khả dụng
             FOR rec_lot IN c_lots(rec_detail.medicine_id) LOOP
+                -- Thoát khỏi vòng lặp lô ngay lập tức nếu đã khấu trừ đủ số lượng thuốc yêu cầu
                 EXIT WHEN v_remaining_deduct <= 0;
                 
+                -- Trường hợp 1: Lô hiện tại còn đủ hoặc nhiều hơn số lượng thuốc cần xuất
                 IF rec_lot.quantity >= v_remaining_deduct THEN
                     UPDATE MEDICINE_LOT
                     SET quantity = quantity - v_remaining_deduct
                     WHERE medicine_lot_id = rec_lot.medicine_lot_id;
                     
+                    -- Đặt lượng cần trừ về 0 vì đã cấp phát đủ số lượng thuốc
                     v_remaining_deduct := 0;
+                -- Trường hợp 2: Lô hiện tại không đủ số lượng thuốc cần xuất
                 ELSE
                     UPDATE MEDICINE_LOT
-                    SET quantity = 0
+                    SET quantity = 0 -- Trừ hết số lượng thuốc hiện có trong lô này về 0
                     WHERE medicine_lot_id = rec_lot.medicine_lot_id;
                     
+                    -- Giảm bớt số lượng cần trừ tương ứng với phần đã lấy từ lô này
                     v_remaining_deduct := v_remaining_deduct - rec_lot.quantity;
                 END IF;
             END LOOP;
             
-            -- Nếu sau khi quét toàn bộ các lô thuốc mà số lượng trừ vẫn chưa đủ
+            -- Kiểm tra an toàn: Nếu duyệt qua toàn bộ các lô khả dụng mà vẫn thiếu số lượng cần cấp phát
             IF v_remaining_deduct > 0 THEN
+                -- Kích hoạt lỗi nghiệp vụ để tự động Rollback (hoàn tác) toàn bộ giao dịch cập nhật trạng thái đơn thuốc
                 RAISE_APPLICATION_ERROR(-20102, 'Lỗi cấp phát: Dược phẩm ID ' || rec_detail.medicine_id || ' không đủ tồn kho khả dụng để thực hiện trừ kho theo nguyên lý FIFO.');
             END IF;
         END LOOP;

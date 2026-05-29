@@ -2,6 +2,8 @@
 
 Tài liệu này ghi lại toàn bộ các ràng buộc toàn vẹn được thiết lập và thực thi cứng tại **tầng cơ sở dữ liệu (Database Layer)** bằng các câu lệnh Oracle SQL DDL. 
 Các quy tắc kiểm tra động ở tầng ứng dụng (Java backend) đã được tách riêng sang tài liệu [rule_service.md](rule_service.md).
+Hệ thống có tổng cộng 125 ràng buộc độc bản được định nghĩa bằng tên cụ thể:
+
 
 ---
 

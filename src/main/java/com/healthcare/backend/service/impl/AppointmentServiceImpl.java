@@ -78,33 +78,59 @@ public class AppointmentServiceImpl implements AppointmentService {
     private String sepayAccountNumber;
 
     @Override
-    // Transaction gom thao tác giữ slot, tạo appointment và tạo payment record
-    // thành một đơn vị atomic.
-    // Nếu bất kỳ bước nào lỗi thì toàn bộ booking được rollback, tránh giữ slot
-    // trống.
+    // Chú thích @Transactional đảm bảo toàn bộ các bước trong hàm này được thực hiện trong cùng một Transaction.
+    // Nếu có bất kỳ bước nào phát sinh ngoại lệ (Exception), toàn bộ các thay đổi trong DB sẽ tự động được Rollback.
     @Transactional
     public AppointmentResponse create(CreateAppointmentRequest request) {
+        // [BƯỚC 1]: Tìm bệnh nhân và áp dụng Khóa Bi Quan (Pessimistic Lock - SELECT ... FOR UPDATE) để tránh sửa đổi song song hồ sơ bệnh nhân.
         Patient patient = findPatientForUpdateOrThrow(request.getPatientId());
+        
+        // [BƯỚC 2]: Tìm lịch làm việc của Bác sĩ và áp dụng Khóa Bi Quan (SELECT ... FOR UPDATE) để khóa độc quyền lịch này, chống tranh chấp slot.
         DoctorSchedule doctorSchedule = findDoctorScheduleForUpdateOrThrow(request.getDoctorScheduleId());
+        
+        // [BƯỚC 3]: Lấy thông tin về mức phí khám (Consultation Fee) liên kết với lịch khám hoặc chuyên khoa của bác sĩ.
         ConsultationFee consultationFee = findConsultationFeeOrThrow(doctorSchedule, request.getFeeId());
 
+        // [BƯỚC 4]: Kiểm tra xem lịch khám của bác sĩ đã hết hạn chưa (ngày khám phải lớn hơn hoặc bằng ngày hiện tại).
         validateScheduleNotExpired(doctorSchedule);
+        
+        // [BƯỚC 5]: Kiểm tra xem bệnh nhân hiện tại có lịch khám nào khác đang ở trạng thái hoạt động (Pending, Confirmed, v.v.) hay không.
         validateNoActiveAppointment(patient.getPatientId());
+        
+        // [BƯỚC 6]: Đảm bảo cấu hình phí khám đang được kích hoạt và khả dụng trong hệ thống.
         validateConsultationFeeActive(consultationFee);
+        
+        // [BƯỚC 7]: Kiểm tra xem ca khám của Bác sĩ đã đạt giới hạn số người khám tối đa (Max Capacity) chưa.
         validateDoctorScheduleCapacity(doctorSchedule);
 
+        // [BƯỚC 8]: Thực hiện giữ chỗ độc quyền: Tăng số lượng đặt hiện tại (booking count) và sinh ra Số thứ tự khám (Queue Number) tiếp theo.
         int nextQueueNumber = reserveDoctorScheduleSlot(doctorSchedule);
 
+        // [BƯỚC 9]: Ánh xạ (Map) dữ liệu yêu cầu từ Client thành đối tượng thực thể Appointment (Lịch hẹn).
         Appointment appointment = appointmentMapper.toEntity(request);
+        
+        // [BƯỚC 10]: Thiết lập các thông tin cơ bản cho lịch hẹn bao gồm Patient, DoctorSchedule, Phí khám và sinh mã đặt lịch ngẫu nhiên (APT-XXXX).
         populateAppointmentForBooking(appointment, patient, doctorSchedule, consultationFee);
+        
+        // [BƯỚC 11]: Gán Số thứ tự vừa lấy được ở Bước 8 vào thông tin lịch hẹn.
         appointment.setQueueNum(nextQueueNumber);
+        
+        // [BƯỚC 12]: Đặt trạng thái ban đầu của Lịch hẹn là PENDING (Chờ thanh toán qua tài khoản/SePay).
         appointment.setStatus(AppointmentStatus.PENDING);
+        
+        // [BƯỚC 13]: Hạn giờ thanh toán trực tuyến: Hết thời gian này (mặc định 10 phút) lịch giữ chỗ sẽ tự động bị hủy để nhường slot.
         appointment.setPaymentExpiresAt(LocalDateTime.now().plusMinutes(ONLINE_PAYMENT_RESERVATION_MINUTES));
 
+        // [BƯỚC 14]: Lưu lịch hẹn xuống Cơ sở dữ liệu và ép buộc ghi ngay (Flush) để phát hiện sớm các lỗi ràng buộc dữ liệu độc nhất (Unique Constraint).
         Appointment savedAppointment = appointmentRepository.saveAndFlush(appointment);
+        
+        // [BƯỚC 15]: Khởi tạo bản ghi Hóa đơn thanh toán (Payment Record) ở trạng thái UNPAID (Chưa thanh toán) liên kết với lịch hẹn này.
         initializePaymentRecord(savedAppointment);
+        
+        // [BƯỚC 16]: Làm mới (Refresh) thực thể lịch hẹn từ Database để đảm bảo đồng bộ đầy đủ các trạng thái và liên kết dữ liệu mới nhất.
         entityManager.refresh(savedAppointment);
 
+        // [BƯỚC 17]: Ánh xạ kết quả thực thể đã lưu thành đối tượng phản hồi (DTO) để trả về cho giao diện Frontend hiển thị.
         return appointmentMapper.toResponse(savedAppointment);
     }
 
