@@ -2,12 +2,9 @@
 
 Tài liệu này ghi lại toàn bộ các ràng buộc toàn vẹn được thiết lập và thực thi cứng tại **tầng cơ sở dữ liệu (Database Layer)** bằng các câu lệnh Oracle SQL DDL. 
 Các quy tắc kiểm tra động ở tầng ứng dụng (Java backend) đã được tách riêng sang tài liệu [rule_service.md](rule_service.md).
-Hệ thống của bạn có tổng cộng 125 ràng buộc độc bản được định nghĩa bằng tên cụ thể:
+Hệ thống có tổng cộng 125 ràng buộc độc bản được định nghĩa bằng tên cụ thể:
 
-CHECK Constraints (Ràng buộc kiểm tra điều kiện): 46 ràng buộc (Ví dụ: kiểm tra tồn kho không âm, giới hạn phần trăm bảo hiểm 0−100%, các cờ Boolean 0/1, v.v.).
-FOREIGN KEY Constraints (Ràng buộc khóa ngoại): 38 ràng buộc (Đảm bảo tính toàn vẹn tham chiếu giữa các thực thể như Lịch hẹn → Bệnh nhân, Hóa đơn → Lịch hẹn, v.v.).
-UNIQUE Constraints (Ràng buộc duy nhất): 37 ràng buộc (Đảm bảo không trùng lặp Email tài khoản, Số định danh CCCD, Giấy phép hành nghề của Bác sĩ, Số bảo hiểm, v.v.).
-PRIMARY KEY Constraints (Ràng buộc khóa chính ghép): 4 ràng buộc (Được thiết lập thủ công trên các bảng liên kết nhiều-nhiều như ROLE_PERMISSION, ACCOUNT_PERMISSION, LAB_TEST_REQUEST_ITEM, MEDICAL_SERVICE_REQUEST_ITEM - không tính các khóa chính đơn tự động tạo khi khai báo cột PRIMARY KEY của từng bảng).
+
 ---
 
 ## Xác Thực Và Phân Quyền
