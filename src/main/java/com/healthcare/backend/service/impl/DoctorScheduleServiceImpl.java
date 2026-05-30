@@ -323,7 +323,6 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
                     throw new DuplicateResourceException("Phòng đã được phân công cho bác sĩ khác ở ca này trong ngày đã chọn");
                 }
             }
-
             throw ex;
         }
     }

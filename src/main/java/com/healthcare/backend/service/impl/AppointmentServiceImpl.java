@@ -78,7 +78,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private String sepayAccountNumber;
 
     @Override
-    // Chú thích @Transactional đảm bảo toàn bộ các bước trong hàm này được thực hiện trong cùng một Transaction.
+    // @Transactional đảm bảo toàn bộ các bước trong hàm này được thực hiện trong cùng một Transaction.
     // Nếu có bất kỳ bước nào phát sinh ngoại lệ (Exception), toàn bộ các thay đổi trong DB sẽ tự động được Rollback.
     @Transactional
     public AppointmentResponse create(CreateAppointmentRequest request) {
@@ -106,7 +106,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         // [BƯỚC 8]: Thực hiện giữ chỗ độc quyền: Tăng số lượng đặt hiện tại (booking count) và sinh ra Số thứ tự khám (Queue Number) tiếp theo.
         int nextQueueNumber = reserveDoctorScheduleSlot(doctorSchedule);
 
-        // [BƯỚC 9]: Ánh xạ (Map) dữ liệu yêu cầu từ Client thành đối tượng thực thể Appointment (Lịch hẹn).
+        // [BƯỚC 9]: Ánh xạ (Map) dữ liệu yêu cầu từ Client thành đối tượng entity Appointment (Lịch hẹn).
         Appointment appointment = appointmentMapper.toEntity(request);
         
         // [BƯỚC 10]: Thiết lập các thông tin cơ bản cho lịch hẹn bao gồm Patient, DoctorSchedule, Phí khám và sinh mã đặt lịch ngẫu nhiên (APT-XXXX).
@@ -118,16 +118,16 @@ public class AppointmentServiceImpl implements AppointmentService {
         // [BƯỚC 12]: Đặt trạng thái ban đầu của Lịch hẹn là PENDING (Chờ thanh toán qua tài khoản/SePay).
         appointment.setStatus(AppointmentStatus.PENDING);
         
-        // [BƯỚC 13]: Hạn giờ thanh toán trực tuyến: Hết thời gian này (mặc định 10 phút) lịch giữ chỗ sẽ tự động bị hủy để nhường slot.
+        // [BƯỚC 13]: Hạn giờ thanh toán trực tuyến: Hết thời gian này lịch giữ chỗ sẽ tự động bị hủy để nhường slot.
         appointment.setPaymentExpiresAt(LocalDateTime.now().plusMinutes(ONLINE_PAYMENT_RESERVATION_MINUTES));
 
-        // [BƯỚC 14]: Lưu lịch hẹn xuống Cơ sở dữ liệu và ép buộc ghi ngay (Flush) để phát hiện sớm các lỗi ràng buộc dữ liệu độc nhất (Unique Constraint).
+        // [BƯỚC 14]: Lưu lịch hẹn xuống Cơ sở dữ liệu để phát hiện sớm các lỗi ràng buộc dữ liệu độc nhất (Unique Constraint).
         Appointment savedAppointment = appointmentRepository.saveAndFlush(appointment);
         
         // [BƯỚC 15]: Khởi tạo bản ghi Hóa đơn thanh toán (Payment Record) ở trạng thái UNPAID (Chưa thanh toán) liên kết với lịch hẹn này.
         initializePaymentRecord(savedAppointment);
         
-        // [BƯỚC 16]: Làm mới (Refresh) thực thể lịch hẹn từ Database để đảm bảo đồng bộ đầy đủ các trạng thái và liên kết dữ liệu mới nhất.
+        // [BƯỚC 16]: Làm mới (Refresh) entity lịch hẹn từ Database để đảm bảo đồng bộ đầy đủ các trạng thái và liên kết dữ liệu mới nhất.
         entityManager.refresh(savedAppointment);
 
         // [BƯỚC 17]: Ánh xạ kết quả thực thể đã lưu thành đối tượng phản hồi (DTO) để trả về cho giao diện Frontend hiển thị.
@@ -354,7 +354,6 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (!Integer.valueOf(1).equals(patient.getIsActive())) {
             throw new ResourceNotFoundException("Patient not found with id: " + patientId);
         }
-
         return patient;
     }
 
