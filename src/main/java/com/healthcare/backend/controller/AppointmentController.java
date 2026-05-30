@@ -3,6 +3,7 @@ package com.healthcare.backend.controller;
 import com.healthcare.backend.dto.request.CreateAppointmentRequest;
 import com.healthcare.backend.dto.request.CreateWalkInAppointmentRequest;
 import com.healthcare.backend.dto.request.SepayWebhookRequest;
+import com.healthcare.backend.dto.request.ConfirmManualPaymentRequest;
 import com.healthcare.backend.dto.response.AppointmentResponse;
 import com.healthcare.backend.entity.enums.AppointmentStatus;
 import com.healthcare.backend.service.AppointmentService;
@@ -70,6 +71,14 @@ public class AppointmentController {
     @PostMapping("/{id}/cancel")
     public ResponseEntity<AppointmentResponse> cancel(@PathVariable Long id) {
         return ResponseEntity.ok(appointmentService.cancel(id));
+    }
+
+    @PostMapping("/{id}/confirm-payment-manual")
+    @PreAuthorize("hasRole('RECEPTIONIST')")
+    public ResponseEntity<AppointmentResponse> confirmManualPayment(
+            @PathVariable Long id,
+            @Valid @RequestBody ConfirmManualPaymentRequest request) {
+        return ResponseEntity.ok(appointmentService.confirmManualPayment(id, request));
     }
 
     @PostMapping("/sepay/webhook")

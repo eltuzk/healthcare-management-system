@@ -3,6 +3,7 @@ package com.healthcare.backend.service;
 import com.healthcare.backend.dto.request.CreateAppointmentRequest;
 import com.healthcare.backend.dto.request.CreateWalkInAppointmentRequest;
 import com.healthcare.backend.dto.request.SepayWebhookRequest;
+import com.healthcare.backend.dto.request.ConfirmManualPaymentRequest;
 import com.healthcare.backend.dto.response.AppointmentResponse;
 import com.healthcare.backend.entity.enums.AppointmentStatus;
 
@@ -25,6 +26,8 @@ public interface AppointmentService {
     AppointmentResponse cancel(Long appointmentId);
 
     AppointmentResponse confirmPaymentFromSepayWebhook(SepayWebhookRequest request, String secretKeyHeader);
+
+    AppointmentResponse confirmManualPayment(Long appointmentId, ConfirmManualPaymentRequest request);
 
     void expirePendingPaymentReservations();
 }
