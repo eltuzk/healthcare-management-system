@@ -3,6 +3,7 @@
 ## [GIỚI THIỆU ĐỒ ÁN](#)
 
 * **Đề tài:** Xây dựng Hệ thống Quản lý Y tế (Healthcare Management System)
+* **GitHub Repository:** [eltuzk/healthcare-management-system](https://github.com/eltuzk/healthcare-management-system)
 * **Mô tả tổng quan:** Đề tài "Xây dựng Hệ thống Quản lý Y tế" là một dự án phần mềm web toàn diện, được thiết kế để giải quyết bài toán vận hành của mô hình y tế đa chi nhánh hiện đại. Hệ thống hỗ trợ **7 vai trò** (Quản trị viên, Bác sĩ, Bệnh nhân, Lễ tân, Kỹ thuật viên, Dược sĩ, Kế toán) với **31 use-case** bao phủ toàn bộ quy trình: tiếp nhận bệnh nhân, quản lý lịch khám, khám chữa bệnh, xét nghiệm, dịch vụ chức năng, nội trú, kê đơn thuốc, kho thuốc, thanh toán và báo cáo doanh thu.
 
 ## [CÁC TÍNH NĂNG VÀ NGHIỆP VỤ NỔI BẬT](#)

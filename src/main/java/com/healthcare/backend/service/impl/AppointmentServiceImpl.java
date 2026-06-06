@@ -3,6 +3,7 @@ package com.healthcare.backend.service.impl;
 import com.healthcare.backend.dto.request.CreateAppointmentRequest;
 import com.healthcare.backend.dto.request.CreateWalkInAppointmentRequest;
 import com.healthcare.backend.dto.request.SepayWebhookRequest;
+import com.healthcare.backend.dto.request.ConfirmManualPaymentRequest;
 import com.healthcare.backend.dto.response.AppointmentResponse;
 import com.healthcare.backend.entity.Account;
 import com.healthcare.backend.entity.Appointment;
@@ -82,55 +83,26 @@ public class AppointmentServiceImpl implements AppointmentService {
     // Nếu có bất kỳ bước nào phát sinh ngoại lệ (Exception), toàn bộ các thay đổi trong DB sẽ tự động được Rollback.
     @Transactional
     public AppointmentResponse create(CreateAppointmentRequest request) {
-        // [BƯỚC 1]: Tìm bệnh nhân và áp dụng Khóa Bi Quan (Pessimistic Lock - SELECT ... FOR UPDATE) để tránh sửa đổi song song hồ sơ bệnh nhân.
         Patient patient = findPatientForUpdateOrThrow(request.getPatientId());
-        
-        // [BƯỚC 2]: Tìm lịch làm việc của Bác sĩ và áp dụng Khóa Bi Quan (SELECT ... FOR UPDATE) để khóa độc quyền lịch này, chống tranh chấp slot.
         DoctorSchedule doctorSchedule = findDoctorScheduleForUpdateOrThrow(request.getDoctorScheduleId());
-        
-        // [BƯỚC 3]: Lấy thông tin về mức phí khám (Consultation Fee) liên kết với lịch khám hoặc chuyên khoa của bác sĩ.
         ConsultationFee consultationFee = findConsultationFeeOrThrow(doctorSchedule, request.getFeeId());
-
-        // [BƯỚC 4]: Kiểm tra xem lịch khám của bác sĩ đã hết hạn chưa (ngày khám phải lớn hơn hoặc bằng ngày hiện tại).
+        
         validateScheduleNotExpired(doctorSchedule);
-        
-        // [BƯỚC 5]: Kiểm tra xem bệnh nhân hiện tại có lịch khám nào khác đang ở trạng thái hoạt động (Pending, Confirmed, v.v.) hay không.
         validateNoActiveAppointment(patient.getPatientId());
-        
-        // [BƯỚC 6]: Đảm bảo cấu hình phí khám đang được kích hoạt và khả dụng trong hệ thống.
         validateConsultationFeeActive(consultationFee);
-        
-        // [BƯỚC 7]: Kiểm tra xem ca khám của Bác sĩ đã đạt giới hạn số người khám tối đa (Max Capacity) chưa.
         validateDoctorScheduleCapacity(doctorSchedule);
-
-        // [BƯỚC 8]: Thực hiện giữ chỗ độc quyền: Tăng số lượng đặt hiện tại (booking count) và sinh ra Số thứ tự khám (Queue Number) tiếp theo.
+        
         int nextQueueNumber = reserveDoctorScheduleSlot(doctorSchedule);
-
-        // [BƯỚC 9]: Ánh xạ (Map) dữ liệu yêu cầu từ Client thành đối tượng entity Appointment (Lịch hẹn).
+        
         Appointment appointment = appointmentMapper.toEntity(request);
-        
-        // [BƯỚC 10]: Thiết lập các thông tin cơ bản cho lịch hẹn bao gồm Patient, DoctorSchedule, Phí khám và sinh mã đặt lịch ngẫu nhiên (APT-XXXX).
         populateAppointmentForBooking(appointment, patient, doctorSchedule, consultationFee);
-        
-        // [BƯỚC 11]: Gán Số thứ tự vừa lấy được ở Bước 8 vào thông tin lịch hẹn.
         appointment.setQueueNum(nextQueueNumber);
-        
-        // [BƯỚC 12]: Đặt trạng thái ban đầu của Lịch hẹn là PENDING (Chờ thanh toán qua tài khoản/SePay).
         appointment.setStatus(AppointmentStatus.PENDING);
-        
-        // [BƯỚC 13]: Hạn giờ thanh toán trực tuyến: Hết thời gian này lịch giữ chỗ sẽ tự động bị hủy để nhường slot.
         appointment.setPaymentExpiresAt(LocalDateTime.now().plusMinutes(ONLINE_PAYMENT_RESERVATION_MINUTES));
-
-        // [BƯỚC 14]: Lưu lịch hẹn xuống Cơ sở dữ liệu để phát hiện sớm các lỗi ràng buộc dữ liệu độc nhất (Unique Constraint).
         Appointment savedAppointment = appointmentRepository.saveAndFlush(appointment);
         
-        // [BƯỚC 15]: Khởi tạo bản ghi Hóa đơn thanh toán (Payment Record) ở trạng thái UNPAID (Chưa thanh toán) liên kết với lịch hẹn này.
         initializePaymentRecord(savedAppointment);
-        
-        // [BƯỚC 16]: Làm mới (Refresh) entity lịch hẹn từ Database để đảm bảo đồng bộ đầy đủ các trạng thái và liên kết dữ liệu mới nhất.
         entityManager.refresh(savedAppointment);
-
-        // [BƯỚC 17]: Ánh xạ kết quả thực thể đã lưu thành đối tượng phản hồi (DTO) để trả về cho giao diện Frontend hiển thị.
         return appointmentMapper.toResponse(savedAppointment);
     }
 
@@ -319,6 +291,60 @@ public class AppointmentServiceImpl implements AppointmentService {
                 request.getContent(),
                 request.getDescription(),
                 toRawJson(request));
+    }
+
+    @Override
+    @Transactional
+    public AppointmentResponse confirmManualPayment(Long appointmentId, ConfirmManualPaymentRequest request) {
+        Account currentAccount = findCurrentAccountOrThrow();
+        Appointment appointment = findAppointmentForUpdateOrThrow(appointmentId);
+
+        validatePendingAppointmentForPayment(appointment);
+        
+        DoctorSchedule doctorSchedule = findDoctorScheduleForUpdateOrThrow(
+                appointment.getDoctorSchedule().getDoctorScheduleId());
+        PaymentRecord paymentRecord = findPaymentRecordForUpdateOrThrow(appointment.getAppointmentId());
+
+        entityManager.refresh(appointment);
+        validatePendingAppointmentForPayment(appointment);
+        validateScheduleNotExpired(doctorSchedule);
+
+        BigDecimal price = paymentRecord.getTotalPrice();
+
+        appointment.setStatus(AppointmentStatus.CONFIRMED);
+        appointment.setPaidAt(LocalDateTime.now());
+        appointment.setCancelledAt(null);
+        appointment.setPaymentReferenceCode(request.getReceiptNumber());
+        appointment.setPaymentContent("Manual payment confirmed at counter");
+
+        paymentRecord.setReceivedAmount(price);
+        paymentRecord.setPaidAt(appointment.getPaidAt());
+        paymentRecord.setPaymentStatus(PaymentStatus.PAID);
+
+        PaymentTransaction paymentTransaction = buildPaymentTransaction(
+                paymentRecord,
+                null,
+                "CASH",
+                request.getReceiptNumber(),
+                price,
+                LocalDateTime.now(),
+                null,
+                "in",
+                "manual",
+                "Manual payment confirmed by receptionist: " + (request.getNote() != null ? request.getNote() : ""),
+                "{}",
+                currentAccount,
+                request.getReceiptNumber());
+
+        try {
+            paymentTransactionRepository.save(paymentTransaction);
+            paymentRecordRepository.save(paymentRecord);
+            appointmentRepository.saveAndFlush(appointment);
+            entityManager.refresh(appointment);
+            return appointmentMapper.toResponse(appointment);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessException("Payment confirmation conflict detected");
+        }
     }
 
     private Appointment findAppointmentOrThrow(Long appointmentId) {
