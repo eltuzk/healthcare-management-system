@@ -33,7 +33,7 @@ public class MedicalServiceRequestController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'TECHNICIAN', 'PATIENT')")
     public ResponseEntity<ApiResponse<Page<MedicalServiceRequestResponse>>> getRequests(
             @RequestParam(required = false) Long medRecordId,
             @RequestParam(required = false) MedicalServiceRequestStatus status,
@@ -42,7 +42,7 @@ public class MedicalServiceRequestController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'TECHNICIAN', 'PATIENT')")
     public ResponseEntity<ApiResponse<MedicalServiceRequestResponse>> getRequestById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(service.getRequestById(id)));
     }

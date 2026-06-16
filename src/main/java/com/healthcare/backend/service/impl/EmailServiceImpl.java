@@ -47,9 +47,9 @@ public class EmailServiceImpl implements EmailService {
 
             // Normalize localhost URLs to point to the public VPS IP
             if (url.contains("localhost:") || url.contains("127.0.0.1")) {
-                url = url.replaceAll("http://localhost:\\d+", "http://161.35.109.58")
-                         .replaceAll("https://localhost:\\d+", "http://161.35.109.58")
-                         .replaceAll("http://127.0.0.1:\\d+", "http://161.35.109.58");
+                url = url.replaceAll("http://localhost:\\d+", "https://healthcare.io.vn")
+                         .replaceAll("https://localhost:\\d+", "https://healthcare.io.vn")
+                         .replaceAll("http://127.0.0.1:\\d+", "https://healthcare.io.vn");
             }
 
             // Always log the generated verification or reset link in full to the system console/logs!

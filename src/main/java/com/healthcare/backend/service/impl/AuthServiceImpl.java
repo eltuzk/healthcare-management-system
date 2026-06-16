@@ -158,12 +158,19 @@ public class AuthServiceImpl implements AuthService {
         Account account;
         if (accountOpt.isPresent()) {
             account = accountOpt.get();
+            // Automatically activate the account if it is currently inactive
+            if (Objects.equals(account.getIsActive(), 0)) {
+                account.setIsActive(1);
+                accountRepository.save(account);
+            }
         } else {
             // 2. Try to find by email (existing account not yet linked to Google)
             Optional<Account> emailAccountOpt = accountRepository.findByEmail(email);
             if (emailAccountOpt.isPresent()) {
                 account = emailAccountOpt.get();
                 account.setGoogleId(googleId);
+                // Also set active since they successfully authenticated via Google
+                account.setIsActive(1);
                 accountRepository.save(account);
             } else {
                 // 3. Create new account

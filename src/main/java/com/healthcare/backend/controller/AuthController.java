@@ -60,7 +60,7 @@ public class AuthController {
             "<div class='card'>" +
             "<h2>Xác thực thành công!</h2>" +
             "<p>Tài khoản của bạn đã được kích hoạt thành công. Giờ đây bạn đã có thể đăng nhập vào hệ thống The Clinical Curator.</p>" +
-            "<a href='http://161.35.109.58/login' class='btn'>Đến trang Đăng nhập</a>" +
+            "<a href='https://healthcare.io.vn/login' class='btn'>Đến trang Đăng nhập</a>" +
             "</div>" +
             "</body>" +
             "</html>");
